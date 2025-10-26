@@ -1,22 +1,36 @@
 @echo off
+chcp 65001 >nul
+title TWConnect2 - GitHub Auto Sync
+setlocal EnableDelayedExpansion
+
 REM ======================================================
 REM  TWConnect2 - GitHub 一鍵同步推送
 REM  作者：Ben Huang
-REM  說明：此批次檔會自動 add / commit / push
+REM  說明：自動 add / commit / push 並開啟 GitHub 頁面
 REM ======================================================
 
-cd /d "C:\Users\ta893\twconnect2"
-
-REM 檢查是否為 Git 專案
-if not exist ".git" (
-    echo [錯誤] 找不到 .git 目錄，請確認你在專案根目錄。
+cd /d "C:\Users\ta893\twconnect2" || (
+    echo [錯誤] 找不到專案資料夾 C:\Users\ta893\twconnect2
     pause
     exit /b
 )
 
-REM 顯示目前分支
+REM 檢查 .git 是否存在
+if not exist ".git" (
+    echo [錯誤] 未找到 .git，請先在此資料夾初始化 Git。
+    pause
+    exit /b
+)
+
 echo.
-git branch
+echo ===========================
+echo   TWConnect2 Git 同步工具
+echo ===========================
+echo.
+
+REM 顯示目前分支
+for /f "tokens=2 delims=* " %%b in ('git branch ^| findstr /R /C:"\*"') do set BRANCH=%%b
+echo 目前分支：!BRANCH!
 echo.
 
 REM 讓使用者輸入 commit 訊息
@@ -34,7 +48,7 @@ git commit -m "%msg%"
 
 if errorlevel 1 (
     echo.
-    echo [提示] 可能沒有變更可提交。
+    echo [提示] 沒有可提交的變更。
     echo.
 )
 
@@ -47,15 +61,15 @@ git push
 
 if errorlevel 1 (
     echo.
-    echo [錯誤] 推送失敗！請確認網路或登入狀態。
+    echo [錯誤] 推送失敗，請確認網路或登入狀態。
     pause
     exit /b
 )
 
 echo.
-echo ✅ 同步成功！
+echo ✅ 同步成功！已推送至 GitHub。
 echo ===========================
-pause
-
 start https://github.com/ta89365/twconnect2
-
+echo.
+pause
+exit /b
