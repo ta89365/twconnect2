@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* ---------- 顏色與字型變數 ---------- */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* ---------- Tailwind v4 主題區 ---------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brandBlue: #1C3D5A;
+}
+
+/* ---------- 深色模式 ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+/* ---------- 全域樣式 ---------- */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ---------- CrossBorderSection 淡藍光軌動畫 ---------- */
+@layer utilities {
+  :root {
+    --cb-arc-color: 210 100% 65%;   /* 弧線主色：淡藍 */
+    --cb-arc-glow:  210 100% 70%;   /* 外層光暈 */
+  }
+
+  /* 基礎弧線樣式 */
+  .cb-arc {
+    stroke: hsl(var(--cb-arc-color) / 0.65);
+    filter:
+      drop-shadow(0 0 6px hsl(var(--cb-arc-glow) / 0.55))
+      drop-shadow(0 0 12px hsl(var(--cb-arc-glow) / 0.35));
+    stroke-linecap: round;
+    fill: none;
+    stroke-width: 2;
+  }
+
+  /* 粗弧線 */
+  .cb-arc--thick { stroke-width: 3; }
+
+  /* 流動動畫（虛線前進） */
+  @keyframes cb-dash {
+    from { stroke-dashoffset: var(--arc-len, 1200); }
+    to   { stroke-dashoffset: 0; }
+  }
+  .animate-cb-dash {
+    stroke-dasharray: var(--arc-len, 1200);
+    animation: cb-dash var(--arc-speed, 16s) linear infinite;
+  }
+
+  /* 微閃爍（呼吸感） */
+  @keyframes cb-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 0.85; }
+  }
+  .animate-cb-pulse {
+    animation: cb-pulse 6s ease-in-out infinite;
+  }
+
+  /* ===== 端點光芒（圓形呼吸）===== */
+  @keyframes cb-glow-pulse {
+    0%, 100% { opacity: .45; transform: scale(0.9); }
+    50%      { opacity: .95; transform: scale(1.15); }
+  }
+  .animate-cb-glow {
+    animation: cb-glow-pulse 5.4s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+}
