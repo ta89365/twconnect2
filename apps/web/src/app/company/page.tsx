@@ -11,8 +11,16 @@ import {
   type CompanyOverviewData,
 } from "@/lib/queries/companyOverview";
 
+/* ============================ Types ============================ */
 type Lang = "jp" | "zh" | "en";
 type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
+
+type SiteSettings = {
+  title?: string | null;
+  logoUrl?: string | null;
+  logoText?: string | null;
+  navigation?: NavItem[] | null;
+};
 
 /* ===== Hero 可調整參數（直接改數字） ===== */
 const HERO_TUNE = {
@@ -111,7 +119,7 @@ export default async function CompanyPage({
 }: {
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
-  // 語言處理
+  // 語言處理（支援同步或 Promise 形態的 searchParams）
   const spRaw =
     searchParams && typeof (searchParams as any).then === "function"
       ? await (searchParams as Promise<{ lang?: string }>)
@@ -122,12 +130,12 @@ export default async function CompanyPage({
 
   // 取資料
   const [site, company] = await Promise.all([
-    sfetch(siteSettingsByLang, { lang }),
+    sfetch<SiteSettings>(siteSettingsByLang, { lang }),
     sfetch<CompanyOverviewData>(companyOverviewByLang, { lang }),
   ]);
 
   // Nav 與品牌：強化 fallback
-  const rawItems: NavItem[] = Array.isArray(site?.navigation) ? site.navigation : [];
+  const rawItems: NavItem[] = Array.isArray(site?.navigation) ? site!.navigation! : [];
   const items: NavItem[] = rawItems
     .map((it) => {
       if (!it?.href) return it;
@@ -136,17 +144,17 @@ export default async function CompanyPage({
     })
     .sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
-  const candidateLogoCompany = (company as any)?.logo?.url || "";
-  const candidateLogoSite = (typeof site?.logoUrl === "string" ? site.logoUrl : "") || "";
+  const candidateLogoCompany = company?.logo?.url || "";
+  const candidateLogoSite = site?.logoUrl || "";
   const navLogoUrl =
     (isValidSrc(candidateLogoCompany) && candidateLogoCompany) ||
     (isValidSrc(candidateLogoSite) && candidateLogoSite) ||
     "/logo.png";
 
   const displayCompanyName: string =
-    (company as any)?.logoText || (site as any)?.logoText || (site as any)?.title || "Taiwan Connect";
+    company?.logoText || site?.logoText || site?.title || "Taiwan Connect";
 
-  // 多語取值
+  // 多語取值工具
   const pick = <T extends { jp?: any; zh?: any; en?: any }>(obj?: T) =>
     lang === "jp" ? obj?.jp : lang === "zh" ? obj?.zh : obj?.en;
 
@@ -304,7 +312,7 @@ export default async function CompanyPage({
           <div className="text-xs tracking-[0.2em] uppercase text-slate-300 text-center mt-2">MESSAGE</div>
           <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-stretch mt-10">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-stretch mt-10">
             {/* 照片卡 */}
             <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5 h-full">
               <Image
@@ -343,7 +351,7 @@ export default async function CompanyPage({
           <h2 className="text-3xl sm:text-4xl font-bold tracking-wide text-white text-center">
             {companyInfoLabel}
           </h2>
-          <div className="text-xs tracking-[0.2em] uppercase text-slate-300 text-center mt-2">COMPANY</div>
+        <div className="text-xs tracking-[0.2em] uppercase text-slate-300 text-center mt-2">COMPANY</div>
           <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
           {data?.companyInfo ? (
@@ -478,6 +486,25 @@ export default async function CompanyPage({
           </div>
         </div>
       </section>
+
+      {/* CTA */}
+      {cta && (
+        <section className="pb-14 sm:pb-16">
+          <div className={container}>
+            <div className="rounded-2xl bg-white/20 border border-white/30 p-6 text-center">
+              <h3 className="text-white text-2xl font-semibold">{cta.heading}</h3>
+              {cta.subtext ? <p className="mt-2 text-white/90">{cta.subtext}</p> : null}
+              <a
+                href={cta.href ?? "/contact"}
+                className="mt-4 inline-flex items-center rounded-xl bg-white px-5 py-3 font-medium"
+                style={{ color: BRAND_DARK }}
+              >
+                {cta.buttonText ?? "Contact us"}
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Footer（滿版） */}
       <div className="w-full border-t border-white/15">
