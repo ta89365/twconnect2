@@ -1,0 +1,21 @@
+# Node
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.preview
+.env.production
+
+# System files
+.DS_Store
+Thumbs.db

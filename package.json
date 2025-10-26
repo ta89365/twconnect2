@@ -1,0 +1,13 @@
+{
+  "name": "twconnect2",
+  "private": true,
+  "packageManager": "pnpm@10.18.3",
+  "scripts": {
+    "dev": "pnpm -C apps/web dev",
+    "build": "pnpm -C apps/web build",
+    "start": "pnpm -C apps/web start"
+  },
+  "dependencies": {
+    "lucide-react": "^0.546.0"
+  }
+}

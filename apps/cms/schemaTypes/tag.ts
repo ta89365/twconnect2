@@ -1,0 +1,24 @@
+// apps/cms/schemaTypes/tag.ts
+import { defineType, defineField } from "sanity";
+
+export default defineType({
+  name: "tag",
+  title: "Tag",
+  type: "document",
+  fields: [
+    defineField({ name: "titleJp", title: "Title JP", type: "string", validation: r => r.required() }),
+    defineField({ name: "titleZh", title: "Title ZH", type: "string" }),
+    defineField({ name: "titleEn", title: "Title EN", type: "string" }),
+    defineField({
+      name: "slug",
+      title: "Slug",
+      type: "slug",
+      options: { source: "titleEn", maxLength: 96 },
+      validation: r => r.required(),
+    }),
+  ],
+  preview: {
+    select: { jp: "titleJp", zh: "titleZh", en: "titleEn" },
+    prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "Tag" }),
+  },
+});
