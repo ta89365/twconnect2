@@ -97,11 +97,8 @@ export default async function NewsEntrancePage({
   const lang = resolveLang(sp ?? undefined);
   const t = dict(lang);
 
-  // ✅ 型別斷言，避免 TS 把回傳推成 {}
-  const data = (await sfetch(
-    newsEntranceByLang,
-    { lang, limit: 24 }
-  )) as Partial<NewsEntranceData> | null;
+  // ✅ 使用泛型 sfetch，取得正確型別
+  const data = await sfetch<NewsEntranceData>(newsEntranceByLang, { lang, limit: 24 });
 
   const posts: any[] = data?.posts ?? [];
   const settings = data?.settings ?? {};
@@ -245,7 +242,7 @@ export default async function NewsEntrancePage({
               ))}
             </div>
           ) : (
-            <p className="mt-10 text白/90">{t.empty}</p>
+            <p className="mt-10 text-white/90">{t.empty}</p>
           )}
         </div>
       </section>
@@ -267,7 +264,7 @@ function FeaturedCard({
 }) {
   const coverUrl = post?.coverImage?.url as string | undefined;
   return (
-    <article className="group relative overflow-hidden rounded-2xl ring-1 ring白/10 bg白/[0.04] backdrop-blur-sm">
+    <article className="group relative overflow-hidden rounded-2xl ring-1 ring-white/10 bg-white/[0.04] backdrop-blur-sm">
       <div className="grid gap-0 md:grid-cols-5">
         {/* 圖片區 */}
         <div className="relative md:col-span-3 aspect-[16/10] md:aspect-auto md:h-full">
@@ -280,11 +277,11 @@ function FeaturedCard({
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
           ) : (
-            <div className="h-full w-full bg白/10" />
+            <div className="h-full w-full bg-white/10" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from黑/40 via黑/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
           {post?.category?.title && (
-            <span className="absolute left-3 top-3 inline-flex rounded-full bg黑/50 px-3 py-1 text-xs text白 ring-1 ring白/20">
+            <span className="absolute left-3 top-3 inline-flex rounded-full bg-black/50 px-3 py-1 text-xs text-white ring-1 ring-white/20">
               {post.category.title}
             </span>
           )}
@@ -297,9 +294,9 @@ function FeaturedCard({
             </Link>
           </h3>
           {post?.excerpt && (
-            <p className="mt-3 text白/90 line-clamp-4">{post.excerpt}</p>
+            <p className="mt-3 text-white/90 line-clamp-4">{post.excerpt}</p>
           )}
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text白/80">
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/80">
             {post?.author?.name && <span>👤 {post.author.name}</span>}
             {Array.isArray(post?.tags) && post.tags.length > 0 && (
               <span>
@@ -310,7 +307,7 @@ function FeaturedCard({
           <div className="mt-6">
             <Link
               href={`/news/${post.slug}?lang=${lang}`}
-              className="inline-flex items-center rounded-lg bg白 text-slate-900 text-sm px-3 py-2 hover:opacity-90"
+              className="inline-flex items-center rounded-lg bg-white text-slate-900 text-sm px-3 py-2 hover:opacity-90"
             >
               {readMoreLabel}
             </Link>
@@ -349,7 +346,7 @@ function ArticleCard({
   return (
     <article
       id={anchorId}
-      className="group relative flex flex-col rounded-2xl bg白 text-slate-900 shadow-sm ring-1 ring黑/5 overflow-hidden transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      className="group relative flex flex-col rounded-2xl bg-white text-slate-900 shadow-sm ring-1 ring-black/5 overflow-hidden transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
       {/* 封面圖 */}
       {coverUrl ? (
@@ -362,7 +359,7 @@ function ArticleCard({
             className="object-cover w-full h-full"
           />
           {tag && (
-            <span className="absolute left-3 top-3 inline-flex rounded-full bg黑/65 px-2.5 py-1 text-xs text白">
+            <span className="absolute left-3 top-3 inline-flex rounded-full bg-black/65 px-2.5 py-1 text-xs text-white">
               {tag}
             </span>
           )}
@@ -391,7 +388,7 @@ function ArticleCard({
       <div className="px-5 pb-5">
         <Link
           href={`/news/${slug}?lang=${lang}`}
-          className="inline-flex items-center rounded-lg bg-slate-900 text白 text-sm px-3 py-2 hover:opacity-90"
+          className="inline-flex items-center rounded-lg bg-slate-900 text-white text-sm px-3 py-2 hover:opacity-90"
         >
           {readMoreLabel}
         </Link>
@@ -413,7 +410,7 @@ function LangDropdown({ current }: { current: Lang }) {
     <div className="relative group">
       {/* 主按鈕 */}
       <button
-        className="flex items-center gap-2 bg白/10 hover:bg白/20 px-3 py-2 rounded-md text-sm font-medium"
+        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-md text-sm font-medium"
         aria-label="Language"
       >
         <span>{selected.flag}</span>
@@ -421,7 +418,7 @@ function LangDropdown({ current }: { current: Lang }) {
       </button>
 
       {/* 下拉清單 */}
-      <div className="absolute right-0 mt-2 w-32 rounded-md shadow-lg bg白 text-slate-800 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition">
+      <div className="absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white text-slate-800 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition">
         {langs.map((l, idx) => (
           <Link
             key={l.code}

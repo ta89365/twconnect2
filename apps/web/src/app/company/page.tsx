@@ -14,6 +14,14 @@ import {
 type Lang = "jp" | "zh" | "en";
 type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
 
+/** ✅ 最小 SiteSettings 型別，僅含本頁使用欄位 */
+type SiteSettingsData = {
+  navigation?: NavItem[];
+  logoUrl?: string | null;
+  logoText?: string | null;
+  title?: string | null;
+};
+
 /* ===== Hero 可調整參數（直接改數字） ===== */
 const HERO_TUNE = {
   BG_POS_X_PERCENT: 50,
@@ -120,14 +128,14 @@ export default async function CompanyPage({
   const lang: Lang =
     spLang === "zh" || spLang === "en" || spLang === "jp" ? (spLang as Lang) : "jp";
 
-  // 取資料
+  // 取資料（✅ 改用泛型 sfetch）
   const [site, company] = await Promise.all([
-    sfetch(siteSettingsByLang, { lang }),
+    sfetch<SiteSettingsData>(siteSettingsByLang, { lang }),
     sfetch<CompanyOverviewData>(companyOverviewByLang, { lang }),
   ]);
 
   // Nav 與品牌：強化 fallback
-  const rawItems: NavItem[] = Array.isArray(site?.navigation) ? site.navigation : [];
+  const rawItems: NavItem[] = Array.isArray(site?.navigation) ? site.navigation! : [];
   const items: NavItem[] = rawItems
     .map((it) => {
       if (!it?.href) return it;
@@ -144,7 +152,7 @@ export default async function CompanyPage({
     "/logo.png";
 
   const displayCompanyName: string =
-    (company as any)?.logoText || (site as any)?.logoText || (site as any)?.title || "Taiwan Connect";
+    (company as any)?.logoText || site?.logoText || site?.title || "Taiwan Connect";
 
   // 多語取值
   const pick = <T extends { jp?: any; zh?: any; en?: any }>(obj?: T) =>
@@ -304,7 +312,7 @@ export default async function CompanyPage({
           <div className="text-xs tracking-[0.2em] uppercase text-slate-300 text-center mt-2">MESSAGE</div>
           <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-stretch mt-10">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-stretch mt-10">
             {/* 照片卡 */}
             <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5 h-full">
               <Image
