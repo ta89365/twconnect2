@@ -1,6 +1,90 @@
 // apps/web/src/lib/queries/companyOverview.ts
 import groq from "groq";
 
+/* ============================ Types ============================ */
+export type Lang = "jp" | "zh" | "en";
+
+export type SanityImageMeta = {
+  dimensions?: { width?: number; height?: number; aspectRatio?: number };
+  lqip?: string | null;
+  palette?: unknown;
+};
+
+export type SanityImageObj = {
+  url?: string | null;
+  alt?: string | null;
+  ref?: string | null;
+  metadata?: SanityImageMeta | null;
+  focal?: unknown;
+};
+
+export type LabelBundle = {
+  pageLabel?: string | null;
+  mission?: string | null;
+  values?: string | null;
+  founder?: string | null;
+  repMessage?: string | null;
+  companyInfo?: string | null;
+};
+
+export type ValueItem = {
+  order?: number | null;
+  key?: string | null;
+  iconKey?: string | null;
+  title?: string | null;
+  descLong?: string | null;
+  descShort?: string | null;
+};
+
+export type PersonML = {
+  name?: { jp?: string | null; zh?: string | null; en?: string | null } | null;
+  title?: { jp?: string | null; zh?: string | null; en?: string | null } | null;
+  photo?: { url?: string | null; alt?: string | null } | null;
+  credentials?: unknown[] | null;
+  bioLong?: { jp?: string | null; zh?: string | null; en?: string | null } | null;
+  bioShort?: { jp?: string | null; zh?: string | null; en?: string | null } | null;
+};
+
+export type ContactCTA = {
+  heading?: string | null;
+  subtext?: string | null;
+  buttonText?: string | null;
+  href?: string | null;
+};
+
+/** 強型別對應此檔下方的 GROQ 結果 */
+export type CompanyOverviewData = {
+  logo?: SanityImageObj | null;
+  logoText?: string | null;
+
+  heading?: string | null;
+  tagline?: string | null;
+  headingTaglines?: string[] | null;
+
+  topImage?: SanityImageObj | null;
+
+  labels?: LabelBundle | null;
+
+  // Portable Text 欄位用 unknown[] 以維持彈性
+  mission?: unknown[] | null;
+  vision?: unknown[] | null;
+
+  visionShort?: string[] | null;
+
+  values?: ValueItem[] | null;
+
+  founder?: PersonML | null;
+  coFounder?: PersonML | null;
+
+  repMessageLong?: unknown[] | null;
+  repMessageShort?: string | null;
+
+  companyInfo?: unknown[] | null;
+
+  cta?: ContactCTA | null;
+};
+
+/* ============================ GROQ ============================ */
 /**
  * 公司概要（依語系）
  * - 圖片以物件回傳並加上空值保護：logo、topImage
