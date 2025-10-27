@@ -1,6 +1,8 @@
 // File: apps/web/next.config.js
 
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV !== "production";
+
 const nextConfig = {
   images: {
     // ✅ 使用新版 remotePatterns（取代 domains）
@@ -20,8 +22,8 @@ const nextConfig = {
   },
 
   experimental: {
-    // ✅ 正確放在 experimental 底下，避免 dev 警告
-    allowedDevOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"],
+    // ✅ 僅開發環境啟用，避免 Vercel build 警告
+    ...(isDev ? { allowedDevOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"] } : {}),
   },
 
   // TypeScript / ESLint 設定
