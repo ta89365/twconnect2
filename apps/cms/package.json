@@ -3,24 +3,27 @@
   "version": "1.0.0",
   "private": true,
   "description": "TW Connect Sanity CMS",
+  "license": "ISC",
   "scripts": {
     "dev": "sanity dev -p 3333",
     "build": "sanity build",
     "deploy": "sanity deploy",
     "lint": "tsc --noEmit"
   },
-  "license": "ISC",
   "dependencies": {
-    "@sanity/structure": "^2.36.2",
-    "@sanity/vision": "^4.10.3",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "sanity": "^4.10.3",
-    "styled-components": "^6.1.15"
+    "@sanity/vision": "^4.10.3",
+    "@sanity/structure": "^2.36.2",
+    "styled-components": "^6.1.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": "20.18.x"
   }
 }
