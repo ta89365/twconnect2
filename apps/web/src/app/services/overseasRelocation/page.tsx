@@ -169,15 +169,29 @@ export default async function OverseasRelocationPage({
   });
 
   // ---- 內容層級 fallback（若 GROQ 該欄位為空，使用 defaults(lang)）----
-  const title = pick<string>(data?.title, t.heroHeading);
-  const heroUrl: string | undefined = data?.heroImage?.url;
+  // 先把 data 寬化成可選欄位以避免 {} 型別報錯
+  type ORData = {
+    title?: string;
+    heroImage?: { url?: string | null; alt?: string | null; lqip?: string | null } | null;
+    background?: string | null;
+    challenges?: string[] | null;
+    services?: string[] | null;
+    flowSteps?: Step[] | null;
+    fees?: string[] | null;
+    ctaLabel?: string | null;
+  };
 
-  const background = pick<string>(data?.background, d.background);
-  const challenges = pick<string[] | undefined>(data?.challenges, d.challenges);
-  const services = pick<string[] | undefined>(data?.services, d.services);
-  const flowSteps = pick<Step[] | undefined>(data?.flowSteps, d.flowSteps);
-  const fees = pick<string[] | undefined>(data?.fees, d.fees);
-  const ctaLabel = pick<string>(data?.ctaLabel, d.ctaLabel);
+  const $data = (data ?? {}) as ORData;
+
+  const title = pick<string>($data.title ?? undefined, t.heroHeading);
+  const heroUrl: string | undefined = $data.heroImage?.url ?? undefined;
+
+  const background = pick<string>($data.background ?? undefined, d.background);
+  const challenges = pick<string[] | undefined>($data.challenges ?? undefined, d.challenges);
+  const services = pick<string[] | undefined>($data.services ?? undefined, d.services);
+  const flowSteps = pick<Step[] | undefined>($data.flowSteps ?? undefined, d.flowSteps);
+  const fees = pick<string[] | undefined>($data.fees ?? undefined, d.fees);
+  const ctaLabel = pick<string>($data.ctaLabel ?? undefined, d.ctaLabel);
 
   const hasBg = !!background;
   const hasChallenges = !!challenges?.length;
@@ -195,14 +209,14 @@ export default async function OverseasRelocationPage({
           {heroUrl ? (
             <Image
               src={heroUrl}
-              alt={data?.heroImage?.alt || title}
+              alt={$data.heroImage?.alt || title}
               fill
               priority
               sizes="100vw"
               className="object-cover"
               style={{ objectPosition: heroObjectPosition }}
-              placeholder={data?.heroImage?.lqip ? "blur" : "empty"}
-              blurDataURL={data?.heroImage?.lqip || undefined}
+              placeholder={$data.heroImage?.lqip ? "blur" : "empty"}
+              blurDataURL={$data.heroImage?.lqip || undefined}
             />
           ) : (
             <div className="absolute inset-0" style={{ backgroundColor: BRAND_BLUE }} />
@@ -274,7 +288,7 @@ export default async function OverseasRelocationPage({
             </a>
           )}
           {hasFees && (
-            <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg白/10 transition">
+            <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
               {t.fees}
             </a>
           )}
@@ -413,7 +427,7 @@ function Card({
       id={id}
       className={`${ANCHOR_OFFSET} ${CARD_TUNE.radius} bg-white ${CARD_TUNE.shadow} ${CARD_TUNE.border} overflow-hidden transition-shadow`}
     >
-      <div className="flex items-center gap-2 px-5 py-4 text白" style={{ backgroundColor: BRAND_BLUE }}>
+      <div className="flex items-center gap-2 px-5 py-4 text-white" style={{ backgroundColor: BRAND_BLUE }}>
         {icon}
         <h2 className="text-base md:text-lg font-semibold">{title}</h2>
       </div>

@@ -1,9 +1,18 @@
 // apps/web/src/app/_components/ChallengesSection.tsx
+import React from "react";
 import { sfetch } from "@/lib/sanity/fetch";
 import { challengesQueryML } from "@/lib/queries/challenges";
 import {
-  Building2, Landmark, Scale, BadgeCheck, Globe2, Sparkles,
-  FileText, Calculator, Handshake
+  Building2,
+  Landmark,
+  Scale,
+  BadgeCheck,
+  Globe2,
+  Sparkles,
+  FileText,
+  Calculator,
+  Handshake,
+  Circle,
 } from "lucide-react";
 
 type Lang = "jp" | "zh" | "en";
@@ -14,6 +23,8 @@ type ChallengeItem = {
   title?: string | null;
   desc?: string | null;
 };
+
+type IconComp = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
 const iconMap = {
   "building-2": Building2,
@@ -40,12 +51,23 @@ function resolveIconKey(title?: string, fallback: keyof typeof iconMap = "sparkl
   return fallback;
 }
 
+function getIconComp(key: string): IconComp {
+  // 型別保險：取不到對應就用 Circle 當後備
+  const comp = (iconMap as Record<string, unknown>)[key] as IconComp | undefined;
+  return comp ?? Circle;
+}
+
 function ChallengeIcon({ item }: { item: ChallengeItem }) {
-  const key = resolveIconKey(item.title);
-  const Ico = iconMap[key];
+  const key = resolveIconKey(item?.title ?? undefined);
+  const Ico = getIconComp(key);
   return (
     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
-      <Ico className="h-5 w-5 text-black" stroke="black" strokeWidth={2} aria-hidden />
+      {React.createElement(Ico, {
+        className: "h-5 w-5 text-black",
+        stroke: "black",
+        strokeWidth: 2,
+        "aria-hidden": true,
+      })}
     </span>
   );
 }
@@ -150,20 +172,20 @@ export default async function ChallengesSection({
         </div>
 
         {/* CTA ribbon */}
-<div className="mt-8 sm:mt-10 md:mt-14">
-  <div className="w-fit mx-auto flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 text-white backdrop-blur sm:flex-row sm:px-8 sm:py-5">
-    <div className="text-center sm:text-left">
-      <div className="font-semibold whitespace-nowrap">Taiwan Connect が解決します</div>
-      <div className="text-slate-200 whitespace-nowrap">グローバル展開を、もっとスムーズに。</div>
-    </div>
-    <a
-      href="/contact"
-      className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold text-white shadow hover:opacity-90 bg-gradient-to-r from-blue-500 to-blue-600 whitespace-nowrap"
-    >
-      See How We Solve It
-    </a>
-  </div>
-</div>
+        <div className="mt-8 sm:mt-10 md:mt-14">
+          <div className="w-fit mx-auto flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 text-white backdrop-blur sm:flex-row sm:px-8 sm:py-5">
+            <div className="text-center sm:text-left">
+              <div className="font-semibold whitespace-nowrap">Taiwan Connect が解決します</div>
+              <div className="text-slate-200 whitespace-nowrap">グローバル展開を、もっとスムーズに。</div>
+            </div>
+            <a
+              href="/contact"
+              className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold text-white shadow hover:opacity-90 bg-gradient-to-r from-blue-500 to-blue-600 whitespace-nowrap"
+            >
+              See How We Solve It
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );

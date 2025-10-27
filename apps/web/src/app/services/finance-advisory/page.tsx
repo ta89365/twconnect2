@@ -180,14 +180,25 @@ function QuickDock({ lang }: { lang: Lang }) {
       <div className={`mx-auto ${LAYOUT.container} px-5 md:px-6`}>
         <div className="py-3 flex gap-2.5 overflow-x-auto pb-1 no-scrollbar justify-center">
           {QUICK_LINKS.map(({ id, icon, label }) => {
-            const Icon = Lucide[icon];
+            // 允許 icon 是字串名稱或直接給元件
+            const IconComp =
+              typeof icon === "string"
+                ? ((Lucide as any)[icon] ?? Lucide.Circle)
+                : (icon || Lucide.Circle);
+
+            // 用 createElement 生成節點以避免 JSX 型別檢查報錯
+            const IconEl = React.createElement(IconComp as any, {
+              className: "size-4 opacity-90 group-hover:opacity-100",
+              "aria-hidden": true,
+            });
+
             return (
               <a
                 key={id}
                 href={`#${id}`}
                 className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-transparent hover:bg-white/10 text-white px-3.5 py-2 text-sm transition-colors"
               >
-                <Icon className="size-4 opacity-90 group-hover:opacity-100" />
+                {IconEl}
                 <span>{label[lang]}</span>
               </a>
             );

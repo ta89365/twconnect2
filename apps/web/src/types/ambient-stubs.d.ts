@@ -4,3 +4,8 @@ declare module "@/lib/types/about" {
   // 之後可改成你實際需要的欄位
   export type AboutData = any;
 }
+// Auto-generated type stubs
+declare module "@/lib/types/about" {
+  export type AboutData = any;
+}
+

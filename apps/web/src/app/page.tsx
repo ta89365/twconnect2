@@ -148,16 +148,19 @@ export default async function Home({
     })
     .sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
-  // Footer
-  const footerCompany = {
-    name: settings?.logoText ?? settings?.title ?? "Taiwan Connect",
-    logoUrl: settings?.logoUrl ?? null,
-  };
+// Footer
+type LooseContact = { email?: string | null; phone?: string | null };
+const c = (contact as unknown as LooseContact | null);
 
-  const footerContact = {
-    email: contact?.email ?? settings?.contactEmail ?? null,
-    phone: contact?.phone ?? settings?.contactPhone ?? null,
-  };
+const footerCompany = {
+  name: settings?.logoText ?? settings?.title ?? "Taiwan Connect",
+  logoUrl: settings?.logoUrl ?? null,
+};
+
+const footerContact = {
+  email: c?.email ?? settings?.contactEmail ?? null,
+  phone: c?.phone ?? settings?.contactPhone ?? null,
+};
 
   const primaryLinks =
     items?.map((i) => ({ label: i.label, href: i.href, external: i.external })) ?? [];

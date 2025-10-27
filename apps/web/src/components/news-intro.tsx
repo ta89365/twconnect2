@@ -1,4 +1,3 @@
-    d="M 120 550 C 960 500, 1150 220, 1320 160"
 // apps/web/src/components/news-intro.tsx
 import Link from "next/link";
 import clsx from "clsx";
@@ -36,16 +35,38 @@ export default function NewsIntro({
   ctaHref?: string;
 }) {
   const t = copy[lang];
+
   return (
     <section
       className={clsx(
-        "relative w-full",
+        "relative w-full overflow-hidden",
         "text-white",
         "py-16 md:py-20",
         className
       )}
       style={{ backgroundColor: "#1C3D5A" }}
     >
+      {/* decorative curve */}
+      <svg
+        className="pointer-events-none absolute -top-10 -right-10 h-[420px] w-[820px] opacity-20"
+        viewBox="0 0 1440 720"
+        fill="none"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="newsCurve" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#ffffff" stopOpacity="0.35" />
+            <stop offset="1" stopColor="#ffffff" stopOpacity="0.05" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M 120 550 C 960 500, 1150 220, 1320 160"
+          stroke="url(#newsCurve)"
+          strokeWidth="48"
+          strokeLinecap="round"
+        />
+      </svg>
+
       <div className="mx-auto max-w-6xl px-4">
         <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
           {t.title}
@@ -56,15 +77,13 @@ export default function NewsIntro({
         <div className="mt-8">
           <Link
             href={ctaHref}
-            className="inline-flex items-center rounded-lg px-5 py-3 font-medium text-white"
+            className="inline-flex items-center rounded-lg px-5 py-3 font-medium text-white transition-colors"
             style={{ backgroundColor: "#2563EB" }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                "#3B82F6";
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#3B82F6";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor =
-                "#2563EB";
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#2563EB";
             }}
           >
             {t.cta}

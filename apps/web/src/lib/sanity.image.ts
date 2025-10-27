@@ -1,47 +1,30 @@
-// 允許同時處理 Sanity asset ref 與已是完整 URL 的字串
+// apps/web/src/lib/sanity/image.ts
 import { createClient } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 
-/** 用於 server/client 兩邊都可工作的 public client */
-const client = createClient({
+// 建立 Sanity client（請確認環境變數設定正確）
+export const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
-  apiVersion: "2024-06-01",
+  apiVersion: "2025-01-01",
   useCdn: true,
 });
 
 const builder = imageUrlBuilder(client);
+type UrlBuilder = ReturnType<typeof imageUrlBuilder>;
 
 /**
- * 用法：
- *   urlFor(assetOrUrl).width(2000).height(1200).url()
- * 支援 Sanity asset ref 或完整 URL。
+ * 統一取得圖片 URL。
+ * - 若傳入為 string（已是完整 URL）直接回傳。
+ * - 若傳入為 Sanity 圖片物件或 asset ref，自動生成完整 URL。
+ * - 若為空值，回傳空字串以避免 runtime 錯誤。
  */
-export function urlFor(src: any) {
-  if (!src) {
-    return { width: () => urlFor(""), height: () => urlFor(""), url: () => "" };
-  }
-
-  // 若是完整 URL，建立可鏈式的 stub 物件讓 width/height 不報錯
-  if (typeof src === "string" && /^https?:\/\//i.test(src)) {
-    const chain = {
-      width: (_?: number) => chain,
-      height: (_?: number) => chain,
-      url: () => src,
-    };
-    return chain;
-  }
-
-  // Sanity image asset/ref
+export function urlFor(source: unknown, b: UrlBuilder = builder): string {
+  if (!source) return "";
+  if (typeof source === "string") return source;
   try {
-    return builder.image(src);
+    return b.image(source).url();
   } catch {
-    // 防呆：避免 build 失敗時爆錯
-    const fallback = {
-      width: (_?: number) => fallback,
-      height: (_?: number) => fallback,
-      url: () => "",
-    };
-    return fallback;
+    return "";
   }
 }

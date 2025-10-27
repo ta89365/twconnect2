@@ -31,7 +31,7 @@ export default function CrossBorderSection({
   data: CrossBorderData | null;
   tune?: CrossBorderTune;
 }) {
-  const bg = data?.bgUrl ? urlFor(data.bgUrl).width(3000).height(1800).url() : null;
+  const bg = data?.bgUrl ? urlFor(data.bgUrl) : null;
 
   const align =
     tune?.containerAlign === "right"
