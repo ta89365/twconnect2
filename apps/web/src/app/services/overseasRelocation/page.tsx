@@ -10,7 +10,7 @@ import { overseasRelocationDetailBySlug } from "@/lib/queries/overseasRelocation
 import { resolveLang, type Lang } from "@/lib/i18n";
 
 export const revalidate = 60;
-// ✅ 讓多語 ?lang=jp|zh|en 生效（逐請求依參數決定內容）
+// 依 ?lang=jp|zh|en 做逐請求渲染
 export const dynamic = "force-dynamic";
 
 const FIXED_SLUG = "overseas-residence-relocation-support";
@@ -24,7 +24,7 @@ const SECTION_Y = "py-10 md:py-14";
 const clamp01 = (n: number) => Math.max(0, Math.min(100, n));
 const heroObjectPosition = `${clamp01(HERO_TUNE.x)}% ${clamp01(HERO_TUNE.y)}%`;
 
-/* ===== 🔧 Hero 文字調整區（紅框三項＋CTA） ===== */
+/* ===== Hero 文字調整區 ===== */
 const HERO_PANEL_TUNE = {
   yBase: "pt-80",
   yMd: "md:pt-96",
@@ -36,14 +36,14 @@ const HERO_PANEL_TUNE = {
   pillText: "text-xs md:text-sm",
 };
 
-/* ===== 🟦 卡片邊框調整區 ===== */
+/* ===== 卡片邊框調整區 ===== */
 const CARD_TUNE = {
   radius: "rounded-2xl",
   border: "border-2 border-[#1C3D5A]/40 ring-2 ring-[#1C3D5A]/15",
   shadow: "shadow-[0_12px_32px_rgba(0,0,0,0.18)]",
 };
 
-/* ===== 📌 錨點偏移（避免被 sticky 快捷列遮住） ===== */
+/* ===== 錨點偏移（避免被 sticky 快捷列遮住） ===== */
 const ANCHOR_OFFSET = "scroll-mt-[92px] md:scroll-mt-[112px]";
 /* ==================================================================== */
 
@@ -81,10 +81,7 @@ function defaults(lang: Lang): {
         { stepNumber: "04", title: "提出・追跡", desc: "当局への提出、審査フォロー、追加対応" },
         { stepNumber: "05", title: "生活立上げ", desc: "口座・保険・住居・税務登録などの実務支援" },
       ],
-      fees: [
-        "案件の内容と緊急度によりお見積りが変動します",
-        "複数手続きの同時依頼にはパッケージ割引あり",
-      ],
+      fees: ["案件の内容と緊急度によりお見積りが変動します", "複数手続きの同時依頼にはパッケージ割引あり"],
       ctaLabel: "お問い合わせはこちら",
     };
 
@@ -115,10 +112,9 @@ function defaults(lang: Lang): {
       ctaLabel: "Contact Us 聯絡我們",
     };
 
-  // en
   return {
     background:
-      "Starting life abroad requires more than a visa. You will also need to set up housing, bank accounts, insurance, and tax registrations. With on-the-ground partners and multilingual support, Taiwan Connect guides you from planning to full relocation.",
+      "Starting life abroad requires more than a visa. You will also need to set up housing, bank accounts, insurance, and tax registrations. With on the ground partners and multilingual support, Taiwan Connect guides you from planning to full relocation.",
     challenges: [
       "Complex rules and documents create delays and rejections",
       "Language and system differences make DIY difficult",
@@ -135,7 +131,7 @@ function defaults(lang: Lang): {
       { stepNumber: "01", title: "Free consult", desc: "Clarify goals and constraints, outline the path" },
       { stepNumber: "02", title: "Plan proposal", desc: "Best fit status, timeline, and quote" },
       { stepNumber: "03", title: "Document prep", desc: "Checklist, drafting, translation, collection" },
-      { stepNumber: "04", title: "Filing & follow-up", desc: "Submission to authorities and ongoing tracking" },
+      { stepNumber: "04", title: "Filing and follow up", desc: "Submission to authorities and ongoing tracking" },
       { stepNumber: "05", title: "Landing support", desc: "Accounts, insurance, housing, and tax setup" },
     ],
     fees: ["Pricing depends on scope and urgency", "Bundle discounts for combined procedures"],
@@ -168,11 +164,17 @@ export default async function OverseasRelocationPage({
     lang,
   });
 
-  // ---- 內容層級 fallback（若 GROQ 該欄位為空，使用 defaults(lang)）----
-  // 先把 data 寬化成可選欄位以避免 {} 型別報錯
   type ORData = {
     title?: string;
-    heroImage?: { url?: string | null; alt?: string | null; lqip?: string | null } | null;
+    heroSrc?: string | null;
+    heroUrl?: string | null;
+    heroImage?:
+      | {
+          url?: string | null;
+          alt?: string | null;
+          lqip?: string | null;
+        }
+      | null;
     background?: string | null;
     challenges?: string[] | null;
     services?: string[] | null;
@@ -184,7 +186,8 @@ export default async function OverseasRelocationPage({
   const $data = (data ?? {}) as ORData;
 
   const title = pick<string>($data.title ?? undefined, t.heroHeading);
-  const heroUrl: string | undefined = $data.heroImage?.url ?? undefined;
+  const heroUrl: string | undefined =
+    $data.heroSrc ?? $data.heroImage?.url ?? $data.heroUrl ?? undefined;
 
   const background = pick<string>($data.background ?? undefined, d.background);
   const challenges = pick<string[] | undefined>($data.challenges ?? undefined, d.challenges);
@@ -203,97 +206,100 @@ export default async function OverseasRelocationPage({
     <div className="min-h-screen flex flex-col text-white" style={{ backgroundColor: BRAND_BLUE }}>
       <NavigationServer lang={lang} />
 
-      {/* ============================== Hero ============================== */}
-      <section className="relative w-full">
-        <div className="relative h-[40vh] sm:h-[46vh] md:h-[45vh] lg:h-[60vh] overflow-hidden">
-          {heroUrl ? (
-            <Image
-              src={heroUrl}
-              alt={$data.heroImage?.alt || title}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-              style={{ objectPosition: heroObjectPosition }}
-              placeholder={$data.heroImage?.lqip ? "blur" : "empty"}
-              blurDataURL={$data.heroImage?.lqip || undefined}
-            />
-          ) : (
-            <div className="absolute inset-0" style={{ backgroundColor: BRAND_BLUE }} />
-          )}
+{/* ============================== Hero ============================== */}
+<section className="relative w-full">
+  <div className="relative h-[40vh] sm:h-[46vh] md:h-[45vh] lg:h-[60vh] overflow-hidden">
+    {heroUrl ? (
+      <Image
+        key={heroUrl}
+        src={heroUrl}
+        alt={$data.heroImage?.alt || title}
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+        style={{ objectPosition: heroObjectPosition }}
+        placeholder={$data.heroImage?.lqip ? "blur" : "empty"}
+        blurDataURL={$data.heroImage?.lqip || undefined}
+      />
+    ) : (
+      <div className="absolute inset-0" style={{ backgroundColor: BRAND_BLUE }} />
+    )}
 
-          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-[#1C3D5A]" />
-          <div
-            className="pointer-events-none absolute -top-24 right-[-60px] h-72 w-72 rounded-full blur-3xl opacity-30"
-            style={{ background: "radial-gradient(closest-side, rgba(255,255,255,0.22), rgba(255,255,255,0))" }}
-          />
+    {/* 漸層遮罩 */}
+    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#1C3D5A]/75" />
 
-          <div className="relative z-10 h-full flex items-start">
-            <div
-              className={`${CONTAINER_W} w-full mx-auto ${CONTAINER_X} ${HERO_PANEL_TUNE.yBase} ${HERO_PANEL_TUNE.yMd} text-center`}
-            >
-              <div className={`${HERO_PANEL_TUNE.pillMb} flex justify-center`}>
-                <div
-                  className={`inline-flex items-center gap-2 rounded-full bg-white/12 border border-white/18 px-4 py-1 ${HERO_PANEL_TUNE.pillText}`}
-                >
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/80" />
-                  {t.breadcrumb}
-                </div>
-              </div>
-
-              <h1 className={`${HERO_PANEL_TUNE.titleSize} font-extrabold tracking-tight drop-shadow-sm`}>{title}</h1>
-
-              <div className={`${HERO_PANEL_TUNE.groupGap} flex flex-wrap items-center justify-center gap-2`}>
-                <LangBadge lang={lang} />
-                <Link
-                  href={`/contact${lang ? `?lang=${lang}` : ""}`}
-                  className={`inline-flex items-center gap-2 rounded-full bg-white/90 ${HERO_PANEL_TUNE.ctaPad} ${HERO_PANEL_TUNE.ctaText} font-semibold shadow-sm hover:bg-white transition`}
-                  style={{ color: BRAND_BLUE }}
-                >
-                  <Lucide.Mail className="h-4 w-4" />
-                  {ctaLabel}
-                </Link>
-              </div>
+    {/* ✅ Hero 文字：改為絕對定位，避免增加 section 高度 */}
+    <div className="absolute inset-0">
+      <div
+        className={`${CONTAINER_W} ${CONTAINER_X} h-full mx-auto flex items-end justify-center text-center pb-14 md:pb-20`}
+      >
+        <div>
+          <div className="mb-4 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/12 border border-white/18 px-4 py-1 text-xs md:text-sm">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/80" />
+              {t.breadcrumb}
             </div>
           </div>
-        </div>
 
-        <div
-          className="absolute inset-x-0 bottom-0 translate-y-1/3 h-24 blur-3xl opacity-70"
-          style={{ backgroundColor: BRAND_BLUE }}
-        />
-      </section>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
+            {title}
+          </h1>
 
-      {/* ============================ Hero 下方快速導覽 ============================ */}
-      <nav className="sticky top-0 z-30 bg-[rgba(28,61,90,0.88)] backdrop-blur-md border-b border-white/12">
-        <div className={`${CONTAINER_W} mx-auto ${CONTAINER_X} py-3 flex flex-wrap justify-center gap-3`}>
-          {hasBg && (
-            <a href="#bg" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-              {t.bg}
-            </a>
-          )}
-          {hasChallenges && (
-            <a href="#ch" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-              {t.challenges}
-            </a>
-          )}
-          {hasServices && (
-            <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-              {t.services}
-            </a>
-          )}
-          {hasFlow && (
-            <a href="#fl" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-              {t.flow}
-            </a>
-          )}
-          {hasFees && (
-            <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-              {t.fees}
-            </a>
-          )}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <LangBadge lang={lang} />
+            <Link
+              href={`/contact${lang ? `?lang=${lang}` : ""}`}
+              className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-1.5 text-sm font-semibold shadow-sm hover:bg-white transition"
+              style={{ color: BRAND_BLUE }}
+            >
+              <Lucide.Mail className="h-4 w-4" />
+              {ctaLabel}
+            </Link>
+          </div>
         </div>
-      </nav>
+      </div>
+    </div>
+
+    {/* 裝飾光暈：絕對定位不影響版面高度 */}
+    <div
+      className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1/3 h-24 blur-3xl opacity-70"
+      style={{ backgroundColor: BRAND_BLUE }}
+    />
+  </div>
+</section>
+
+{/* ============================ Hero 下方快速導覽 ============================ */}
+{/* ✅ 貼齊關鍵：-mt-px 吃掉 1px 縫隙，並用 border-t 當分隔線 */}
+<nav className="-mt-px sticky top-0 z-30 bg-[rgba(28,61,90,0.88)] backdrop-blur-md border-t border-white/12">
+  <div className={`${CONTAINER_W} mx-auto ${CONTAINER_X} py-3 flex flex-wrap justify-center gap-3`}>
+    {hasBg && (
+      <a href="#bg" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+        {t.bg}
+      </a>
+    )}
+    {hasChallenges && (
+      <a href="#ch" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+        {t.challenges}
+      </a>
+    )}
+    {hasServices && (
+      <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+        {t.services}
+      </a>
+    )}
+    {hasFlow && (
+      <a href="#fl" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+        {t.flow}
+      </a>
+    )}
+    {hasFees && (
+      <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+        {t.fees}
+      </a>
+    )}
+  </div>
+</nav>
 
       {/* ================================ 內容區 ================================ */}
       <main className={`${CONTAINER_W} mx-auto w-full ${CONTAINER_X} ${SECTION_Y} flex-1`}>
@@ -322,7 +328,6 @@ export default async function OverseasRelocationPage({
             </Card>
           )}
 
-          {/* ========= 料金（参考）卡：點陣背景 + 浮水印 + 側邊資訊框 ========= */}
           {hasFees && (
             <Card id="fe" title={t.fees} icon={<Lucide.Receipt className="h-5 w-5" />}>
               <div
@@ -332,19 +337,15 @@ export default async function OverseasRelocationPage({
                   backgroundSize: "12px 12px",
                 }}
               >
-                {/* 超淡浮水印 */}
                 <Lucide.Coins
                   className="absolute -top-2 -right-2 h-14 w-14 md:h-16 md:w-16 text-[#1C3D5A]/10 pointer-events-none"
                   aria-hidden
                 />
 
-                {/* 條列 */}
                 <BulletList items={fees} dot />
 
-                {/* 置底：水平資訊條 */}
                 <aside className="mt-6 rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur px-4 py-4 shadow-sm">
                   <div className="flex flex-col md:flex-row md:items-center md:gap-6">
-                    {/* 左：標題＋說明 */}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 text-slate-900 font-semibold">
                         <Lucide.MessageCircle className="h-5 w-5 text-[#1C3D5A]" />
@@ -352,7 +353,6 @@ export default async function OverseasRelocationPage({
                       </div>
                       <p className="mt-2 text-sm leading-relaxed text-slate-700">{t.feeSideNote}</p>
 
-                      {/* 標籤 */}
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="inline-flex items-center gap-1 rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A] text-xs px-2.5 py-1">
                           <Lucide.BadgeCheck className="h-3.5 w-3.5" />
@@ -365,7 +365,6 @@ export default async function OverseasRelocationPage({
                       </div>
                     </div>
 
-                    {/* 右：CTA */}
                     <div className="mt-4 md:mt-0 md:ml-auto">
                       <Link
                         href={`/contact${lang ? `?lang=${lang}` : ""}`}
@@ -427,7 +426,7 @@ function Card({
       id={id}
       className={`${ANCHOR_OFFSET} ${CARD_TUNE.radius} bg-white ${CARD_TUNE.shadow} ${CARD_TUNE.border} overflow-hidden transition-shadow`}
     >
-      <div className="flex items-center gap-2 px-5 py-4 text-white" style={{ backgroundColor: BRAND_BLUE }}>
+      <div className="flex items-center gap-2 px-5 py-4 text白" style={{ backgroundColor: BRAND_BLUE }}>
         {icon}
         <h2 className="text-base md:text-lg font-semibold">{title}</h2>
       </div>
@@ -477,7 +476,7 @@ function StepList({ steps }: { steps?: { stepNumber?: string; title?: string; de
       {steps.map((st, i) => (
         <li key={i} className="ms-6">
           <span
-            className="absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-bold ring-2 ring-white"
+            className="absolute -start-3 flex h-6 w-6 items-center justify中心 rounded-full text-white text-xs font-bold ring-2 ring-white"
             style={{ backgroundColor: BRAND_BLUE }}
           >
             {(st.stepNumber ?? `${i + 1}`).padStart(2, "0")}
@@ -495,7 +494,7 @@ function StepList({ steps }: { steps?: { stepNumber?: string; title?: string; de
 function LangBadge({ lang }: { lang: Lang }) {
   const label = lang === "jp" ? "日本語" : lang === "zh" ? "繁體中文" : "English";
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm ring-1 ring-black/5 text-slate-900">
+    <span className="inline-flex items-center gap-1 rounded-full bg白/80 px-2.5 py-1 text-xs font-medium shadow-sm ring-1 ring-black/5 text-slate-900">
       <Lucide.BadgeCheck className="h-3.5 w-3.5" />
       {label}
     </span>
@@ -533,12 +532,13 @@ function dict(lang: Lang) {
       defaultCTA: "Contact Us 聯絡我們",
       bottomHeading: "用最合適的移居方案，安心展開海外生活",
       feeSideHeading: "先進行免費諮詢",
-      feeSideNote: "費用會依據目的與條件不同而調整。了解您的情況後，我們會提供客製化報價。",
+      feeSideNote:
+        "費用會依據目的與條件不同而調整。了解您的情況後，我們會提供客製化報價。",
       tagTailored: "客製報價",
       tagQuickReply: "快速回覆",
     };
   return {
-    breadcrumb: "Home / Services / Overseas Residence & Relocation",
+    breadcrumb: "Home / Services / Overseas Residence and Relocation",
     heroHeading: "Overseas Residence and Relocation Support",
     bg: "Background",
     challenges: "Challenges",

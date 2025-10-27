@@ -1,30 +1,32 @@
-/** @type {import("next").NextConfig} */
-const nextConfig = {
-  // ✅ 若要在手機或其他裝置預覽本機開發站，可改用 dev proxy 或 middleware 控制 CORS
-  // 不再使用 experimental.allowedDevOrigins 或 devIndicators.appIsrStatus
+// File: apps/web/next.config.js
 
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
-    // ✅ 允許 Sanity 圖片來源
+    // ✅ 使用新版 remotePatterns（取代 domains）
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "cdn.sanity.io", // Sanity v3 預設圖檔來源
+        hostname: "cdn.sanity.io",
+        pathname: "/images/**",
       },
       {
         protocol: "https",
-        hostname: "images.sanitycdn.com", // Sanity 新版 pipeline
+        hostname: "images.sanitycdn.com",
+        pathname: "/**",
       },
     ],
+    formats: ["image/avif", "image/webp"],
   },
 
-  // ✅ 可加快頁面載入，防止 build 過慢
-  typescript: {
-    ignoreBuildErrors: false,
+  experimental: {
+    // ✅ 正確放在 experimental 底下，避免 dev 警告
+    allowedDevOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"],
   },
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // TypeScript / ESLint 設定
+  typescript: { ignoreBuildErrors: false },
+  eslint: { ignoreDuringBuilds: true },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
