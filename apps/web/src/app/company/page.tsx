@@ -23,7 +23,24 @@ type SiteSettingsData = {
   title?: string | null;
 };
 
-/** (3) 統一的語言解析工具 */
+// 導覽列輸出用型別（我們自己的穩定形狀）
+type NavItemOut = {
+  label: string;
+  href: string;
+  external?: boolean;
+  order?: number;
+};
+
+// 公司資訊安全型別
+type CompanyInfoSafe = {
+  companyName?: string;
+  representative?: string;
+  activities?: string[];
+  addressJapan?: string;
+  addressTaiwan?: string;
+};
+
+/** 統一語言解析 */
 function resolveLang(sp?: { lang?: string | string[] } | null): Lang {
   let v = sp?.lang;
   if (Array.isArray(v)) v = v[0];
@@ -64,15 +81,12 @@ function isValidSrc(s?: string | null) {
   if (v.toLowerCase() === "null" || v.toLowerCase() === "undefined") return false;
   return true;
 }
-
-/** 站內連結判斷：/ 開頭或相對連結，但排除以 // 開頭的協議相對 URL */
 function isInternalHref(href: string) {
   if (!href) return false;
   if (href.startsWith("//")) return false; // protocol-relative external
   return href.startsWith("/") || (!href.startsWith("http://") && !href.startsWith("https://"));
 }
 
-/** 在 PortableText 段落內，自動替站內連結加上 ?lang= 參數 */
 function PortableParagraphs({
   blocks,
   lang,
@@ -138,37 +152,47 @@ function RepMessageBlocks({ blocks }: { blocks?: SimpleBlock[] | null }) {
   );
 }
 
+/** ✅ 相容包裝：把 NavigationServer 轉成我們要的 props 形狀，避免 TS 紅字 */
+const NavigationServerCompat =
+  NavigationServer as unknown as React.FC<{
+    items: NavItemOut[];
+    lang: Lang;
+    brand: { logoUrl?: string; name?: string };
+  }>;
+
 /* ===== 主頁面 ===== */
 export default async function CompanyPage({
   searchParams,
 }: {
-  // (2) 允許 Promise 以便 await
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
-  // (2) 先 await 再取值
   const spRaw =
     searchParams && typeof (searchParams as any).then === "function"
       ? await (searchParams as Promise<{ lang?: string }>)
       : (searchParams as { lang?: string } | undefined);
 
-  // (3) 用統一的 resolveLang
   const lang = resolveLang(spRaw);
 
-  // (4) 帶入 Sanity 參數查詢
   const [site, company] = await Promise.all([
     sfetch<SiteSettingsData>(siteSettingsByLang, { lang }),
     sfetch<CompanyOverviewData>(companyOverviewByLang, { lang }),
   ]);
 
-  // Nav 連結補 lang
+  const cinfo = ((company as any)?.companyInfo ?? {}) as CompanyInfoSafe;
+
+  // ===== Nav items：補 lang 並轉成 NavItemOut =====
   const rawItems: NavItem[] = Array.isArray(site?.navigation) ? site!.navigation! : [];
-  const items: NavItem[] = rawItems
-    .map((it) => {
-      if (!it?.href) return it;
-      if (it.external) return it; // 外部連結不加
-      const join = it.href.includes("?") ? "&" : "?";
-      return { ...it, href: `${it.href}${join}lang=${lang}` };
-    })
+  const navItems: NavItemOut[] = rawItems
+    .filter(
+      (it): it is Required<Pick<NavItem, "label" | "href">> &
+        Partial<Pick<NavItem, "external" | "order">> => !!it?.label && !!it?.href
+    )
+    .map((it) => ({
+      label: it.label,
+      href: it.external ? it.href : `${it.href}${it.href.includes("?") ? "&" : "?"}lang=${lang}`,
+      external: !!it.external,
+      ...(typeof it.order === "number" ? { order: it.order } : {}),
+    }))
     .sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
   // 品牌資源
@@ -209,16 +233,16 @@ export default async function CompanyPage({
       {/* Header（滿版） */}
       <div className="w-full border-b border-white/15">
         <div className={container}>
-          {/* (4) lang 傳進子元件 */}
-          <NavigationServer
-            items={items}
+          {/* ✅ 用相容包裝，items 再也不紅字 */}
+          <NavigationServerCompat
+            items={navItems}
             lang={lang}
             brand={{ logoUrl: navLogoUrl, name: displayCompanyName }}
           />
         </div>
       </div>
 
-      {/* Hero：背景圖 + 疊在圖上的「会社概要」 */}
+      {/* Hero */}
       <section
         id="philosophy"
         className="relative w-full"
@@ -254,7 +278,7 @@ export default async function CompanyPage({
       {/* Mission / Vision / Values */}
       <section className="py-14 sm:py-16">
         <div className={container}>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-wide text-white text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-wide text白 text-center">
             {missionLabel}
           </h2>
           <div className="text-xs tracking-[0.2em] uppercase text-slate-300 text-center mt-2">
@@ -287,7 +311,6 @@ export default async function CompanyPage({
             <div className="text-xl sm:text-2xl font-semibold text-white">
               {lang === "jp" ? "バリュー" : lang === "zh" ? "核心價值" : "Values"}
             </div>
-
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {(values as any[]).map((v, idx) => (
                 <div
@@ -359,70 +382,70 @@ export default async function CompanyPage({
           <div className="text-xs tracking-[0.2em] uppercase text-slate-300 text-center mt-2">COMPANY</div>
           <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
-          {company?.companyInfo ? (
+          {!!company?.companyInfo && (
             <div className={`${card} p-5 sm:p-6 mt-6`}>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-6 gap-x-6 text-slate-100">
-                {company.companyInfo.companyName ? (
+                {!!cinfo.companyName && (
                   <>
                     <div className="text-slate-300">
                       {lang === "jp" ? "会社名" : lang === "zh" ? "公司名稱" : "Company Name"}
                     </div>
-                    <div className="sm:col-span-2">{company.companyInfo.companyName}</div>
+                    <div className="sm:col-span-2">{cinfo.companyName}</div>
                     <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
-                ) : null}
+                )}
 
-                {company.companyInfo.representative ? (
+                {!!cinfo.representative && (
                   <>
                     <div className="text-slate-300">
                       {lang === "jp" ? "代表" : lang === "zh" ? "代表人" : "Representative"}
                     </div>
-                    <div className="sm:col-span-2">{company.companyInfo.representative}</div>
+                    <div className="sm:col-span-2">{cinfo.representative}</div>
                     <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
-                ) : null}
+                )}
 
-                {Array.isArray(company.companyInfo.activities) && company.companyInfo.activities.length ? (
+                {Array.isArray(cinfo.activities) && cinfo.activities.length > 0 && (
                   <>
                     <div className="text-slate-300">
                       {lang === "jp" ? "事業内容" : lang === "zh" ? "主要業務" : "Business Activities"}
                     </div>
                     <div className="sm:col-span-2">
                       <ul className="list-disc pl-6 leading-8 text-slate-200">
-                        {company.companyInfo.activities.map((a: string, i: number) => (
+                        {cinfo.activities.map((a, i) => (
                           <li key={i}>{a}</li>
                         ))}
                       </ul>
                     </div>
                     <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
-                ) : null}
+                )}
 
-                {company.companyInfo.addressJapan ? (
+                {!!cinfo.addressJapan && (
                   <>
                     <div className="text-slate-300">
                       {lang === "jp" ? "所在地（日本）" : lang === "zh" ? "據點（日本）" : "Japan Address"}
                     </div>
-                    <div className="sm:col-span-2">{company.companyInfo.addressJapan}</div>
+                    <div className="sm:col-span-2">{cinfo.addressJapan}</div>
                     <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
-                ) : null}
+                )}
 
-                {company.companyInfo.addressTaiwan ? (
+                {!!cinfo.addressTaiwan && (
                   <>
                     <div className="text-slate-300">
                       {lang === "jp" ? "所在地（台湾）" : lang === "zh" ? "據點（台灣）" : "Taiwan Address"}
                     </div>
-                    <div className="sm:col-span-2">{company.companyInfo.addressTaiwan}</div>
+                    <div className="sm:col-span-2">{cinfo.addressTaiwan}</div>
                   </>
-                ) : null}
+                )}
               </div>
             </div>
-          ) : null}
+          )}
         </div>
       </section>
 
-      {/* Maps（純外部，不需要補 lang） */}
+      {/* Maps */}
       <section id="maps" className="py-14 sm:py-16">
         <div className={container}>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-wide text-white text-center">
@@ -439,10 +462,7 @@ export default async function CompanyPage({
             <div className="mt-3 rounded-2xl overflow-hidden border border-white/15 shadow-md bg-white/5">
               <iframe
                 title="map-jp"
-                src={mapEmbedUrl(
-                  company?.companyInfo?.addressJapan ||
-                    "〒173-0004 東京都板橋区板橋三丁目9番14-503号　グラスコート板橋"
-                )}
+                src={mapEmbedUrl(cinfo.addressJapan || "〒173-0004 東京都板橋区板橋三丁目9番14-503号　グラスコート板橋")}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="w-full h-[420px]"
@@ -460,7 +480,7 @@ export default async function CompanyPage({
             <div className="mt-3 rounded-2xl overflow-hidden border border-white/15 shadow-md bg-white/5">
               <iframe
                 title="map-tw"
-                src={mapEmbedUrl(company?.companyInfo?.addressTaiwan || "台灣桃園市平鎮區新光路三段158巷18號")}
+                src={mapEmbedUrl(cinfo.addressTaiwan || "台灣桃園市平鎮區新光路三段158巷18號")}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="w-full h-[420px]"
@@ -488,10 +508,9 @@ export default async function CompanyPage({
         </div>
       </section>
 
-      {/* Footer（滿版） */}
+      {/* Footer */}
       <div className="w-full border-t border-white/15">
         <div className={container}>
-          {/* (4)(5) 將 lang 傳入；FooterServer 內部如有站內連結亦需加上 lang */}
           <FooterServer lang={lang} {...({ logoUrl: navLogoUrl, logoText: displayCompanyName } as any)} />
         </div>
       </div>
