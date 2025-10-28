@@ -3,7 +3,7 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "post",
-  title: "Post / 專欄文章",
+  title: "News & Articles",
   type: "document",
   fields: [
     /* ===== 發佈與中台資訊 ===== */
@@ -71,19 +71,34 @@ export default defineType({
       name: "slugJp",
       title: "Slug JP",
       type: "slug",
-      options: { source: "titleJp", maxLength: 96, slugify: s => s?.toString().trim().toLowerCase().replace(/\s+/g, "-").slice(0, 96) },
+      options: {
+        source: "titleJp",
+        maxLength: 96,
+        slugify: (s) =>
+          s?.toString().trim().toLowerCase().replace(/\s+/g, "-").slice(0, 96),
+      },
     }),
     defineField({
       name: "slugZh",
       title: "Slug ZH",
       type: "slug",
-      options: { source: "titleZh", maxLength: 96, slugify: s => s?.toString().trim().toLowerCase().replace(/\s+/g, "-").slice(0, 96) },
+      options: {
+        source: "titleZh",
+        maxLength: 96,
+        slugify: (s) =>
+          s?.toString().trim().toLowerCase().replace(/\s+/g, "-").slice(0, 96),
+      },
     }),
     defineField({
       name: "slugEn",
       title: "Slug EN",
       type: "slug",
-      options: { source: "titleEn", maxLength: 96, slugify: s => s?.toString().trim().toLowerCase().replace(/\s+/g, "-").slice(0, 96) },
+      options: {
+        source: "titleEn",
+        maxLength: 96,
+        slugify: (s) =>
+          s?.toString().trim().toLowerCase().replace(/\s+/g, "-").slice(0, 96),
+      },
     }),
 
     /* ===== 多語標題與摘要 ===== */
@@ -95,23 +110,46 @@ export default defineType({
     defineField({ name: "excerptEn", title: "Excerpt EN", type: "text", rows: 3 }),
 
     /* ===== 多語內文（Portable Text）===== */
-    defineField({ name: "bodyJp", title: "Body JP", type: "array", of: [{ type: "block" }, { type: "image", options: { hotspot: true } }] }),
-    defineField({ name: "bodyZh", title: "Body ZH", type: "array", of: [{ type: "block" }, { type: "image", options: { hotspot: true } }] }),
-    defineField({ name: "bodyEn", title: "Body EN", type: "array", of: [{ type: "block" }, { type: "image", options: { hotspot: true } }] }),
+    defineField({
+      name: "bodyJp",
+      title: "Body JP",
+      type: "array",
+      of: [{ type: "block" }, { type: "image", options: { hotspot: true } }],
+    }),
+    defineField({
+      name: "bodyZh",
+      title: "Body ZH",
+      type: "array",
+      of: [{ type: "block" }, { type: "image", options: { hotspot: true } }],
+    }),
+    defineField({
+      name: "bodyEn",
+      title: "Body EN",
+      type: "array",
+      of: [{ type: "block" }, { type: "image", options: { hotspot: true } }],
+    }),
 
     /* ===== SEO（多語）===== */
     defineField({ name: "seoTitleJp", title: "SEO Title JP", type: "string" }),
     defineField({ name: "seoTitleZh", title: "SEO Title ZH", type: "string" }),
     defineField({ name: "seoTitleEn", title: "SEO Title EN", type: "string" }),
-    defineField({ name: "seoDescriptionJp", title: "SEO Description JP", type: "text", rows: 3 }),
-    defineField({ name: "seoDescriptionZh", title: "SEO Description ZH", type: "text", rows: 3 }),
-    defineField({ name: "seoDescriptionEn", title: "SEO Description EN", type: "text", rows: 3 }),
     defineField({
-      name: "ogImage",
-      title: "OG Image",
-      type: "image",
-      options: { hotspot: true },
-      fields: [{ name: "alt", title: "Alt text", type: "string" }],
+      name: "seoDescriptionJp",
+      title: "SEO Description JP",
+      type: "text",
+      rows: 3,
+    }),
+    defineField({
+      name: "seoDescriptionZh",
+      title: "SEO Description ZH",
+      type: "text",
+      rows: 3,
+    }),
+    defineField({
+      name: "seoDescriptionEn",
+      title: "SEO Description EN",
+      type: "text",
+      rows: 3,
     }),
 
     /* ===== 自動欄位 ===== */
@@ -124,8 +162,19 @@ export default defineType({
   ],
 
   orderings: [
-    { title: "Pinned first, newest", name: "pinDescDateDesc", by: [{ field: "pinnedAtTop", direction: "desc" }, { field: "publishedAt", direction: "desc" }] },
-    { title: "Newest", name: "dateDesc", by: [{ field: "publishedAt", direction: "desc" }] },
+    {
+      title: "Pinned first, newest",
+      name: "pinDescDateDesc",
+      by: [
+        { field: "pinnedAtTop", direction: "desc" },
+        { field: "publishedAt", direction: "desc" },
+      ],
+    },
+    {
+      title: "Newest",
+      name: "dateDesc",
+      by: [{ field: "publishedAt", direction: "desc" }],
+    },
   ],
 
   preview: {
@@ -138,7 +187,11 @@ export default defineType({
     },
     prepare(sel) {
       const title = sel.titleJp || sel.titleZh || sel.titleEn || "Untitled";
-      return { title, subtitle: sel.date ? new Date(sel.date).toLocaleString() : "", media: sel.media };
+      return {
+        title,
+        subtitle: sel.date ? new Date(sel.date).toLocaleString() : "",
+        media: sel.media,
+      };
     },
   },
 });

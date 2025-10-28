@@ -3,7 +3,7 @@ import { defineField, defineType } from 'sanity';
 
 export default defineType({
   name: 'service',
-  title: 'Service',
+  title: 'Core Services Overview',
   type: 'document',
   fields: [
     defineField({
@@ -25,24 +25,23 @@ export default defineType({
       validation: (Rule) => Rule.uri({ allowRelative: true }),
     }),
 
-    // 多語標題
+    // Multi-language titles
     defineField({ name: 'titleZh', title: 'Title (ZH)', type: 'string' }),
     defineField({ name: 'titleEn', title: 'Title (EN)', type: 'string' }),
     defineField({ name: 'titleJp', title: 'Title (JP)', type: 'string' }),
 
-    // 多語說明
+    // Multi-language descriptions
     defineField({ name: 'descZh', title: 'Description (ZH)', type: 'text' }),
     defineField({ name: 'descEn', title: 'Description (EN)', type: 'text' }),
     defineField({ name: 'descJp', title: 'Description (JP)', type: 'text' }),
   ],
   preview: {
     select: {
-      titleZh: 'titleZh',
       titleEn: 'titleEn',
       media: 'image',
     },
-    prepare({ titleZh, titleEn, media }) {
-      return { title: titleZh || titleEn || 'Service', media };
+    prepare({ titleEn, media }) {
+      return { title: titleEn || 'Service', media };
     },
   },
 });

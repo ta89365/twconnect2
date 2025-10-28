@@ -3,180 +3,165 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "financeAdvisoryDetail",
-  title: "Financial & Accounting Advisory / 海外發展支援",
+  title: "Financial & Accounting Advisory Services",
   type: "document",
   fields: [
-    /* ========== 基本資訊 ========== */
+    /* ========== Basic Information ========== */
     defineField({
       name: "title",
-      title: "標題 Title",
+      title: "Service Title",
       type: "object",
+      description: "Enter service titles in Japanese, Chinese, and English.",
       fields: [
-        { name: "jp", title: "日本語", type: "string" },
-        { name: "zh", title: "繁體中文", type: "string" },
+        { name: "jp", title: "Japanese", type: "string" },
+        { name: "zh", title: "Chinese", type: "string" },
         { name: "en", title: "English", type: "string" },
       ],
     }),
 
     defineField({
       name: "slug",
-      title: "Slug（網址代稱）",
+      title: "Slug (for URL)",
       type: "slug",
-      options: { source: "title.zh", maxLength: 96 },
+      description: "Used in the page URL. Automatically generated from the English title.",
+      options: { source: "title.en", maxLength: 96 },
+      validation: (Rule) => Rule.required(),
     }),
 
     defineField({
       name: "heroImage",
-      title: "Hero Image / 封面圖片",
+      title: "Hero Image",
       type: "image",
+      description:
+        "Main image displayed at the top of the page. Use a wide image and enable Hotspot for better control.",
       options: { hotspot: true },
-      fields: [{ name: "alt", title: "Alt文字", type: "string" }],
+      fields: [
+        {
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Alternative text for accessibility and SEO.",
+        },
+      ],
     }),
 
-    /* ========== Section 1: 背景 / Background ========== */
+    /* ========== Section 1: Background ========== */
     defineField({
       name: "background",
-      title: "背景 / Background",
+      title: "Background",
       type: "object",
+      description: "Short introductory paragraph describing the background of this service.",
       fields: [
-        { name: "jp", title: "日本語", type: "text" },
-        { name: "zh", title: "繁體中文", type: "text" },
+        { name: "jp", title: "Japanese", type: "text" },
+        { name: "zh", title: "Chinese", type: "text" },
         { name: "en", title: "English", type: "text" },
       ],
     }),
 
-    /* ========== Section 2: 課題 / Challenges ========== */
+    /* ========== Section 2: Challenges ========== */
     defineField({
       name: "challenges",
-      title: "課題 / Challenges",
+      title: "Challenges",
       type: "object",
       fields: [
-        {
-          name: "jp",
-          title: "日本語版",
-          type: "array",
-          of: [{ type: "string", title: "課題項目" }],
-        },
-        {
-          name: "zh",
-          title: "繁體中文版",
-          type: "array",
-          of: [{ type: "string", title: "挑戰項目" }],
-        },
-        {
-          name: "en",
-          title: "English Version",
-          type: "array",
-          of: [{ type: "string", title: "Challenge Item" }],
-        },
+        { name: "jp", title: "Japanese", type: "array", of: [{ type: "string" }] },
+        { name: "zh", title: "Chinese", type: "array", of: [{ type: "string" }] },
+        { name: "en", title: "English", type: "array", of: [{ type: "string" }] },
       ],
     }),
 
-    /* ========== Section 3: 服務內容 / Services ========== */
+    /* ========== Section 3: Services ========== */
     defineField({
       name: "services",
-      title: "服務內容 / Services",
+      title: "Services",
       type: "object",
       fields: [
-        {
-          name: "jp",
-          title: "日本語版",
-          type: "array",
-          of: [{ type: "string", title: "サービス内容項目" }],
-        },
-        {
-          name: "zh",
-          title: "繁體中文版",
-          type: "array",
-          of: [{ type: "string", title: "服務項目" }],
-        },
-        {
-          name: "en",
-          title: "English Version",
-          type: "array",
-          of: [{ type: "string", title: "Service Item" }],
-        },
+        { name: "jp", title: "Japanese", type: "array", of: [{ type: "string" }] },
+        { name: "zh", title: "Chinese", type: "array", of: [{ type: "string" }] },
+        { name: "en", title: "English", type: "array", of: [{ type: "string" }] },
       ],
     }),
 
-    /* ========== Section 4: 服務流程 / Service Flow ========== */
+    /* ========== Section 4: Service Flow ========== */
     defineField({
       name: "serviceFlow",
-      title: "服務流程 / Service Flow",
+      title: "Service Flow",
       type: "object",
+      description: "Step-by-step process explaining how the service is delivered.",
       fields: [
         {
           name: "jp",
-          title: "日本語版",
+          title: "Japanese",
           type: "array",
           of: [
-            defineField({
+            {
               type: "object",
               fields: [
-                { name: "step", title: "步驟編號", type: "string" },
-                { name: "desc", title: "說明", type: "text" },
+                { name: "step", title: "Step Number", type: "string" },
+                { name: "desc", title: "Description", type: "text" },
               ],
-            }),
+            },
           ],
         },
         {
           name: "zh",
-          title: "繁體中文版",
+          title: "Chinese",
           type: "array",
           of: [
-            defineField({
+            {
               type: "object",
               fields: [
-                { name: "step", title: "步驟編號", type: "string" },
-                { name: "desc", title: "說明", type: "text" },
+                { name: "step", title: "Step Number", type: "string" },
+                { name: "desc", title: "Description", type: "text" },
               ],
-            }),
+            },
           ],
         },
         {
           name: "en",
-          title: "English Version",
+          title: "English",
           type: "array",
           of: [
-            defineField({
+            {
               type: "object",
               fields: [
-                { name: "step", title: "Step", type: "string" },
+                { name: "step", title: "Step Number", type: "string" },
                 { name: "desc", title: "Description", type: "text" },
               ],
-            }),
+            },
           ],
         },
       ],
     }),
 
-    /* ========== Section 5: 費用參考 / Fees ========== */
+    /* ========== Section 5: Fees ========== */
     defineField({
       name: "fees",
-      title: "費用（參考） / Fees (Reference)",
+      title: "Fees (Reference)",
       type: "object",
+      description: "Reference pricing or example fee structure in multiple languages.",
       fields: [
         {
           name: "jp",
-          title: "日本語版",
+          title: "Japanese",
           type: "object",
           fields: [
-            { name: "title", title: "標題", type: "string" },
-            { name: "items", title: "內容", type: "array", of: [{ type: "string" }] },
+            { name: "title", title: "Title", type: "string" },
+            { name: "items", title: "Items", type: "array", of: [{ type: "string" }] },
           ],
         },
         {
           name: "zh",
-          title: "繁體中文版",
+          title: "Chinese",
           type: "object",
           fields: [
-            { name: "title", title: "標題", type: "string" },
-            { name: "items", title: "內容", type: "array", of: [{ type: "string" }] },
+            { name: "title", title: "Title", type: "string" },
+            { name: "items", title: "Items", type: "array", of: [{ type: "string" }] },
           ],
         },
         {
           name: "en",
-          title: "English Version",
+          title: "English",
           type: "object",
           fields: [
             { name: "title", title: "Title", type: "string" },
@@ -186,29 +171,25 @@ export default defineType({
       ],
     }),
 
-    /* ========== 排序與顯示控制 ========== */
+    /* ========== Display Settings ========== */
     defineField({
       name: "order",
-      title: "顯示順序",
+      title: "Display Order",
       type: "number",
     }),
-
     defineField({
       name: "publishedAt",
-      title: "發布時間",
+      title: "Published At",
       type: "datetime",
     }),
   ],
 
+  /* 讓 Studio 清單與文件標頭顯示 English 版 Service Title */
   preview: {
-    select: {
-      title: "title.zh",
-      media: "heroImage",
-    },
+    select: { title: "title.en", media: "heroImage" },
     prepare({ title, media }) {
       return {
-        title: title || "未命名服務",
-        subtitle: "Financial & Accounting Advisory",
+        title: title || "(Untitled Service)",
         media,
       };
     },

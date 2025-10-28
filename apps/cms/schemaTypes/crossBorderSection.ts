@@ -2,73 +2,69 @@
 import { defineType, defineField } from "sanity";
 
 export default defineType({
-  name: "crossBorderSection", // ← 原本是 ipoSection
-  title: "Cross-Border Service Section", // ← 左側顯示名稱
+  name: "crossBorderSection",
+  title: "Cross-Border Advisory Section",
   type: "document",
-  // 建議當成單一文件使用
   fields: [
+    // Headings (multi-language)
     defineField({
       name: "headingZh",
-      title: "主標題（中文）",
+      title: "Heading (ZH)",
       type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "headingJp",
-      title: "主標題（日文）",
+      title: "Heading (JP)",
       type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "headingEn",
-      title: "主標題（英文）",
+      title: "Heading (EN)",
       type: "string",
       validation: (Rule) => Rule.required(),
     }),
 
-    // 3 段文字
-    defineField({ name: "para1Zh", title: "段落一（中文）", type: "text" }),
-    defineField({ name: "para1Jp", title: "段落一（日文）", type: "text" }),
-    defineField({ name: "para1En", title: "段落一（英文）", type: "text" }),
+    // Paragraphs (two only)
+    defineField({ name: "para1Zh", title: "Paragraph 1 (ZH)", type: "text" }),
+    defineField({ name: "para1Jp", title: "Paragraph 1 (JP)", type: "text" }),
+    defineField({ name: "para1En", title: "Paragraph 1 (EN)", type: "text" }),
 
-    defineField({ name: "para2Zh", title: "段落二（中文）", type: "text" }),
-    defineField({ name: "para2Jp", title: "段落二（日文）", type: "text" }),
-    defineField({ name: "para2En", title: "段落二（英文）", type: "text" }),
-
-    defineField({ name: "para3Zh", title: "段落三（中文）", type: "text" }),
-    defineField({ name: "para3Jp", title: "段落三（日文）", type: "text" }),
-    defineField({ name: "para3En", title: "段落三（英文）", type: "text" }),
+    defineField({ name: "para2Zh", title: "Paragraph 2 (ZH)", type: "text" }),
+    defineField({ name: "para2Jp", title: "Paragraph 2 (JP)", type: "text" }),
+    defineField({ name: "para2En", title: "Paragraph 2 (EN)", type: "text" }),
 
     // CTA
     defineField({
       name: "ctaTextZh",
-      title: "CTA 文字（中文）",
+      title: "CTA Text (ZH)",
       type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "ctaTextJp",
-      title: "CTA 文字（日文）",
+      title: "CTA Text (JP)",
       type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "ctaTextEn",
-      title: "CTA 文字（英文）",
+      title: "CTA Text (EN)",
       type: "string",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "ctaHref",
-      title: "CTA 連結",
+      title: "CTA Link",
       type: "url",
       validation: (Rule) => Rule.uri({ allowRelative: true }).required(),
     }),
 
-    // 背景圖（支援 hotspot）
+    // Background image
     defineField({
       name: "bgImage",
-      title: "背景圖片",
+      title: "Background Image",
       type: "image",
       options: { hotspot: true },
       validation: (Rule) => Rule.required(),
@@ -77,13 +73,11 @@ export default defineType({
 
   preview: {
     select: {
-      titleJp: "headingJp",
       media: "bgImage",
     },
-    prepare({ titleJp, media }) {
+    prepare({ media }) {
       return {
-        title: titleJp || "Cross-Border Service Section",
-        subtitle: "三段文字 + CTA + 背景圖",
+        title: "Cross-Border Service Section",
         media,
       };
     },

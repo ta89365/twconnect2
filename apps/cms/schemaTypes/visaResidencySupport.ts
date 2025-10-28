@@ -3,124 +3,130 @@ import { defineField, defineType } from "sanity";
 
 export default defineType({
   name: "visaResidencySupport",
-  title: "VisaResidency Support",
+  title: "Visa & Residency Services",
   type: "document",
   fields: [
-    /* ===== 基本資訊 ===== */
+    /* ===== Basic Info ===== */
+    defineField({
+      name: "titleEn",
+      title: "Service Title",
+      type: "string",
+      description: "Enter the English title of the service (e.g. Visa & Residency Support).",
+      validation: (Rule) => Rule.required(),
+    }),
     defineField({
       name: "slug",
-      title: "Slug（URL 用）",
+      title: "Slug (for URL)",
       type: "slug",
+      description: "Used in the page URL. Automatically generated from the English title.",
       options: { source: "titleEn", maxLength: 96 },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "order",
-      title: "顯示順序",
+      title: "Display Order",
       type: "number",
+      description: "Controls the order in which this service appears on the website.",
     }),
 
-    /* ===== 多語標題 ===== */
+    /* ===== Localized Titles ===== */
     defineField({
       name: "titleJp",
-      title: "日文標題",
+      title: "Service Title (Japanese)",
       type: "string",
-      description: "例：ビザ・居留サポート",
+      description: "Example: ビザ・居留サポート",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: "titleZh",
-      title: "中文標題",
+      title: "Service Title (Chinese)",
       type: "string",
-      description: "例：簽證與居留支援",
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: "titleEn",
-      title: "英文標題",
-      type: "string",
-      description: "例：Visa & Residency Support",
+      description: "Example: 簽證與居留支援",
       validation: (Rule) => Rule.required(),
     }),
 
-    /* ===== 背景 ===== */
+    /* ===== Background ===== */
     defineField({
       name: "background",
-      title: "背景 Background",
+      title: "Background",
       type: "object",
+      description: "Introductory paragraph describing the background of this service.",
       fields: [
-        { name: "jp", title: "日本語版", type: "text" },
-        { name: "zh", title: "中文版", type: "text" },
-        { name: "en", title: "English Version", type: "text" },
+        { name: "jp", title: "Japanese", type: "text" },
+        { name: "zh", title: "Chinese", type: "text" },
+        { name: "en", title: "English", type: "text" },
       ],
       options: { collapsible: true, collapsed: false },
     }),
 
-    /* ===== 課題 Challenges ===== */
+    /* ===== Challenges ===== */
     defineField({
       name: "challenges",
-      title: "課題 Challenges",
+      title: "Challenges",
       type: "object",
+      description: "List of key challenges clients often face regarding this service.",
       fields: [
-        { name: "jp", title: "日本語版", type: "array", of: [{ type: "string" }] },
-        { name: "zh", title: "中文版", type: "array", of: [{ type: "string" }] },
-        { name: "en", title: "English Version", type: "array", of: [{ type: "string" }] },
+        { name: "jp", title: "Japanese", type: "array", of: [{ type: "string" }] },
+        { name: "zh", title: "Chinese", type: "array", of: [{ type: "string" }] },
+        { name: "en", title: "English", type: "array", of: [{ type: "string" }] },
       ],
       options: { collapsible: true, collapsed: false },
     }),
 
-    /* ===== 服務內容 Services ===== */
+    /* ===== Services ===== */
     defineField({
       name: "services",
-      title: "服務內容 Services",
+      title: "Service Details",
       type: "object",
+      description: "Descriptions of the services provided within this category.",
       fields: [
-        { name: "jp", title: "日本語版", type: "array", of: [{ type: "string" }] },
-        { name: "zh", title: "中文版", type: "array", of: [{ type: "string" }] },
-        { name: "en", title: "English Version", type: "array", of: [{ type: "string" }] },
+        { name: "jp", title: "Japanese", type: "array", of: [{ type: "string" }] },
+        { name: "zh", title: "Chinese", type: "array", of: [{ type: "string" }] },
+        { name: "en", title: "English", type: "array", of: [{ type: "string" }] },
       ],
       options: { collapsible: true, collapsed: false },
     }),
 
-    /* ===== 服務流程 Service Flow ===== */
+    /* ===== Service Flow ===== */
     defineField({
       name: "serviceFlow",
-      title: "服務流程 Service Flow",
+      title: "Service Flow",
       type: "object",
+      description: "Step-by-step explanation of the service process.",
       fields: [
         {
           name: "jp",
-          title: "日本語版",
+          title: "Japanese",
           type: "array",
           of: [
             {
               type: "object",
               fields: [
-                { name: "order", title: "步驟序號", type: "string" },
-                { name: "title", title: "步驟標題", type: "string" },
-                { name: "desc", title: "步驟說明", type: "text" },
+                { name: "order", title: "Step No.", type: "string" },
+                { name: "title", title: "Title", type: "string" },
+                { name: "desc", title: "Description", type: "text" },
               ],
             },
           ],
         },
         {
           name: "zh",
-          title: "中文版",
+          title: "Chinese",
           type: "array",
           of: [
             {
               type: "object",
               fields: [
-                { name: "order", title: "步驟序號", type: "string" },
-                { name: "title", title: "步驟標題", type: "string" },
-                { name: "desc", title: "步驟說明", type: "text" },
+                { name: "order", title: "Step No.", type: "string" },
+                { name: "title", title: "Title", type: "string" },
+                { name: "desc", title: "Description", type: "text" },
               ],
             },
           ],
         },
         {
           name: "en",
-          title: "English Version",
+          title: "English",
           type: "array",
           of: [
             {
@@ -137,15 +143,16 @@ export default defineType({
       options: { collapsible: true, collapsed: false },
     }),
 
-    /* ===== 費用 Fees ===== */
+    /* ===== Fees ===== */
     defineField({
       name: "fees",
-      title: "費用參考 Fees",
+      title: "Fees",
       type: "object",
+      description: "Fee information or pricing notes for each language version.",
       fields: [
-        { name: "jp", title: "日本語版", type: "text" },
-        { name: "zh", title: "中文版", type: "text" },
-        { name: "en", title: "English Version", type: "text" },
+        { name: "jp", title: "Japanese", type: "text" },
+        { name: "zh", title: "Chinese", type: "text" },
+        { name: "en", title: "English", type: "text" },
       ],
       options: { collapsible: true, collapsed: false },
     }),
@@ -153,25 +160,31 @@ export default defineType({
     /* ===== CTA ===== */
     defineField({
       name: "ctaLabel",
-      title: "聯絡我們 CTA 文字",
+      title: "CTA Button Label",
       type: "object",
+      description: "Text for the call-to-action button (e.g., Contact Us).",
       fields: [
-        { name: "jp", title: "日本語版", type: "string", initialValue: "お問い合わせはこちら" },
-        { name: "zh", title: "中文版", type: "string", initialValue: "聯絡我們" },
-        { name: "en", title: "English Version", type: "string", initialValue: "Contact Us" },
+        { name: "jp", title: "Japanese", type: "string", initialValue: "お問い合わせはこちら" },
+        { name: "zh", title: "Chinese", type: "string", initialValue: "聯絡我們" },
+        { name: "en", title: "English", type: "string", initialValue: "Contact Us" },
       ],
     }),
 
-    /* ===== Hero 圖片（可選） ===== */
+    /* ===== Hero Image ===== */
     defineField({
       name: "heroImage",
-      title: "頂部封面圖",
+      title: "Hero Image",
       type: "image",
+      description: "Optional hero image displayed at the top of the page.",
       options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Alternative text for accessibility and SEO.",
+        }),
+      ],
     }),
   ],
-
-  preview: {
-    select: { title: "titleZh", subtitle: "titleEn", media: "heroImage" },
-  },
 });

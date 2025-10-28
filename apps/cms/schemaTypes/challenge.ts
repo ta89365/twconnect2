@@ -5,7 +5,7 @@ import { DocumentIcon } from '@sanity/icons'
 
 export default defineType({
   name: 'challenge',
-  title: 'Challenge',
+  title: 'Client Challenges Section',
   type: 'document',
   icon: DocumentIcon,
 
@@ -17,49 +17,49 @@ export default defineType({
       validation: (Rule) => Rule.min(0).integer(),
     }),
 
-    // 新增：選擇用哪個 outline icon（僅存 key，前端渲染真正的 SVG）
+    // Icon selection (outline icon key)
     defineField({
       name: 'iconKey',
       title: 'Icon (Outline)',
       type: 'string',
-      description: '挑選一個代表此痛點的線條圖示（前端用 lucide-react 渲染）',
+      description: 'Select an outline icon key (rendered with lucide-react).',
       options: {
         list: [
-          { title: 'Building / 設立流程', value: 'building-2' },
-          { title: 'Landmark / 銀行與資金', value: 'landmark' },
-          { title: 'Scale / 稅務會計差異', value: 'scale' },
-          { title: 'Badge Check / 合規與契約', value: 'badge-check' },
-          { title: 'Globe 2 / 跨境協同與數據', value: 'globe-2' },
-          { title: 'Sparkles / 其他', value: 'sparkles' },
+          { title: 'Building / Setup Process', value: 'building-2' },
+          { title: 'Landmark / Banking & Funding', value: 'landmark' },
+          { title: 'Scale / Tax & Accounting Differences', value: 'scale' },
+          { title: 'Badge Check / Compliance & Contracts', value: 'badge-check' },
+          { title: 'Globe 2 / Cross-border Collaboration & Data', value: 'globe-2' },
+          { title: 'Sparkles / Others', value: 'sparkles' },
         ],
         layout: 'radio',
       },
     }),
 
-    // 圖片版本（可選）
+    // Optional custom image version
     defineField({
       name: 'iconImage',
       title: 'Icon Image',
       type: 'image',
       options: { hotspot: true },
-      description: '若要自備圖片，建議 256×256 PNG 透明背景；否則使用上面的 Outline Icon',
+      description: 'Optional custom icon image (recommended 256×256 PNG with transparent background).',
     }),
 
-    // 舊資料相容：emoji 字串
+    // Legacy emoji field
     defineField({
       name: 'iconEmoji',
-      title: 'Icon Emoji (legacy or fallback)',
+      title: 'Icon Emoji (Legacy or Fallback)',
       type: 'string',
-      description: '保留舊資料用，如 🔍；若已上傳圖片或選擇 outline icon 可不填',
+      description: 'For legacy data, e.g., 🔍. Can be left empty if an icon or image is selected.',
       validation: (Rule) => Rule.max(8),
     }),
 
-    // 多語標題
+    // Multi-language titles
     defineField({ name: 'titleZh', title: 'Title (ZH)', type: 'string' }),
     defineField({ name: 'titleEn', title: 'Title (EN)', type: 'string' }),
     defineField({ name: 'titleJp', title: 'Title (JP)', type: 'string' }),
 
-    // 多語說明
+    // Multi-language descriptions
     defineField({ name: 'descZh', title: 'Description (ZH)', type: 'text' }),
     defineField({ name: 'descEn', title: 'Description (EN)', type: 'text' }),
     defineField({ name: 'descJp', title: 'Description (JP)', type: 'text' }),
@@ -67,13 +67,12 @@ export default defineType({
 
   preview: {
     select: {
-      titleZh: 'titleZh',
       titleEn: 'titleEn',
       iconImage: 'iconImage',
       iconEmoji: 'iconEmoji',
     },
-    prepare({ titleZh, titleEn, iconImage, iconEmoji }) {
-      const title = titleZh || titleEn || 'Challenge'
+    prepare({ titleEn, iconImage, iconEmoji }) {
+      const title = titleEn || 'Challenge'
       const media =
         iconImage ||
         (iconEmoji

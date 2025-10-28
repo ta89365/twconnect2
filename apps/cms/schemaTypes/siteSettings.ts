@@ -3,7 +3,7 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "siteSettings",
-  title: "Site Settings",
+  title: "Global Site Settings",
   type: "document",
   fields: [
     defineField({
@@ -46,18 +46,7 @@ export default defineType({
       options: { sortable: true },
     }),
 
-    // 品牌與社群
-    defineField({
-      name: "brand",
-      title: "Brand",
-      type: "object",
-      fields: [
-        { name: "primaryDark", title: "Primary Dark", type: "string" },
-        { name: "primary", title: "Primary", type: "string" },
-        { name: "navHover", title: "Nav Hover", type: "string" },
-        { name: "focusRing", title: "Focus Ring", type: "string" },
-      ],
-    }),
+    // ---- 社群連結 ----
     defineField({
       name: "social",
       title: "Social",

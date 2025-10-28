@@ -3,40 +3,32 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "companyStrengthsAndFAQ",
-  title: "Our Strengths & FAQ（企業優勢與常見問題）",
+  title: "Our Strengths & FAQs",
   type: "document",
 
   fields: [
-    /* ========== Hero 圖片欄位（新增） ========== */
+    /* ========== Hero Image ========== */
     defineField({
       name: "heroImage",
-      title: "Hero Image / 頂端背景圖",
+      title: "Hero Image",
       type: "image",
       description:
-        "顯示於頁面頂端的主視覺背景圖（建議使用寬幅圖，啟用 Hotspot 以便控制焦點）",
+        "Background image at the top of the page. Use a wide image and enable Hotspot to control the focal point.",
       options: { hotspot: true },
       fields: [
         defineField({
           name: "alt",
-          title: "Alt Text / 圖片說明文字",
+          title: "Alt Text",
           type: "string",
-          description: "圖片替代文字（用於 SEO 與無障礙設計）",
+          description: "Alternative text for accessibility and SEO.",
         }),
       ],
     }),
 
-    /* ========== 頂層設定 ========== */
-    defineField({
-      name: "title",
-      title: "Section Title（如 Our Strengths）",
-      type: "string",
-      initialValue: "Our Strengths",
-    }),
-
-    /* ========== 企業優勢 ========== */
+    /* ========== Strengths ========== */
     defineField({
       name: "strengths",
-      title: "Strength Items（企業優勢項目）",
+      title: "Strength Items",
       type: "array",
       of: [
         defineField({
@@ -46,17 +38,18 @@ export default defineType({
           fields: [
             defineField({
               name: "order",
-              title: "Order（顯示順序）",
+              title: "Display Order",
               type: "number",
+              description: "Controls the display order of this item.",
             }),
             defineField({
               name: "icon",
-              title: "Icon / Emoji（選填）",
+              title: "Icon or Emoji",
               type: "string",
-              description: "可填 emoji 或 Lucide 圖示代碼",
+              description: "Optional. Use an emoji or a Lucide icon name.",
             }),
 
-            /* ===== 多語標題 ===== */
+            /* ===== Multilingual Title ===== */
             defineField({
               name: "titleJp",
               title: "Title (Japanese)",
@@ -73,7 +66,7 @@ export default defineType({
               type: "string",
             }),
 
-            /* ===== 多語內文 ===== */
+            /* ===== Multilingual Body ===== */
             defineField({
               name: "bodyJp",
               title: "Body (Japanese)",
@@ -94,20 +87,21 @@ export default defineType({
             }),
           ],
           preview: {
-            select: { title: "titleJp", subtitle: "order" },
+            select: { title: "titleEn", subtitle: "order" },
             prepare({ title, subtitle }) {
-              return { title, subtitle: `#${subtitle ?? ""}` };
+              return { title: title || "(Untitled Strength)", subtitle: `#${subtitle ?? ""}` };
             },
           },
         }),
       ],
     }),
 
-    /* ========== FAQ 區塊 ========== */
+    /* ========== FAQ Section ========== */
     defineField({
       name: "faqTitle",
-      title: "FAQ Section Title（如 よくある質問 / 常見問題 / FAQ）",
+      title: "FAQ Section Title",
       type: "object",
+      description: "Localized title displayed above the FAQ list.",
       fields: [
         defineField({ name: "jp", title: "Japanese", type: "string" }),
         defineField({ name: "zh", title: "Chinese", type: "string" }),
@@ -117,8 +111,9 @@ export default defineType({
 
     defineField({
       name: "faqIntro",
-      title: "FAQ Intro Paragraph（導言說明文字）",
+      title: "FAQ Intro Paragraph",
       type: "object",
+      description: "Short introductory text shown before the FAQ items.",
       fields: [
         defineField({ name: "jp", title: "Japanese", type: "text", rows: 3 }),
         defineField({ name: "zh", title: "Chinese", type: "text", rows: 3 }),
@@ -128,7 +123,7 @@ export default defineType({
 
     defineField({
       name: "faqItems",
-      title: "FAQ Items（常見問題集）",
+      title: "FAQ Items",
       type: "array",
       of: [
         defineField({
@@ -138,11 +133,12 @@ export default defineType({
           fields: [
             defineField({
               name: "order",
-              title: "Order（顯示順序）",
+              title: "Display Order",
               type: "number",
+              description: "Controls the display order of this FAQ.",
             }),
 
-            /* ===== 多語問題 ===== */
+            /* ===== Multilingual Question ===== */
             defineField({
               name: "questionJp",
               title: "Question (Japanese)",
@@ -159,7 +155,7 @@ export default defineType({
               type: "string",
             }),
 
-            /* ===== 多語回答 ===== */
+            /* ===== Multilingual Answer ===== */
             defineField({
               name: "answerJp",
               title: "Answer (Japanese)",
@@ -180,9 +176,9 @@ export default defineType({
             }),
           ],
           preview: {
-            select: { title: "questionJp", subtitle: "order" },
+            select: { title: "questionEn", subtitle: "order" },
             prepare({ title, subtitle }) {
-              return { title, subtitle: `#${subtitle ?? ""}` };
+              return { title: title || "(Untitled FAQ)", subtitle: `#${subtitle ?? ""}` };
             },
           },
         }),
@@ -191,9 +187,8 @@ export default defineType({
   ],
 
   preview: {
-    select: { title: "title" },
-    prepare({ title }) {
-      return { title: title ?? "Our Strengths & FAQ" };
+    prepare() {
+      return { title: "Our Strengths & FAQ" };
     },
   },
 });

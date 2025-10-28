@@ -1,5 +1,4 @@
 // apps/web/src/app/services/finance-advisory/page.tsx
-
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import * as Lucide from "lucide-react";
@@ -14,31 +13,31 @@ import {
 } from "@/lib/queries/financeAdvisoryDetail";
 
 export const revalidate = 60;
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic"; // ✅ (1) 改為強制動態
 
 /* ============================ 視覺調整區 ============================ */
 const BRAND_BLUE = "#1C3D5A";
 
 /** Hero 圖片焦點與最小高度 */
 const HERO_TUNE = {
-  focalX: 55, // 0~100
-  focalY: 45, // 0~100
-  minH: 440,  // Hero 區高度
+  focalX: 55,
+  focalY: 45,
+  minH: 440,
 };
 
 /** Hero 文字區位置與寬度調整 */
 const HERO_TEXT_TUNE = {
-  top: "40%",      // px 或 %
-  left: "33%",     // px 或 %
-  maxWidth: "40%", // px 或 %
+  top: "40%",
+  left: "33%",
+  maxWidth: "40%",
   align: "left" as "left" | "center" | "right",
 };
 
 /** Hero 圖片位移與縮放 */
 const HERO_IMG_CTRL = {
-  offsetX: 0,  // 向右為正，px
-  offsetY: 0,  // 向下為正，px
-  zoom: 1,     // 1=原尺寸，>1 放大
+  offsetX: 0,
+  offsetY: 0,
+  zoom: 1,
 };
 
 /** 保留（不位移快捷列） */
@@ -170,7 +169,7 @@ function Steps({ items }: { items?: Array<{ step?: string | null; desc?: string 
   );
 }
 
-/* ============================ 快捷列：貼齊 Hero 下緣，捲動吸頂 top:0 ============================ */
+/* ============================ 快捷列 ============================ */
 function QuickDock({ lang }: { lang: Lang }) {
   return (
     <div
@@ -180,13 +179,11 @@ function QuickDock({ lang }: { lang: Lang }) {
       <div className={`mx-auto ${LAYOUT.container} px-5 md:px-6`}>
         <div className="py-3 flex gap-2.5 overflow-x-auto pb-1 no-scrollbar justify-center">
           {QUICK_LINKS.map(({ id, icon, label }) => {
-            // 允許 icon 是字串名稱或直接給元件
             const IconComp =
               typeof icon === "string"
                 ? ((Lucide as any)[icon] ?? Lucide.Circle)
                 : (icon || Lucide.Circle);
 
-            // 用 createElement 生成節點以避免 JSX 型別檢查報錯
             const IconEl = React.createElement(IconComp as any, {
               className: "size-4 opacity-90 group-hover:opacity-100",
               "aria-hidden": true,
@@ -195,7 +192,7 @@ function QuickDock({ lang }: { lang: Lang }) {
             return (
               <a
                 key={id}
-                href={`#${id}`}
+                href={`#${id}`} // 錨點連結不需加 lang
                 className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-transparent hover:bg-white/10 text-white px-3.5 py-2 text-sm transition-colors"
               >
                 {IconEl}
@@ -213,9 +210,18 @@ function QuickDock({ lang }: { lang: Lang }) {
 export default async function FinanceAdvisoryPage({
   searchParams,
 }: {
-  searchParams?: { lang?: string };
+  // ✅ (2) 允許 Promise 並先 await 再取得 lang
+  searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
-  const lang = resolveLang(searchParams?.lang);
+  const sp =
+    searchParams && typeof (searchParams as any).then === "function"
+      ? await (searchParams as Promise<{ lang?: string }>)
+      : (searchParams as { lang?: string } | undefined);
+
+  // ✅ (3) 使用 resolveLang 解析語言參數
+  const lang = resolveLang(sp?.lang);
+
+  // ✅ (4) 查詢時帶入 lang
   const data = await sfetch<FinanceAdvisoryData>(financeAdvisoryDetailBySlug, {
     slug: FIXED_SLUG,
     lang,
@@ -229,7 +235,7 @@ export default async function FinanceAdvisoryPage({
       en: "Financial & Accounting Advisory / Overseas Expansion Support",
     }[lang];
 
-  /* ------------ Localized UI labels（Footer 之前加入，供下方 CTA 使用） ------------ */
+  /* ------------ Localized UI labels ------------ */
   function dict(localLang: Lang) {
     if (localLang === "jp")
       return {
@@ -287,7 +293,7 @@ export default async function FinanceAdvisoryPage({
 
   return (
     <div className="relative min-h-screen" style={{ backgroundColor: BRAND_BLUE }}>
-      {/* ===== Hero 圖：可位移與縮放（無藍色遮罩） ===== */}
+      {/* ===== Hero 圖 ===== */}
       {data?.heroImage?.url && (
         <div className="absolute inset-x-0 top-0 z-0 overflow-hidden" style={{ height: HERO_TUNE.minH + NAV_H }}>
           <div
@@ -313,10 +319,11 @@ export default async function FinanceAdvisoryPage({
 
       {/* 導覽列 */}
       <div className="relative z-20">
+        {/* ✅ (4) lang 傳入子元件 */}
         <NavigationServer lang={lang} />
       </div>
 
-      {/* ===== Hero 文字：品牌藍，可調位置 ===== */}
+      {/* ===== Hero 文字 ===== */}
       <header
         className="relative z-10 w-full"
         style={{ minHeight: HERO_TUNE.minH, marginTop: `-${NAV_H}px`, paddingTop: `${NAV_H}px` }}
@@ -340,6 +347,7 @@ export default async function FinanceAdvisoryPage({
             {lang === "en" && "Advisory that connects numbers with strategy to support global growth."}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
+            {/* 錨點連結不需加 lang */}
             <Link
               href="#services"
               className="inline-flex items-center gap-2 rounded-lg bg-[#1C3D5A] text-white hover:bg-[#24496C] px-4 py-2.5 text-sm font-medium transition-colors"
@@ -353,13 +361,13 @@ export default async function FinanceAdvisoryPage({
         </div>
       </header>
 
-      {/* spacer 抵銷 header 負邊距，讓 QuickDock 初始貼齊 Hero 下緣 */}
+      {/* spacer 抵銷 header 負邊距 */}
       <div style={{ height: NAV_H }} />
 
-      {/* 快捷列：起始貼齊 Hero，下滑時吸附視口頂端 */}
+      {/* 快捷列 */}
       <QuickDock lang={lang} />
 
-      {/* 主內容：與 Hero ➜ 背景 的距離一致 */}
+      {/* 主內容 */}
       <main
         className={`relative z-10 mx-auto ${LAYOUT.container} px-5 md:px-6 pb-18 md:pb-24 ${LAYOUT.yGap}`}
         style={{ marginTop: `${HERO_TO_BG_GAP}px` }}
@@ -400,8 +408,9 @@ export default async function FinanceAdvisoryPage({
           >
             <Bullets items={data?.fees?.items ?? []} />
             <div className="mt-5">
+              {/* ✅ (5) 站內連結補上 ?lang */}
               <Link
-                href="/contact"
+                href={`/contact?lang=${lang}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 hover:bg-white/20 px-4 py-2.5 text-sm font-medium transition-colors text-white"
               >
                 <Lucide.Mail className="size-4" />
@@ -414,28 +423,33 @@ export default async function FinanceAdvisoryPage({
         )}
       </main>
 
-      {/* ===== Pre-Footer CTA（比照示意圖） ===== */}
-      <section
-        className="border-y"
-        style={{ borderColor: "rgba(255,255,255,0.15)" }}
-      >
+      {/* ===== Pre-Footer CTA ===== */}
+      <section className="border-y" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
         <div className={`mx-auto ${LAYOUT.container} px-5 md:px-6`}>
           <div className="py-10 md:py-14 text-center">
             <h3 className="text-white text-xl md:text-2xl font-semibold tracking-tight">
-              {labels.bottomHeading}
+              {(() => {
+                if (lang === "jp") return "最適な移住プランで、海外生活の第一歩を";
+                if (lang === "zh") return "用最合適的移居方案，安心展開海外生活";
+                return "Start your next chapter abroad with the right relocation plan";
+              })()}
             </h3>
 
             <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
-              {/* 主按鈕：白底品牌藍字 */}
+              {/* ✅ (5) 站內連結補上 ?lang */}
               <Link
-                href="/contact"
+                href={`/contact?lang=${lang}`}
                 className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
                 style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
               >
-                {labels.defaultCTA}
+                {(() => {
+                  if (lang === "jp") return "お問い合わせはこちら";
+                  if (lang === "zh") return "Contact Us 聯絡我們";
+                  return "Contact Us";
+                })()}
               </Link>
 
-              {/* 次按鈕：深藍描邊、微透明背景 */}
+              {/* 外部連結不需要加 lang */}
               <a
                 href="mailto:info@twconnects.com"
                 className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white"

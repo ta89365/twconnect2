@@ -3,170 +3,152 @@ import { defineField, defineType } from "sanity";
 
 export default defineType({
   name: "twServiceDetail",
-  title: "Taiwan Service Detail (台灣相關服務詳情)",
+  title: "Taiwan Market Entry Detail",
   type: "document",
+
   fields: [
-    /* ========== 基本資訊 ========== */
+    /* ========== Basic Info ========== */
     defineField({
       name: "title",
-      title: "Service Title (服務名稱)",
-      type: "object",
-      fields: [
-        { name: "zh", type: "string", title: "中文" },
-        { name: "jp", type: "string", title: "日本語" },
-        { name: "en", type: "string", title: "English" },
-      ],
+      title: "Service Title",
+      type: "string",
+      description: "Enter the English title shown on the page and used to generate the slug.",
+      validation: (Rule) => Rule.required().min(2),
     }),
 
     defineField({
       name: "slug",
-      title: "Slug (網址代稱)",
+      title: "Slug",
       type: "slug",
-      options: { source: "title.en", maxLength: 100 },
+      description: "URL friendly identifier generated from the English Service Title.",
+      options: { source: "title", maxLength: 100 },
+      validation: (Rule) => Rule.required(),
     }),
 
     defineField({
       name: "coverImage",
-      title: "Hero Image / 封面圖片",
+      title: "Hero Image",
       type: "image",
+      description: "Top hero image. Use a wide image and enable Hotspot to control the focal point.",
       options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Alternative text for accessibility and SEO.",
+        }),
+      ],
     }),
 
-    /* ========== 背景 ========== */
+    /* ========== Background ========== */
     defineField({
       name: "background",
-      title: "Background / 背景說明",
+      title: "Background",
       type: "object",
+      description: "Short background description for this service in three languages.",
       fields: [
-        { name: "zh", type: "text", title: "中文" },
-        { name: "jp", type: "text", title: "日本語" },
-        { name: "en", type: "text", title: "English" },
+        { name: "zh", type: "text", title: "Chinese", rows: 4 },
+        { name: "jp", type: "text", title: "Japanese", rows: 4 },
+        { name: "en", type: "text", title: "English", rows: 4 },
       ],
     }),
 
-    /* ========== 挑戰 (Challenge) ========== */
+    /* ========== Challenges ========== */
     defineField({
       name: "challenges",
-      title: "Challenges / 課題・挑戰",
+      title: "Challenges",
       type: "object",
+      description: "Key challenges that clients typically face.",
       fields: [
-        { name: "zh", type: "array", of: [{ type: "string" }], title: "中文" },
-        { name: "jp", type: "array", of: [{ type: "string" }], title: "日本語" },
+        { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
+        { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
         { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
       ],
     }),
 
-    /* ========== 服務內容 (Services) ========== */
+    /* ========== Service Items ========== */
     defineField({
       name: "services",
-      title: "Service Items / 服務內容",
+      title: "Service Items",
       type: "object",
+      description: "What is included in this service and related keywords.",
       fields: [
-        { name: "zh", type: "array", of: [{ type: "string" }], title: "中文" },
-        { name: "jp", type: "array", of: [{ type: "string" }], title: "日本語" },
+        { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
+        { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
         { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
-        {
+        defineField({
           name: "keywords",
-          title: "Keywords / 關鍵詞",
+          title: "Keywords",
           type: "object",
+          description: "Search and tagging keywords per language.",
           fields: [
-            { name: "zh", type: "array", of: [{ type: "string" }], title: "中文" },
-            { name: "jp", type: "array", of: [{ type: "string" }], title: "日本語" },
+            { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
+            { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
             { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
           ],
-        },
+        }),
       ],
     }),
 
-    /* ========== 服務流程 (Service Flow) ========== */
+    /* ========== Service Flow ========== */
     defineField({
       name: "serviceFlow",
-      title: "Service Flow / 服務流程",
+      title: "Service Flow",
       type: "object",
+      description: "Step by step flow or checklist that clients will follow.",
       fields: [
-        { name: "zh", type: "array", of: [{ type: "string" }], title: "中文" },
-        { name: "jp", type: "array", of: [{ type: "string" }], title: "日本語" },
+        { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
+        { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
         { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
       ],
     }),
 
-    /* ========== 時程範例 (Schedule Example) ========== */
+    /* ========== Schedule Example ========== */
     defineField({
       name: "scheduleExample",
-      title: "Schedule Example / 時程範例",
+      title: "Schedule Example",
       type: "object",
+      description: "Example timeline blocks with a title and bullet items for each language.",
       fields: [
         {
           name: "zh",
+          title: "Chinese",
           type: "array",
-          of: [{ type: "object", fields: [
-            { name: "title", type: "string", title: "標題" },
-            { name: "items", type: "array", of: [{ type: "string" }], title: "內容" },
-          ]}],
-          title: "中文",
+          of: [
+            {
+              type: "object",
+              fields: [
+                { name: "title", type: "string", title: "Title" },
+                { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
+              ],
+            },
+          ],
         },
         {
           name: "jp",
+          title: "Japanese",
           type: "array",
-          of: [{ type: "object", fields: [
-            { name: "title", type: "string", title: "タイトル" },
-            { name: "items", type: "array", of: [{ type: "string" }], title: "内容" },
-          ]}],
-          title: "日本語",
+          of: [
+            {
+              type: "object",
+              fields: [
+                { name: "title", type: "string", title: "Title" },
+                { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
+              ],
+            },
+          ],
         },
         {
           name: "en",
-          type: "array",
-          of: [{ type: "object", fields: [
-            { name: "title", type: "string", title: "Title" },
-            { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
-          ]}],
           title: "English",
-        },
-      ],
-    }),
-
-    /* ========== 費用 (Fees) ========== */
-    defineField({
-      name: "fees",
-      title: "Fees (Reference) / 費用參考",
-      type: "array",
-      of: [
-        {
-          type: "object",
-          fields: [
-            { name: "category", type: "string", title: "Category / 類別" },
+          type: "array",
+          of: [
             {
-              name: "entries",
-              title: "Fee Entries / 費用項目",
-              type: "array",
-              of: [
-                {
-                  type: "object",
-                  fields: [
-                    {
-                      name: "serviceName",
-                      title: "Service Name (多語系)",
-                      type: "object",
-                      fields: [
-                        { name: "zh", type: "string", title: "中文" },
-                        { name: "jp", type: "string", title: "日本語" },
-                        { name: "en", type: "string", title: "English" },
-                      ],
-                    },
-                    { name: "fee", type: "string", title: "費用 (JPY)" },
-                    {
-                      name: "notes",
-                      title: "備註 (多語系)",
-                      type: "object",
-                      fields: [
-                        { name: "zh", type: "string", title: "中文" },
-                        { name: "jp", type: "string", title: "日本語" },
-                        { name: "en", type: "string", title: "English" },
-                      ],
-                    },
-                  ],
-                },
+              type: "object",
+              fields: [
+                { name: "title", type: "string", title: "Title" },
+                { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
               ],
             },
           ],
@@ -174,22 +156,86 @@ export default defineType({
       ],
     }),
 
+    /* ========== Fees ========== */
+    defineField({
+      name: "fees",
+      title: "Fees Reference",
+      type: "array",
+      description: "Reference pricing grouped by category.",
+      of: [
+        defineField({
+          name: "feeGroup",
+          title: "Fee Group",
+          type: "object",
+          fields: [
+            { name: "category", type: "string", title: "Category" },
+            {
+              name: "entries",
+              title: "Fee Entries",
+              type: "array",
+              of: [
+                defineField({
+                  name: "feeEntry",
+                  title: "Fee Entry",
+                  type: "object",
+                  fields: [
+                    {
+                      name: "serviceName",
+                      title: "Service Name",
+                      type: "object",
+                      description: "Display name for the fee entry in three languages.",
+                      fields: [
+                        { name: "zh", type: "string", title: "Chinese" },
+                        { name: "jp", type: "string", title: "Japanese" },
+                        { name: "en", type: "string", title: "English" },
+                      ],
+                    },
+                    { name: "fee", type: "string", title: "Fee JPY" },
+                    {
+                      name: "notes",
+                      title: "Notes",
+                      type: "object",
+                      description: "Optional notes in three languages.",
+                      fields: [
+                        { name: "zh", type: "string", title: "Chinese" },
+                        { name: "jp", type: "string", title: "Japanese" },
+                        { name: "en", type: "string", title: "English" },
+                      ],
+                    },
+                  ],
+                }),
+              ],
+            },
+          ],
+        }),
+      ],
+    }),
+
     /* ========== CTA ========== */
     defineField({
       name: "ctaLabel",
-      title: "CTA Button Label (多語系)",
+      title: "CTA Button Label",
       type: "object",
+      description: "Text on the call to action button in three languages.",
       fields: [
-        { name: "zh", type: "string", title: "中文" },
-        { name: "jp", type: "string", title: "日本語" },
+        { name: "zh", type: "string", title: "Chinese" },
+        { name: "jp", type: "string", title: "Japanese" },
         { name: "en", type: "string", title: "English" },
       ],
     }),
 
     defineField({
       name: "ctaLink",
-      title: "CTA Link (e.g. Contact Page)",
+      title: "CTA Link",
       type: "url",
+      description: "Target URL for the call to action button such as contact page.",
     }),
   ],
+
+  preview: {
+    select: { title: "title", media: "coverImage" },
+    prepare({ title, media }) {
+      return { title: title || "(Untitled Service)", media };
+    },
+  },
 });
