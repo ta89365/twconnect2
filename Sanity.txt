@@ -1,0 +1,16 @@
+# 路徑
+cd C:\Users\ta893\twconnect2\apps\cms
+
+# 切版本
+nvm use 22.20.0
+
+# 準備 pnpm
+corepack enable
+corepack prepare pnpm@10.18.3 --activate
+
+# 有這段 script 就用它
+# package.json scripts: { "dev": "sanity dev --host 127.0.0.1 --port 3333" }
+pnpm dev
+
+# 若尚未加 script 就先用這行
+# npx --yes sanity@latest dev --host 127.0.0.1 --port 3333

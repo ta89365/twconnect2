@@ -1,0 +1,5 @@
+cd C:\Users\ta893\twconnect2\apps\web
+nvm use 20.18.1
+corepack enable
+corepack prepare pnpm@10.18.3 --activate
+pnpm dev
