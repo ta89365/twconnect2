@@ -13,18 +13,23 @@ export const clientChallengesSectionDetailByLang = groq`
   ),
   "heroImage": heroImage{
     ...,
-    "url": asset->url,
+    "url": coalesce(asset->url, remoteUrl),
     "alt": coalesce(
       select($lang == "jp" => altJp, $lang == "zh" => altZh, $lang == "en" => altEn),
       altJp, altZh, altEn
     )
   },
-
   "intro": coalesce(
     select($lang == "jp" => introJp, $lang == "zh" => introZh, $lang == "en" => introEn),
     introJp, introZh, introEn
   ),
-
+  "mediaGallery": mediaGallery[]{
+    "url": coalesce(asset->url, remoteUrl),
+    "alt": coalesce(
+      select($lang == "jp" => altJp, $lang == "zh" => altZh, $lang == "en" => altEn),
+      altJp, altZh, altEn
+    )
+  },
   "challenges": challenges[] | order(order asc){
     _key,
     "order": order,
@@ -39,19 +44,23 @@ export const clientChallengesSectionDetailByLang = groq`
     "tip": coalesce(
       select($lang == "jp" => tipJp, $lang == "zh" => tipZh, $lang == "en" => tipEn),
       tipJp, tipZh, tipEn
-    )
+    ),
+    "image": image{
+      "url": coalesce(asset->url, remoteUrl),
+      "alt": coalesce(
+        select($lang == "jp" => altJp, $lang == "zh" => altZh, $lang == "en" => altEn),
+        altJp, altZh, altEn
+      )
+    }
   },
-
   "conclusion": coalesce(
     select($lang == "jp" => conclusionJp, $lang == "zh" => conclusionZh, $lang == "en" => conclusionEn),
     conclusionJp, conclusionZh, conclusionEn
   ),
-
   "companyIntro": coalesce(
     select($lang == "jp" => companyIntroJp, $lang == "zh" => companyIntroZh, $lang == "en" => companyIntroEn),
     companyIntroJp, companyIntroZh, companyIntroEn
   ),
-
   "features": features[]{
     _key,
     icon,
@@ -62,9 +71,15 @@ export const clientChallengesSectionDetailByLang = groq`
     "description": coalesce(
       select($lang == "jp" => descriptionJp, $lang == "zh" => descriptionZh, $lang == "en" => descriptionEn),
       descriptionJp, descriptionZh, descriptionEn
-    )
+    ),
+    "image": image{
+      "url": coalesce(asset->url, remoteUrl),
+      "alt": coalesce(
+        select($lang == "jp" => altJp, $lang == "zh" => altZh, $lang == "en" => altEn),
+        altJp, altZh, altEn
+      )
+    }
   },
-
   "contactSection": {
     "linkedin": contactSection.linkedin,
     "line": contactSection.line,

@@ -27,6 +27,12 @@ export default defineType({
         defineField({ name: "altJp", title: "Alt Text (Japanese)", type: "string" }),
         defineField({ name: "altZh", title: "Alt Text (Chinese)", type: "string" }),
         defineField({ name: "altEn", title: "Alt Text (English)", type: "string" }),
+        defineField({
+          name: "remoteUrl",
+          title: "Remote Image URL",
+          type: "url",
+          description: "Optional. Use an external image URL when not uploading an asset.",
+        }),
       ],
     }),
 
@@ -48,6 +54,32 @@ export default defineType({
       title: "Introduction (English)",
       type: "array",
       of: [{ type: "block" }],
+    }),
+
+    /* ========== Optional Media Gallery (array of images) ========== */
+    defineField({
+      name: "mediaGallery",
+      title: "Media Gallery",
+      type: "array",
+      of: [
+        defineField({
+          name: "galleryItem",
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({ name: "altJp", title: "Alt Text (Japanese)", type: "string" }),
+            defineField({ name: "altZh", title: "Alt Text (Chinese)", type: "string" }),
+            defineField({ name: "altEn", title: "Alt Text (English)", type: "string" }),
+            defineField({
+              name: "remoteUrl",
+              title: "Remote Image URL",
+              type: "url",
+              description: "Optional external image URL.",
+            }),
+          ],
+        }),
+      ],
+      description: "Optional strip of images shown near the intro card.",
     }),
 
     /* ========== Challenges ========== */
@@ -95,15 +127,34 @@ export default defineType({
               of: [{ type: "block" }],
             }),
 
-            // Tips
+            // Tips（維持 text，避免舊資料型別衝突）
             defineField({ name: "tipJp", title: "Tip / Advice (Japanese)", type: "text", rows: 3 }),
             defineField({ name: "tipZh", title: "Tip / Advice (Chinese)", type: "text", rows: 3 }),
             defineField({ name: "tipEn", title: "Tip / Advice (English)", type: "text", rows: 3 }),
+
+            // Optional image per challenge
+            defineField({
+              name: "image",
+              title: "Challenge Image",
+              type: "image",
+              options: { hotspot: true },
+              fields: [
+                defineField({ name: "altJp", title: "Alt Text (Japanese)", type: "string" }),
+                defineField({ name: "altZh", title: "Alt Text (Chinese)", type: "string" }),
+                defineField({ name: "altEn", title: "Alt Text (English)", type: "string" }),
+                defineField({
+                  name: "remoteUrl",
+                  title: "Remote Image URL",
+                  type: "url",
+                  description: "Optional external image URL.",
+                }),
+              ],
+            }),
           ],
           preview: {
-            select: { title: "titleEn", subtitle: "order" },
-            prepare({ title, subtitle }) {
-              return { title: title || "(Untitled Challenge)", subtitle: `#${subtitle ?? ""}` };
+            select: { title: "titleEn", subtitle: "order", media: "image" },
+            prepare({ title, subtitle, media }) {
+              return { title: title || "(Untitled Challenge)", subtitle: `#${subtitle ?? ""}`, media };
             },
           },
         }),
@@ -171,14 +222,49 @@ export default defineType({
             defineField({ name: "titleZh", title: "Feature Title (Chinese)", type: "string" }),
             defineField({ name: "titleEn", title: "Feature Title (English)", type: "string" }),
 
-            defineField({ name: "descriptionJp", title: "Feature Description (Japanese)", type: "text", rows: 3 }),
-            defineField({ name: "descriptionZh", title: "Feature Description (Chinese)", type: "text", rows: 3 }),
-            defineField({ name: "descriptionEn", title: "Feature Description (English)", type: "text", rows: 3 }),
+            // 保留 text，避免舊資料遷移
+            defineField({
+              name: "descriptionJp",
+              title: "Feature Description (Japanese)",
+              type: "text",
+              rows: 3,
+            }),
+            defineField({
+              name: "descriptionZh",
+              title: "Feature Description (Chinese)",
+              type: "text",
+              rows: 3,
+            }),
+            defineField({
+              name: "descriptionEn",
+              title: "Feature Description (English)",
+              type: "text",
+              rows: 3,
+            }),
+
+            // Optional image per feature
+            defineField({
+              name: "image",
+              title: "Feature Image",
+              type: "image",
+              options: { hotspot: true },
+              fields: [
+                defineField({ name: "altJp", title: "Alt Text (Japanese)", type: "string" }),
+                defineField({ name: "altZh", title: "Alt Text (Chinese)", type: "string" }),
+                defineField({ name: "altEn", title: "Alt Text (English)", type: "string" }),
+                defineField({
+                  name: "remoteUrl",
+                  title: "Remote Image URL",
+                  type: "url",
+                  description: "Optional external image URL.",
+                }),
+              ],
+            }),
           ],
           preview: {
-            select: { title: "titleEn" },
-            prepare({ title }) {
-              return { title: title || "(Untitled Feature)" };
+            select: { title: "titleEn", media: "image" },
+            prepare({ title, media }) {
+              return { title: title || "(Untitled Feature)", media };
             },
           },
         }),
