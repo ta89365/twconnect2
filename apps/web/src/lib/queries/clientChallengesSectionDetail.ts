@@ -1,9 +1,8 @@
-// queries/clientChallengesSectionDetail.ts
+// apps/web/src/lib/queries/clientChallengesSectionDetail.ts
 import { groq } from "next-sanity";
 
 export const clientChallengesSectionDetailByLang = groq`
 *[_type == "clientChallengesSectionDetail"] | order(_updatedAt desc)[0]{
-  /* ========== Hero ========== */
   "heroTitle": coalesce(
     select($lang == "jp" => heroTitleJp, $lang == "zh" => heroTitleZh, $lang == "en" => heroTitleEn),
     heroTitleJp, heroTitleZh, heroTitleEn
@@ -21,16 +20,14 @@ export const clientChallengesSectionDetailByLang = groq`
     )
   },
 
-  /* ========== Introduction ========== */
   "intro": coalesce(
     select($lang == "jp" => introJp, $lang == "zh" => introZh, $lang == "en" => introEn),
     introJp, introZh, introEn
   ),
 
-  /* ========== Challenges ========== */
   "challenges": challenges[] | order(order asc){
     _key,
-    order,
+    "order": order,
     "title": coalesce(
       select($lang == "jp" => titleJp, $lang == "zh" => titleZh, $lang == "en" => titleEn),
       titleJp, titleZh, titleEn
@@ -45,19 +42,16 @@ export const clientChallengesSectionDetailByLang = groq`
     )
   },
 
-  /* ========== Conclusion ========== */
   "conclusion": coalesce(
     select($lang == "jp" => conclusionJp, $lang == "zh" => conclusionZh, $lang == "en" => conclusionEn),
     conclusionJp, conclusionZh, conclusionEn
   ),
 
-  /* ========== Company Intro ========== */
   "companyIntro": coalesce(
     select($lang == "jp" => companyIntroJp, $lang == "zh" => companyIntroZh, $lang == "en" => companyIntroEn),
     companyIntroJp, companyIntroZh, companyIntroEn
   ),
 
-  /* ========== Features ========== */
   "features": features[]{
     _key,
     icon,
@@ -71,13 +65,12 @@ export const clientChallengesSectionDetailByLang = groq`
     )
   },
 
-  /* ========== Contact Section ========== */
-  "contactSection": contactSection{
-    linkedin,
-    line,
+  "contactSection": {
+    "linkedin": contactSection.linkedin,
+    "line": contactSection.line,
     "note": coalesce(
-      select($lang == "jp" => noteJp, $lang == "zh" => noteZh, $lang == "en" => noteEn),
-      noteJp, noteZh, noteEn
+      select($lang == "jp" => contactSection.noteJp, $lang == "zh" => contactSection.noteZh, $lang == "en" => contactSection.noteEn),
+      contactSection.noteJp, contactSection.noteZh, contactSection.noteEn
     )
   }
 }
