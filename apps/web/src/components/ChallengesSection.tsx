@@ -44,17 +44,16 @@ function resolveIconKey(title?: string, fallback: keyof typeof iconMap = "sparkl
   if (/(銀行|口座|資金|kyc|資金源|bank|account|fund|コンプライアンス)/.test(t)) return "landmark";
   if (/(会計|會計|請求|発票|invoice|報告|申告|申報)/.test(t)) return "file-text";
   if (/(税|稅|tax|計算|cost|コスト)/.test(t)) return "calculator";
-  if (/(合約|契約|合規|コンプライアンス|compliance|審査|審核)/.test(t)) return "badge-check";
-  if (/(跨境|越境|クロスボーダー|global|globe|協同|コラボ|データ|data|リアルタイム)/.test(t)) return "globe-2";
+  if (/(合約|契約|合規|compliance|審査|審核)/.test(t)) return "badge-check";
+  if (/(跨境|越境|global|globe|コラボ|データ|data)/.test(t)) return "globe-2";
   if (/(合作|協議|取引|deal|handshake)/.test(t)) return "handshake";
   if (/(法律|法規|監管|regulation|法務|規制)/.test(t)) return "scale";
   return fallback;
 }
 
 function getIconComp(key: string): IconComp {
-  // 型別保險：取不到對應就用 Circle 當後備
   const comp = (iconMap as Record<string, unknown>)[key] as IconComp | undefined;
-  return comp ?? Circle;
+  return (comp ?? Circle) as IconComp;
 }
 
 function ChallengeIcon({ item }: { item: ChallengeItem }) {
@@ -84,10 +83,12 @@ export default async function ChallengesSection({
   const items = await sfetch<ChallengeItem[]>(challengesQueryML, { lang });
   if (!items?.length) return null;
 
-  // 只取前 5 張以符合設計
   const list = items.slice(0, 5);
   const head = list.slice(0, 3);
-  const tail = list.slice(3); // 剩下 2 張
+  const tail = list.slice(3);
+
+  const CTA_TEXT =
+    lang === "jp" ? "詳しく見る" : lang === "zh" ? "看我們怎麼解決" : "See How We Solve It";
 
   return (
     <section className="relative bg-[#1C3D5A] py-16 sm:py-20 md:py-24">
@@ -101,7 +102,6 @@ export default async function ChallengesSection({
           </p>
         </header>
 
-        {/* 上排：固定三欄 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {head.map((it) => (
             <article
@@ -123,8 +123,6 @@ export default async function ChallengesSection({
             </article>
           ))}
 
-          {/* 第二排（lg 以上：兩張置中；lg 以下：自然直向） */}
-          {/* lg 以下先把 tail 也照格線自然排下去 */}
           {tail.map((it) => (
             <article
               key={it._id}
@@ -145,7 +143,6 @@ export default async function ChallengesSection({
             </article>
           ))}
 
-          {/* lg 以上：整列換成佔滿三欄的容器，內層兩張固定寬度並置中 */}
           <div className="hidden lg:block lg:col-span-3">
             <div className="grid grid-cols-[auto_auto] gap-5 w-fit mx-auto">
               {tail.map((it) => (
@@ -178,11 +175,13 @@ export default async function ChallengesSection({
               <div className="font-semibold whitespace-nowrap">Taiwan Connect が解決します</div>
               <div className="text-slate-200 whitespace-nowrap">グローバル展開を、もっとスムーズに。</div>
             </div>
+
+            {/* 用原生 <a>，避免 Server/Client 混用導致的 TS 紅字 */}
             <a
-              href="/contact"
+              href={`/client-challenges?lang=${lang}`}
               className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold text-white shadow hover:opacity-90 bg-gradient-to-r from-blue-500 to-blue-600 whitespace-nowrap"
             >
-              See How We Solve It
+              {CTA_TEXT}
             </a>
           </div>
         </div>
