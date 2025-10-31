@@ -3,6 +3,7 @@ import siteSettings from './siteSettings';
 import hero from './hero';
 import service from './service';
 import challenge from './challenge';
+import fiveCommonChallenges from './clientChallengesSectionDetail'; // ✅ New: Client Challenges SectionDetail
 import crossBorderSection from './crossBorderSection';
 import about from './About';
 import contactSection from './contactSection';
@@ -18,7 +19,7 @@ import tag from './tag';
 import category from './category';
 import author from './author';
 
-// 物件型別
+// Object types
 import mlText from './objects/mlText';
 import cta from './objects/cta';
 
@@ -30,6 +31,7 @@ export const schemaTypes = [
 
   /* ========== Services & Business Sections ========== */
   challenge, // Client Challenges Section
+  fiveCommonChallenges, // Client Challenges SectionDetail
   service, // Core Services Overview
   crossBorderSection, // Cross-Border Advisory Section
   about, // About Us / Company Introduction
