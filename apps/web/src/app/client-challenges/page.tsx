@@ -153,10 +153,14 @@ const MediaStrip: React.FC<{ items?: Img[] | null }> = ({ items }) => {
 export default async function ClientChallengesPage(props: {
   searchParams: Record<string, string | string[] | undefined> | Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const sp = typeof (props.searchParams as any)?.then === "function"
+// 先把 searchParams 解成普通物件，再只把 lang 丟進 resolveLang
+const spResolved: Record<string, string | string[] | undefined> =
+  typeof (props.searchParams as any)?.then === "function"
     ? await (props.searchParams as Promise<Record<string, string | string[] | undefined>>)
-    : props.searchParams;
-  const lang = resolveLang(sp);
+    : ((props.searchParams || {}) as Record<string, string | string[] | undefined>);
+
+const lang = resolveLang({ lang: spResolved.lang });
+
 
   const data = (await sfetch<PageDoc>(clientChallengesSectionDetailByLang, { lang })) as PageDoc;
 
