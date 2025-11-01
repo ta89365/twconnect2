@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import * as React from "react";
+import type { JSX } from "react"; // ✅ add this line
 import { PortableText } from "@portabletext/react";
 import { sfetch } from "@/lib/sanity/fetch";
 import { postBySlugAndLang, type Lang } from "@/lib/queries/news";
