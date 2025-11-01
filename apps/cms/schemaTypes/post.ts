@@ -6,6 +6,23 @@ export default defineType({
   title: "News & Articles",
   type: "document",
   fields: [
+    // 內容頻道區分：news 或 column
+    defineField({
+      name: "channel",
+      title: "Channel",
+      type: "string",
+      description: "內容頻道。news 為新聞動態，column 為專欄文章。",
+      options: {
+        list: [
+          { title: "News", value: "news" },
+          { title: "Column", value: "column" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "news",
+      validation: (r) => r.required(),
+    }),
+
     /* ===== 發佈與中台資訊 ===== */
     defineField({
       name: "publishedAt",

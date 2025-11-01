@@ -54,7 +54,7 @@ export const revalidate = 60;
 export default async function ServicesPage({
   searchParams,
 }: {
-  searchParams?: { lang?: string | string[] } | Promise<{ lang?: string | string[] }>;
+  searchParams?: { lang?: string  };
 }) {
   const spRaw =
     searchParams && typeof (searchParams as any).then === "function"
@@ -94,14 +94,15 @@ export default async function ServicesPage({
   });
 
   return (
-    <div className="min-h-screen bg-[#1C3D5A]">
+    <div className="min-h-screen bg-[#1C3D5A] text-white">
+      {/* 導覽列 */}
+      {/** @ts-expect-error Async Server Component */}
       <NavigationServer lang={lang} />
-      <ServiceSection
-        items={items}
-        heading={t.heading[lang]}
-        subheading={t.subheading[lang]}
-        ctaText={t.ctaText[lang]}
-      />
+
+      {/* 內容本體 ... */}
+
+      {/* Footer */}
+      {/** @ts-expect-error Async Server Component */}
       <FooterServer lang={lang} />
     </div>
   );
