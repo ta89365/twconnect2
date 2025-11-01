@@ -220,9 +220,7 @@ const footerContact = {
       <HeroBanner data={hero} navHeight={NAV_HEIGHT} tune={TUNE} />
 
 {/* 五大痛點 */}
-{/** @ts-expect-error Async Server Component */}
-<ChallengesSection lang={lang} />
-
+{await ChallengesSection({ lang })}
 
       {/* 服務 */}
       <ServiceSection items={services || []} />

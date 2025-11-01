@@ -69,7 +69,7 @@ if errorlevel 1 (
 echo.
 echo ✅ 同步成功！已推送至 GitHub。
 echo ===========================
-start https://github.com/ta89365/twconnect2
+start https://vercel.com/twconnects-ea2981af/~/deployments
 echo.
 pause
 exit /b
