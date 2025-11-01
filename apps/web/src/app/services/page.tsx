@@ -96,14 +96,12 @@ export default async function ServicesPage({
   return (
     <div className="min-h-screen bg-[#1C3D5A] text-white">
       {/* 導覽列 */}
-      {/** @ts-expect-error Async Server Component */}
-      <NavigationServer lang={lang} />
+      {await NavigationServer({ lang })}
 
       {/* 內容本體 ... */}
 
       {/* Footer */}
-      {/** @ts-expect-error Async Server Component */}
-      <FooterServer lang={lang} />
+      {await FooterServer({ lang })}
     </div>
   );
 }
