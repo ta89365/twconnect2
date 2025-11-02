@@ -94,7 +94,7 @@ export default defineType({
     defineField({
       name: "contactFormHref",
       title: "Contact Form URL",
-      type: "url",
+      type: "string",
       description: "External form link. Open in same tab is fine.",
     }),
 
@@ -171,7 +171,7 @@ export default defineType({
     defineField({
       name: "bookingHref",
       title: "Booking Link",
-      type: "url",
+      type: "string",
       description: "Booking page URL, e.g., Google Form or Notion booking page.",
     }),
   ],

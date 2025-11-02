@@ -1,12 +1,29 @@
+// apps/web/src/components/LanguageSwitcher.tsx
 "use client";
 
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-type Lang = "zh" | "jp" | "en";
-type CC = "TW" | "JP" | "US";
+type Lang = "zh" | "zh-cn" | "jp" | "en";
+type CC = "TW" | "CN" | "JP" | "US";
 
-function FlagSVG({ cc }: { cc: CC }) {
+function normalizeLang(input?: string | null): Lang {
+  const k = String(input ?? "").trim().toLowerCase();
+  if (k === "zh-cn" || k === "zh_cn" || k === "zh-hans" || k === "hans" || k === "cn") return "zh-cn";
+  if (k === "zh" || k === "zh-hant" || k === "zh_tw" || k === "zh-tw" || k === "tw" || k === "hant") return "zh";
+  if (k === "en" || k === "en-us" || k === "en_us") return "en";
+  if (k === "jp" || k === "ja" || k === "ja-jp") return "jp";
+  return "jp";
+}
+
+type Props = {
+  current?: Lang;        // 可傳可不傳；會以 URL 為準
+  offsetY?: number;      // rem
+  offsetRight?: number;  // rem
+};
+
+type FlagCC = CC;
+function FlagSVG({ cc }: { cc: FlagCC }) {
   if (cc === "JP") {
     return (
       <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
@@ -30,6 +47,14 @@ function FlagSVG({ cc }: { cc: CC }) {
       </svg>
     );
   }
+  if (cc === "CN") {
+    return (
+      <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
+        <rect width="16" height="12" fill="#de2910" />
+        <circle cx="3" cy="3" r="1.2" fill="#ffde00" />
+      </svg>
+    );
+  }
   // TW
   return (
     <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
@@ -44,55 +69,50 @@ export default function LanguageSwitcher({
   current,
   offsetY = 5,
   offsetRight = 1.25,
-}: {
-  current: Lang;
-  offsetY?: number; // rem
-  offsetRight?: number; // rem
-}) {
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // 以 URL 為準，沒有就參考傳入的 current，最後預設 jp
+  const urlLang = normalizeLang(searchParams?.get("lang"));
+  const activeLang = normalizeLang(current ?? urlLang);
+
   const items = useMemo(
     () => [
-      { key: "zh" as Lang, cc: "TW" as CC, label: "中文" },
-      { key: "jp" as Lang, cc: "JP" as CC, label: "日本語" },
-      { key: "en" as Lang, cc: "US" as CC, label: "English" },
+      { key: "zh" as Lang,    cc: "TW" as CC, label: "繁體中文" },
+      { key: "zh-cn" as Lang, cc: "CN" as CC, label: "简体中文" },
+      { key: "jp" as Lang,    cc: "JP" as CC, label: "日本語" },
+      { key: "en" as Lang,    cc: "US" as CC, label: "English" },
     ],
     []
   );
 
   const setLang = (lang: Lang) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
-    params.set("lang", lang);
+    params.set("lang", lang); // ✅ 只改 URL 的 lang，停留在當前頁面
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
     <div
-      className="
-        fixed z-[80] flex flex-col overflow-hidden
-        rounded-2xl bg-white/15 backdrop-blur-md
-        border border-white/30 shadow-lg
-        text-[13px] text-white select-none
-      "
+      className="fixed z-[80] flex flex-col overflow-hidden rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 shadow-lg text-[13px] text-white select-none"
       style={{ top: `${offsetY}rem`, right: `${offsetRight}rem` }}
       role="group"
       aria-label="Language switcher"
     >
       {items.map((it, idx) => {
-        const active = it.key === current;
+        const active = it.key === activeLang;
         return (
           <button
             key={it.key}
+            type="button"
             onClick={() => setLang(it.key)}
             aria-pressed={active}
             className={[
               "flex items-center gap-3 px-3 py-2 w-40 text-left transition-colors outline-none",
               idx !== items.length - 1 ? "border-b border-white/25" : "",
-              active
-                ? "bg-white/30 font-semibold"
-                : "hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/60",
+              active ? "bg-white/30 font-semibold" : "hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/60",
             ].join(" ")}
           >
             <span className="w-4 h-3.5 flex items-center justify-center">

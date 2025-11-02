@@ -2,7 +2,7 @@
 
 /* ========================== Imports ========================== */
 // Global & Visual
-import siteSettings from "./siteSettings";
+import siteSettings, { siteSettingsTypes } from "./siteSettings";
 import hero from "./hero";
 
 // Services & Business
@@ -61,6 +61,7 @@ import contactPage from "./documents/contactPage";
 export const schemaTypes = [
   /* ========== Global and Visual Settings ========== */
   siteSettings,
+  ...siteSettingsTypes, // <-- 新增：包含 footerLink 等共用型別
   hero,
 
   /* ========== Services and Business Sections ========== */

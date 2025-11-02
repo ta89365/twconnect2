@@ -1,5 +1,5 @@
 // apps/web/src/app/page.tsx
-import Navigation from "@/components/navigation";
+import NavigationServer from "@/components/NavigationServer"; // 伺服端導覽，支援 zh-cn
 import HeroBanner from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
 import ChallengesSection from "@/components/ChallengesSection";
@@ -22,7 +22,7 @@ import ContactSection from "@/components/ContactSection";
 import type { ContactData } from "@/lib/types/contact";
 
 // Footer
-import Footer from "@/components/Footer";
+import FooterServer from "@/components/FooterServer";
 
 import { sfetch } from "@/lib/sanity/fetch";
 import { siteSettingsByLang } from "@/lib/queries/siteSettings";
@@ -31,7 +31,7 @@ import { servicesQueryML } from "@/lib/queries/services";
 import { crossBorderByLang } from "@/lib/queries/crossBorder";
 import { aboutByLang } from "@/lib/queries/about";
 import { contactByLang } from "@/lib/queries/contact";
-import { newsEntranceByLang } from "@/lib/queries/news"; // ✅ 新增：接 News
+import { newsEntranceByLang } from "@/lib/queries/news";
 
 import Link from "next/link";
 
@@ -93,8 +93,18 @@ function SectionDivider({ className = "" }: { className?: string }) {
 
 /** 日期格式器 */
 const MONTH_EN = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
   const [yyyy, mm, dd] = iso.split("-");
@@ -107,11 +117,11 @@ function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
 
 /** 首頁 News Section 需要的最小資料結構（由 Sanity 映射而來） */
 type HomeNewsItem = {
-  dateISO: string;        // "YYYY-MM-DD"
+  dateISO: string; // "YYYY-MM-DD"
   title: string;
-  href: string;           // 站內連結 /news/[slug]?lang=xx
-  badge?: string | null;  // 類別名稱
-  hashtags?: string[];    // tags 名稱陣列
+  href: string; // 站內連結 /news/[slug]?lang=xx
+  badge?: string | null; // 類別名稱
+  hashtags?: string[]; // tags 名稱陣列
 };
 
 export default async function Home({
@@ -124,61 +134,71 @@ export default async function Home({
       ? await (searchParams as Promise<{ lang?: string }>)
       : (searchParams as { lang?: string } | undefined);
 
+  // 讀取 URL 語言
   const spLang = (spRaw?.lang ?? "").toString().toLowerCase();
-  const lang: Lang =
-    spLang === "zh" || spLang === "en" || spLang === "jp" ? (spLang as Lang) : "jp";
+
+  // 內容語言：若為 zh-cn 則回退 zh，其餘維持 jp/zh/en
+  const contentLang: Lang =
+    spLang === "zh-cn"
+      ? "zh"
+      : spLang === "zh" || spLang === "en" || spLang === "jp"
+      ? (spLang as Lang)
+      : "jp";
 
   const [settings, hero, crossBorder, services, about, contact, news] = await Promise.all([
-    sfetch<any>(siteSettingsByLang, { lang }),
-    sfetch<any>(heroByLang, { lang }),
-    sfetch<CrossBorderData>(crossBorderByLang, { lang }),
-    sfetch<ServiceItem[]>(servicesQueryML, { lang }),
-    sfetch<AboutData>(aboutByLang, { lang }),
-    sfetch<ContactData>(contactByLang, { lang }),
-    sfetch<any>(newsEntranceByLang, { lang, limit: 4 }), // ✅ 新增：抓最新 4 則
+    sfetch<any>(siteSettingsByLang, { lang: contentLang }),
+    sfetch<any>(heroByLang, { lang: contentLang }),
+    sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
+    sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
+    sfetch<AboutData>(aboutByLang, { lang: contentLang }),
+    sfetch<ContactData>(contactByLang, { lang: contentLang }),
+    sfetch<any>(newsEntranceByLang, { lang: contentLang, limit: 4 }),
   ]);
 
-  // 導覽列資料：附 lang 參數
+  // 導覽列資料供 Footer 使用
   const rawItems: NavItem[] = Array.isArray(settings?.navigation) ? settings.navigation : [];
   const items: NavItem[] = rawItems
     .map((it) => {
       if (!it?.href) return it;
       const join = it.href.includes("?") ? "&" : "?";
-      return { ...it, href: `${it.href}${join}lang=${lang}` };
+      return { ...it, href: `${it.href}${join}lang=${contentLang}` };
     })
     .sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
-// Footer
-type LooseContact = { email?: string | null; phone?: string | null };
-const c = (contact as unknown as LooseContact | null);
+  // Footer
+  type LooseContact = { email?: string | null; phone?: string | null };
+  const c = (contact as unknown as LooseContact | null);
 
-const footerCompany = {
-  name: settings?.logoText ?? settings?.title ?? "Taiwan Connect",
-  logoUrl: settings?.logoUrl ?? null,
-};
+  const footerCompany = {
+    name: settings?.logoText ?? settings?.title ?? "Taiwan Connect",
+    logoUrl: settings?.logoUrl ?? null,
+  };
 
-const footerContact = {
-  email: c?.email ?? settings?.contactEmail ?? null,
-  phone: c?.phone ?? settings?.contactPhone ?? null,
-};
+  const footerContact = {
+    email: c?.email ?? settings?.contactEmail ?? null,
+    phone: c?.phone ?? settings?.contactPhone ?? null,
+  };
 
   const primaryLinks =
     items?.map((i) => ({ label: i.label, href: i.href, external: i.external })) ?? [];
 
   const secondaryLinks = [
-    { label: lang === "jp" ? "サービス" : lang === "zh" ? "服務內容" : "Services", href: "/services" },
-    { label: lang === "jp" ? "事例紹介" : lang === "zh" ? "成功案例" : "Case Studies", href: "/cases" },
+    { label: contentLang === "jp" ? "サービス" : contentLang === "zh" ? "服務內容" : "Services", href: "/services" },
+    { label: contentLang === "jp" ? "事例紹介" : contentLang === "zh" ? "成功案例" : "Case Studies", href: "/cases" },
     { label: "News", href: "/news" },
-    { label: lang === "jp" ? "IPOアドバイザリー" : lang === "zh" ? "IPO 顧問" : "IPO Advisory", href: "/ipo" },
+    {
+      label: contentLang === "jp" ? "IPOアドバイザリー" : contentLang === "zh" ? "IPO 顧問" : "IPO Advisory",
+      href: "/ipo",
+    },
   ];
 
-  // ✅ 映射 Sanity->首頁 NewsSection 所需資料
+  // Sanity -> 首頁 NewsSection 所需資料
   const newsPosts = Array.isArray(news?.posts) ? news.posts : [];
   const homeNewsItems: HomeNewsItem[] = newsPosts.slice(0, 4).map((p: any) => {
     const published = typeof p?.publishedAt === "string" ? p.publishedAt : "";
     const dateISO = published ? published.slice(0, 10) : "1970-01-01";
     const slug = p?.slug ?? "";
-    const href = `/news/${slug}?lang=${lang}`;
+    const href = `/news/${slug}?lang=${contentLang}`;
     const badge = p?.category?.title ?? null;
     const hashtags =
       Array.isArray(p?.tags) && p.tags.length > 0
@@ -195,23 +215,13 @@ const footerContact = {
 
   return (
     <main id="top" className="bg-background text-foreground">
-      {/* 導覽列：背景深藍、字白 */}
-      <div className="w-full bg-[#1C3D5A] text-white border-b border-white/15">
-        <div className="container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <Navigation
-            lang={lang}
-            items={items as any}
-            brand={{
-              logoUrl: settings?.logoUrl ?? null,
-              name: settings?.logoText ?? settings?.title ?? "Taiwan Connect",
-            }}
-          />
-        </div>
-      </div>
+      {/* 導覽列：僅導覽列支援 zh-cn 其餘內容用 contentLang */}
+      {/** @ts-expect-error Async Server Component */}
+      <NavigationServer lang={spRaw?.lang as string} />
 
-      {/* 語言切換器 */}
+      {/* 語言切換器：直接改 URL 參數 停留在當前頁面 */}
       <LanguageSwitcher
-        current={lang}
+        current={contentLang}
         offsetY={TUNE.langOffsetYrem}
         offsetRight={TUNE.langOffsetRightRem}
       />
@@ -219,8 +229,8 @@ const footerContact = {
       {/* Hero */}
       <HeroBanner data={hero} navHeight={NAV_HEIGHT} tune={TUNE} />
 
-{/* 五大痛點 */}
-{await ChallengesSection({ lang })}
+      {/* 五大痛點 */}
+      {await ChallengesSection({ lang: contentLang })}
 
       {/* 服務 */}
       <ServiceSection items={services || []} />
@@ -228,35 +238,30 @@ const footerContact = {
       {/* CrossBorder */}
       <CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} />
 
-      {/* About */}
-      <AboutSection data={about ?? null} />
-
       {/* 分隔線 */}
       <SectionDivider className="-mt-2 md:-mt-4" />
 
-      {/* News：視覺不變，只換資料來源 */}
-      <NewsSection lang={lang} items={homeNewsItems} />
+      {/* News */}
+      <NewsSection lang={contentLang} items={homeNewsItems} />
 
       <SectionDivider className="-mt-2 md:-mt-4" />
 
       {/* Contact */}
-      <ContactSection data={contact ?? null} lang={lang} />
+      <ContactSection data={contact ?? null} lang={contentLang} />
 
       <SectionDivider className="-mt-2 md:-mt-4" />
 
       {/* Footer */}
-      <Footer
-        lang={lang}
-        company={footerCompany}
-        contact={footerContact}
-        primaryLinks={primaryLinks}
-        secondaryLinks={secondaryLinks}
+      {/** @ts-expect-error Async Server Component */}
+      <FooterServer
+        lang={(spRaw?.lang?.toLowerCase() as "jp" | "zh" | "en" | "zh-cn") || contentLang}
       />
     </main>
   );
 }
 
-/** News Section 藍色主題：視覺維持不變，改成吃 props.items */
+
+/** News Section 藍色主題：視覺維持不變 改成吃 props.items */
 function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
   const t = {
     jp: { title: "NEWS", sub: "当社のプレスリリースなど", cta: "一覧はこちら" },
@@ -322,7 +327,7 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
                 </li>
               ))}
 
-              {/* 若沒有資料，仍維持版位不動視覺 */}
+              {/* 若沒有資料 仍維持版位不動視覺 */}
               {items.length === 0 && (
                 <li className="py-6">
                   <h3 className="mt-3 text-[15px] md:text-base leading-relaxed text-blue-100">
