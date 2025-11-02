@@ -27,11 +27,28 @@ import tag from "./tag";
 import category from "./category";
 import author from "./author";
 
+// Mainland China Investment (Landing + Article + UBO Guide + Docs)
+import cnInvestmentLanding, {
+  authority,
+  reviewItem,
+  processStep,
+  serviceBullet,
+  faqItem,
+  recommendedItem,
+} from "./cnInvestmentLanding";
+import mainlandInvestmentGuide from "./mainlandInvestmentGuide";
+import cnInvestmentUboGuide from "./cnInvestmentUboGuide";
+import cnInvestmentDocsCn from "./cnInvestmentDocsCn";
+
+// CN Investment Whitelist (ZH-CN only)
+import cnInvestmentWhitelist from "./cnInvestmentWhitelist";
+import blockContentZhCn from "./blockContentZhCn";
+
 // Common Objects
 import mlText from "./objects/mlText";
 import cta from "./objects/cta";
 
-/* ===== New: Contact Form and Localization Schema ===== */
+// Localization & Contact
 import localeString from "./objects/localeString";
 import localeText from "./objects/localeText";
 import localeBlock from "./objects/localeBlock";
@@ -40,33 +57,49 @@ import contactCta from "./objects/contactCta";
 import contactAddress from "./objects/contactAddress";
 import contactPage from "./documents/contactPage";
 
-/* ========================== EXPORT ========================== */
+/* ========================== Exports ========================== */
 export const schemaTypes = [
   /* ========== Global and Visual Settings ========== */
-  siteSettings, // Global Site Settings
-  hero, // Homepage Hero Banner
+  siteSettings,
+  hero,
 
   /* ========== Services and Business Sections ========== */
-  challenge, // Client Challenges Section
-  fiveCommonChallenges, // Client Challenges SectionDetail
-  service, // Core Services Overview
-  crossBorderSection, // Cross Border Advisory Section
-  about, // About Us or Company Introduction
-  contactSection, // Contact and Inquiry Section (legacy)
-  companyOverviewSingleton, // Company Mission and Profile
-  twServiceDetail, // Taiwan Market Entry Detail
-  visaResidencySupport, // Visa and Residency Services
-  overseasRelocationSupport, // Relocation and Settlement Services
-  financeAdvisoryDetail, // Financial and Accounting Advisory Services
-  companyStrengthsAndFAQ, // Our Strengths and FAQs
+  challenge,
+  fiveCommonChallenges,
+  service,
+  crossBorderSection,
+  about,
+  contactSection,
+  companyOverviewSingleton,
+  twServiceDetail,
+  visaResidencySupport,
+  overseasRelocationSupport,
+  financeAdvisoryDetail,
+  companyStrengthsAndFAQ,
 
   /* ========== News and Column System ========== */
-  newsSettings, // News Entrance Settings
-  columnSettings, // Column Entrance Settings
-  post, // Shared Post Document
-  tag, // Article Tags
-  category, // Article Categories
-  author, // Article Authors
+  newsSettings,
+  columnSettings,
+  post,
+  tag,
+  category,
+  author,
+
+  /* ========== Mainland China Investment ========== */
+  cnInvestmentLanding,          // Landing Page
+  mainlandInvestmentGuide,      // Article Page
+  cnInvestmentUboGuide,         // UBO Guide (ZH-CN)
+  cnInvestmentDocsCn,           // Document Preparation & Rejection Reasons (ZH-CN)
+  authority,                    // Object Types (Landing)
+  reviewItem,
+  processStep,
+  serviceBullet,
+  faqItem,
+  recommendedItem,
+
+  /* ========== CN Investment Whitelist (ZH-CN) ========== */
+  blockContentZhCn,             // Portable Text for Whitelist
+  cnInvestmentWhitelist,        // Whitelist Article (ZH-CN)
 
   /* ========== Common Object Types ========== */
   mlText,
@@ -79,7 +112,7 @@ export const schemaTypes = [
   localeStringArray,
   contactCta,
   contactAddress,
-  contactPage, // 新增 Contact Form 設定文件
+  contactPage,
 
   /* ========== Company Overview Subtypes ========== */
   ...companyOverviewTypes,

@@ -13,6 +13,7 @@
     "preflight:fast": "pnpm typecheck && pnpm lint && pnpm -C apps/cms run check:sanity && pnpm build:all"
   },
   "dependencies": {
+    "@portabletext/types": "^2.0.15",
     "lucide-react": "^0.546.0"
   },
   "pnpm": {
