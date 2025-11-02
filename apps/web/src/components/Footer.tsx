@@ -121,10 +121,10 @@ export default function Footer({
   return (
     <footer className="text-slate-100" style={{ backgroundColor: BRAND_BG }}>
       <div className="border-t border-white/15">
-        {/* ✅ 高度更緊湊，gap與padding縮小 */}
-        <div className="mx-auto max-w-7xl px-8 py-8 sm:py-10 flex flex-col md:flex-row md:items-start md:justify-between gap-8 md:gap-5">
-          {/* 左：公司敘述（40%） */}
-          <section className="md:w-[40%]">
+        {/* ✅ 調整容器寬度 + 欄位比例 */}
+        <div className="mx-auto max-w-[90rem] px-8 py-8 sm:py-10 flex flex-col md:flex-row md:items-start md:justify-between gap-8 md:gap-5">
+          {/* 左：公司敘述（38%） */}
+          <section className="md:w-[38%]">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden ring-1 ring-white/20">
                 <Image
@@ -140,8 +140,8 @@ export default function Footer({
             <p className="mt-2 text-[14px] leading-6 text-slate-300">{displayDesc}</p>
           </section>
 
-          {/* 中：聯絡資訊（34%） */}
-          <section className="md:w-[34%]">
+          {/* 中：聯絡資訊（32%） */}
+          <section className="md:w-[32%]">
             <ul className="space-y-1.5 text-slate-200 text-[14px]">
               {contact?.addressJp && (
                 <li className="flex items-start gap-2 leading-5">
@@ -175,8 +175,8 @@ export default function Footer({
             </ul>
           </section>
 
-          {/* 右：網站導覽 + 社群（26%） */}
-          <nav className="md:w-[26%]">
+          {/* 右：網站導覽 + 社群（30%） */}
+          <nav className="md:w-[30%]">
             <div className="font-semibold text-white mb-1 text-[14px]">
               {displaySitemap}
             </div>
@@ -187,7 +187,7 @@ export default function Footer({
                     href={withLang(l.href, lang)}
                     target={l.external ? "_blank" : undefined}
                     rel={l.external ? "noreferrer" : undefined}
-                    className="text-slate-200 hover:text-sky-200 transition-colors"
+                    className="text-slate-200 hover:text-sky-200 transition-colors whitespace-nowrap"
                     prefetch={false}
                   >
                     {l.label}
@@ -287,7 +287,7 @@ export default function Footer({
         </div>
 
         {/* 底線與版權列 */}
-        <div className="mx-auto max-w-7xl px-8">
+        <div className="mx-auto max-w-[90rem] px-8">
           <div className="mt-6 h-px w-full bg-white/10" />
           <div className="py-4 text-center">
             <p className="text-xs text-slate-300">

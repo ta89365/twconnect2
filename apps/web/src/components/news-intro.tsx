@@ -1,4 +1,4 @@
-// apps/web/src/components/news-intro.tsx
+// apps/web/src/components/news-intro.tsx 
 import Link from "next/link";
 import clsx from "clsx";
 
@@ -78,12 +78,12 @@ export default function NewsIntro({
           <Link
             href={ctaHref}
             className="inline-flex items-center rounded-lg px-5 py-3 font-medium text-white transition-colors"
-            style={{ backgroundColor: "#2563EB" }}
+            style={{ backgroundColor: "#4A90E2", color: "#FFFFFF" }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#3B82F6";
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#2563EB";
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2";
             }}
           >
             {t.cta}

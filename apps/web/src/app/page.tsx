@@ -1,4 +1,4 @@
-// apps/web/src/app/page.tsx
+// File: apps/web/src/app/page.tsx
 import NavigationServer from "@/components/NavigationServer"; // 伺服端導覽，支援 zh-cn
 import HeroBanner from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -31,15 +31,12 @@ import { servicesQueryML } from "@/lib/queries/services";
 import { crossBorderByLang } from "@/lib/queries/crossBorder";
 import { aboutByLang } from "@/lib/queries/about";
 import { contactByLang } from "@/lib/queries/contact";
-import { newsEntranceByLang } from "@/lib/queries/news";
+import { mixedHomeFeedByLang } from "@/lib/queries/insights";
 
 import Link from "next/link";
 import type { JSX } from "react";
 
-type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
-type Lang = "jp" | "zh" | "en";
-
-/** Hero 參數 */
+/* ============================ 視覺與版面設定 ============================ */
 const NAV_HEIGHT = 72;
 const TUNE = {
   langOffsetYrem: (NAV_HEIGHT + 8) / 16,
@@ -92,20 +89,10 @@ function SectionDivider({ className = "" }: { className?: string }) {
   );
 }
 
-/** 日期格式器 */
+/** 日期格式器（deterministic，不用 Intl 依賴環境） */
 const MONTH_EN = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
 ];
 function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
   const [yyyy, mm, dd] = iso.split("-");
@@ -116,19 +103,24 @@ function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
   return `${y}年${m}月${d}日`;
 }
 
-/** 首頁 News Section 需要的最小資料結構（由 Sanity 映射而來） */
+/* ============================ 型別 ============================ */
+type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
+type Lang = "jp" | "zh" | "en";
+
+/** 首頁混合列表所需資料結構 */
 type HomeNewsItem = {
-  dateISO: string; // "YYYY-MM-DD"
+  dateISO: string;        // "YYYY-MM-DD"
   title: string;
-  href: string; // 站內連結 /news/[slug]?lang=xx
-  badge?: string | null; // 類別名稱
-  hashtags?: string[]; // tags 名稱陣列
+  href: string;           // /news/[slug]?lang=xx 或 /column/[slug]?lang=xx
+  channelLabel: string;   // 小分類：News / Column（多語）
+  hashtags?: string[];
 };
 
 /* 包裝 Server Components，避免使用 @ts-expect-error */
 const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 
+/* ============================ Page ============================ */
 export default async function Home({
   searchParams,
 }: {
@@ -150,14 +142,15 @@ export default async function Home({
       ? (spLang as Lang)
       : "jp";
 
-  const [settings, hero, crossBorder, services, about, contact, news] = await Promise.all([
+  const [settings, hero, crossBorder, services, about, contact, mixed] = await Promise.all([
     sfetch<any>(siteSettingsByLang, { lang: contentLang }),
     sfetch<any>(heroByLang, { lang: contentLang }),
     sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
     sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
     sfetch<AboutData>(aboutByLang, { lang: contentLang }),
     sfetch<ContactData>(contactByLang, { lang: contentLang }),
-    sfetch<any>(newsEntranceByLang, { lang: contentLang, limit: 4 }),
+    // 混合 News + Column，最新 6 筆
+    sfetch<any>(mixedHomeFeedByLang, { lang: contentLang, limit: 5 }),
   ]);
 
   // 導覽列資料供 Footer 使用
@@ -197,14 +190,19 @@ export default async function Home({
     },
   ];
 
-  // Sanity -> 首頁 NewsSection 所需資料
-  const newsPosts = Array.isArray(news?.posts) ? news.posts : [];
-  const homeNewsItems: HomeNewsItem[] = newsPosts.slice(0, 4).map((p: any) => {
+  // 混合資料 => 首頁所需
+  const posts = Array.isArray(mixed?.posts) ? mixed.posts : [];
+  const channelLabel = (channel: "news" | "column"): string => {
+    if (contentLang === "jp") return channel === "news" ? "ニュース" : "コラム";
+    if (contentLang === "zh") return channel === "news" ? "新聞" : "專欄";
+    return channel === "news" ? "News" : "Column";
+  };
+  const homeNewsItems: HomeNewsItem[] = posts.map((p: any) => {
     const published = typeof p?.publishedAt === "string" ? p.publishedAt : "";
     const dateISO = published ? published.slice(0, 10) : "1970-01-01";
     const slug = p?.slug ?? "";
-    const href = `/news/${slug}?lang=${contentLang}`;
-    const badge = p?.category?.title ?? null;
+    const base = p?.channel === "column" ? "/column" : "/news";
+    const href = `${base}/${slug}?lang=${contentLang}`;
     const hashtags =
       Array.isArray(p?.tags) && p.tags.length > 0
         ? p.tags.map((t: any) => t?.title).filter(Boolean)
@@ -213,7 +211,7 @@ export default async function Home({
       dateISO,
       title: p?.title ?? "",
       href,
-      badge,
+      channelLabel: channelLabel(p?.channel),
       hashtags,
     };
   });
@@ -223,7 +221,7 @@ export default async function Home({
       {/* 導覽列：僅導覽列支援 zh-cn 其餘內容用 contentLang */}
       <Nav lang={spRaw?.lang as string} />
 
-      {/* 語言切換器：直接改 URL 參數 停留在當前頁面 */}
+      {/* 語言切換器 */}
       <LanguageSwitcher
         current={contentLang}
         offsetY={TUNE.langOffsetYrem}
@@ -242,10 +240,14 @@ export default async function Home({
       {/* CrossBorder */}
       <CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} />
 
-      {/* 分隔線 */}
       <SectionDivider className="-mt-2 md:-mt-4" />
 
-      {/* News */}
+      {/* About 區塊 */}
+      <AboutSection data={about ?? null} />
+
+      <SectionDivider className="-mt-2 md:-mt-4" />
+
+      {/* 混合 News + Column 區塊 */}
       <NewsSection lang={contentLang} items={homeNewsItems} />
 
       <SectionDivider className="-mt-2 md:-mt-4" />
@@ -258,17 +260,22 @@ export default async function Home({
       {/* Footer */}
       <Footer
         lang={(spRaw?.lang?.toLowerCase() as "jp" | "zh" | "en" | "zh-cn") || contentLang}
+        company={footerCompany}
+        contact={footerContact}
+        primaryLinks={primaryLinks}
+        secondaryLinks={secondaryLinks}
       />
     </main>
   );
 }
 
-/** News Section 藍色主題：視覺維持不變 改成吃 props.items */
+/** 混合 News & Column 的首頁列表 */
 function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
+  // 標題多語直接寫在程式
   const t = {
-    jp: { title: "NEWS", sub: "当社のプレスリリースなど", cta: "一覧はこちら" },
-    zh: { title: "NEWS", sub: "公司新聞與公告", cta: "查看更多" },
-    en: { title: "NEWS", sub: "Press releases and updates", cta: "See all" },
+    jp: { title: "ニュースとコラム", sub: "最新のニュースと実務コラムをまとめてお届けします。", cta: "すべて見る" },
+    zh: { title: "新聞與專欄", sub: "最新新聞與深度專欄一次掌握。", cta: "查看全部" },
+    en: { title: "News & Column", sub: "Latest updates and columns in one place.", cta: "See all" },
   }[lang];
 
   return (
@@ -277,9 +284,14 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
           {/* 左側標題與按鈕 */}
           <div className="md:col-span-1">
-            <h2 className="text-5xl md:text-6xl font-extrabold tracking-wide text-white drop-shadow-sm">
-              {t.title}
-            </h2>
+<h2
+  className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-wide text-white drop-shadow-sm leading-snug"
+  style={{ wordBreak: "keep-all" }}
+>
+  {lang === "en" ? "News &\u00A0Column" : t.title}
+</h2>
+
+
             <p className="mt-4 text-lg text-blue-100">{t.sub}</p>
 
             <div className="mt-8">
@@ -292,7 +304,7 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
             </div>
           </div>
 
-          {/* 右側文章列表 */}
+          {/* 右側混合列表 */}
           <div className="md:col-span-2">
             <ul className="divide-y divide-white/20">
               {items.map((a, i) => (
@@ -302,14 +314,12 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
                       {formatDateDeterministic(lang, a.dateISO)}
                     </time>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      {a.badge ? (
-                        <span className="inline-flex items-center rounded-full border border-blue-200/40 bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-100">
-                          {a.badge}
-                        </span>
-                      ) : null}
-                    </div>
+                    {/* 小分類：News / Column（多語） */}
+                    <span className="inline-flex items-center rounded-full border border-blue-200/40 bg-blue-900/30 px-3 py-1 text-xs font-semibold text-blue-100">
+                      {a.channelLabel}
+                    </span>
 
+                    {/* Hashtags */}
                     {a.hashtags && a.hashtags.length > 0 && (
                       <div className="w-full md:w-auto md:ml-auto text-xs text-blue-200">
                         {a.hashtags.map((h, idx) => (
@@ -329,7 +339,7 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
                 </li>
               ))}
 
-              {/* 若沒有資料 仍維持版位不動視覺 */}
+              {/* 若沒有資料 */}
               {items.length === 0 && (
                 <li className="py-6">
                   <h3 className="mt-3 text-[15px] md:text-base leading-relaxed text-blue-100">
@@ -337,7 +347,7 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
                       ? "記事は準備中です。まもなく公開します。"
                       : lang === "zh"
                       ? "內容準備中，敬請期待。"
-                      : "No news yet. Coming soon."}
+                      : "No posts yet. Coming soon."}
                   </h3>
                 </li>
               )}

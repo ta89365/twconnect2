@@ -15,7 +15,8 @@ import {
   Circle,
 } from "lucide-react";
 
-type Lang = "jp" | "zh" | "en";
+type Lang = "jp" | "zh" | "zh-cn" | "en";
+
 type ChallengeItem = {
   _id: string;
   order?: number | null;
@@ -71,34 +72,64 @@ function ChallengeIcon({ item }: { item: ChallengeItem }) {
   );
 }
 
+/** 內建多語字串（不走 Sanity） */
+function resolveCopy(lang: Lang) {
+  // ✅ 若為 zh-cn 視為 zh（繁體中文）
+  const key: "jp" | "zh" | "en" = lang === "zh-cn" ? "zh" : (lang as any);
+
+  const dict = {
+    jp: {
+      heading: "台湾進出で、こんな課題はありませんか？",
+      sub: "解決策を提示する前に、まずよくある本当の課題を整理しましょう。",
+      ribbonTitle: "Taiwan Connect が解決します",
+      ribbonSub: "グローバル展開を、もっとスムーズに。",
+      cta: "お問い合わせ",
+    },
+    zh: {
+      heading: "常見的五大挑戰",
+      sub: "在提出解決方案之前，我們先整理企業最常面臨的真實問題。",
+      ribbonTitle: "Taiwan Connect 為你解決",
+      ribbonSub: "讓跨境布局，更順暢。",
+      cta: "看我們怎麼解決",
+    },
+    en: {
+      heading: "Five Common Challenges",
+      sub: "Before proposing solutions, let's first organize the real challenges businesses often face.",
+      ribbonTitle: "Taiwan Connect Solves It",
+      ribbonSub: "Make global expansion smoother.",
+      cta: "See How We Solve It",
+    },
+  } as const;
+
+  return dict[key];
+}
+
 export default async function ChallengesSection({
   lang = "jp",
-  heading = "よくある5つの課題",
-  sub = "解決策を提示する前に、まずよくある本当の課題を整理しましょう。"
+  heading,
+  sub,
 }: {
   lang?: Lang;
   heading?: string;
   sub?: string;
 }) {
-  const items = await sfetch<ChallengeItem[]>(challengesQueryML, { lang });
+  const copy = resolveCopy(lang);
+  const items = await sfetch<ChallengeItem[]>(challengesQueryML, { lang: lang === "zh-cn" ? "zh" : lang });
   if (!items?.length) return null;
 
   const list = items.slice(0, 5);
   const head = list.slice(0, 3);
   const tail = list.slice(3);
 
-  const CTA_TEXT =
-    lang === "jp" ? "詳しく見る" : lang === "zh" ? "看我們怎麼解決" : "See How We Solve It";
-
   return (
     <section className="relative bg-[#1C3D5A] py-16 sm:py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-4">
         <header className="mb-8 sm:mb-10 md:mb-12 text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow">
-            {heading}
+            {heading ?? copy.heading}
           </h2>
           <p className="mt-3 text-base sm:text-lg md:text-xl text-slate-300">
-            {sub}
+            {sub ?? copy.sub}
           </p>
         </header>
 
@@ -168,21 +199,26 @@ export default async function ChallengesSection({
           </div>
         </div>
 
-        {/* CTA ribbon */}
+        {/* CTA ribbon（改為品牌藍按鈕樣式） */}
         <div className="mt-8 sm:mt-10 md:mt-14">
           <div className="w-fit mx-auto flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 text-white backdrop-blur sm:flex-row sm:px-8 sm:py-5">
             <div className="text-center sm:text-left">
-              <div className="font-semibold whitespace-nowrap">Taiwan Connect が解決します</div>
-              <div className="text-slate-200 whitespace-nowrap">グローバル展開を、もっとスムーズに。</div>
+              <div className="font-semibold whitespace-nowrap">{copy.ribbonTitle}</div>
+              <div className="text-slate-200 whitespace-nowrap">{copy.ribbonSub}</div>
             </div>
 
-            {/* 用原生 <a>，避免 Server/Client 混用導致的 TS 紅字 */}
-            <a
-              href={`/client-challenges?lang=${lang}`}
-              className="inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold text-white shadow hover:opacity-90 bg-gradient-to-r from-blue-500 to-blue-600 whitespace-nowrap"
-            >
-              {CTA_TEXT}
-            </a>
+            {/* ✅ 改成指定底色 + Hover 效果 */}
+<a
+  href={`/client-challenges?lang=${lang}`}
+  className="
+    inline-flex items-center justify-center rounded-full
+    px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200
+    text-white bg-[#4A90E2] hover:bg-[#5AA2F0] whitespace-nowrap
+  "
+>
+  {copy.cta}
+</a>
+
           </div>
         </div>
       </div>

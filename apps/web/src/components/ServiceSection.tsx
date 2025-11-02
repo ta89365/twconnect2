@@ -1,5 +1,10 @@
+// apps/web/src/app/components/ServiceSection.tsx
 "use client";
+
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+
+type Lang = "jp" | "zh" | "zh-cn" | "en";
 
 export type ServiceItem = {
   _id: string;
@@ -10,18 +15,62 @@ export type ServiceItem = {
   desc?: string | null;
 };
 
+/* 將 URL 的 ?lang 正規化；簡體一律視為繁體 zh */
+function normalizeLang(input?: string | null): Exclude<Lang, "zh-cn"> {
+  const k = String(input ?? "").trim().toLowerCase();
+  if (k === "zh-cn" || k === "zh_cn" || k === "zh-hans" || k === "hans" || k === "cn") return "zh";
+  if (k === "zh" || k === "zh-hant" || k === "zh_tw" || k === "zh-tw" || k === "tw" || k === "hant") return "zh";
+  if (k === "en" || k === "en-us" || k === "en_us") return "en";
+  if (k === "jp" || k === "ja" || k === "ja-jp") return "jp";
+  return "jp";
+}
+
+/** 內建多語（不走 Sanity）。 */
+function resolveCopy(lang: Exclude<Lang, "zh-cn">) {
+  const dict = {
+    jp: {
+      heading: "サービス内容",
+      subheading: "― 専門アドバイザリーチームが台湾進出や国際ビジネス展開の第一歩を支援 ―",
+      cta: "詳細を見る",
+    },
+    zh: {
+      heading: "服務內容",
+      subheading: "— 專業顧問團隊支援您邁出進軍臺灣與國際業務拓展的第一步 —",
+      cta: "查看詳情",
+    },
+    en: {
+      heading: "Services",
+      subheading: "— Our advisory team supports your first steps into Taiwan and global expansion —",
+      cta: "Learn More",
+    },
+  } as const;
+
+  return dict[lang];
+}
+
 export default function ServiceSection({
   items,
-  heading = "サービス内容",
-  subheading = "― 専門アドバイザリーチームが台湾進出の第一歩を支援 ―",
-  ctaText = "詳細を見る",
+  lang, // 可選；若未傳，將以 URL ?lang 為主
+  heading,
+  subheading,
+  ctaText,
 }: {
   items: ServiceItem[];
+  lang?: Lang;
+  /** 傳入則覆蓋內建多語 */
   heading?: string;
+  /** 傳入則覆蓋內建多語 */
   subheading?: string;
+  /** 傳入則覆蓋內建多語 */
   ctaText?: string;
 }) {
   if (!items?.length) return null;
+
+  // ✅ 以 URL ?lang 優先，其次使用 props.lang，最後預設 jp
+  const sp = useSearchParams();
+  const urlLang = normalizeLang(sp?.get("lang"));
+  const effectiveLang = normalizeLang(lang ?? urlLang);
+  const copy = resolveCopy(effectiveLang);
 
   return (
     <section className="relative overflow-hidden bg-[#1C3D5A] py-16 sm:py-20">
@@ -33,14 +82,16 @@ export default function ServiceSection({
       <div className="relative mx-auto max-w-7xl px-4">
         <div className="mb-10 text-center sm:mb-12">
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            {heading}
+            {heading ?? copy.heading}
           </h2>
-          <p className="mt-3 text-sm text-slate-200 sm:text-base">{subheading}</p>
+          <p className="mt-3 text-sm text-slate-200 sm:text-base">
+            {subheading ?? copy.subheading}
+          </p>
         </div>
 
         {/* Cards */}
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((it, idx) => (
+          {items.map((it) => (
             <a
               key={it._id}
               href={it.href || "#"}
@@ -61,13 +112,6 @@ export default function ServiceSection({
                 <div className="aspect-[16/9] w-full bg-slate-700" />
               )}
 
-              {/* index badge */}
-              <div className="absolute left-3 top-3">
-                <div className="rounded-xl bg-blue-500/90 px-2.5 py-1 text-xs font-bold text-white shadow">
-                  {String((it.order ?? idx + 1)).padStart(2, "0")}
-                </div>
-              </div>
-
               {/* body */}
               <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
                 <h3 className="text-base font-semibold leading-snug text-white">
@@ -80,9 +124,14 @@ export default function ServiceSection({
                 {/* CTA */}
                 <div className="mt-4">
                   <span
-                    className="inline-flex items-center justify-center rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-semibold text-white shadow transition-colors duration-200 hover:bg-[#3B82F6]"
+                    className="
+                      inline-flex items-center justify-center rounded-xl
+                      px-4 py-2 text-sm font-semibold shadow
+                      transition-colors duration-200
+                      text-[#FFFFFF] bg-[#4A90E2] hover:bg-[#5AA2F0]
+                    "
                   >
-                    {ctaText}
+                    {ctaText ?? copy.cta}
                   </span>
                 </div>
               </div>

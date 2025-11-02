@@ -1,3 +1,4 @@
+// apps/web/src/components/hero-banner.tsx
 import Image from "next/image";
 
 type HeroData = {
@@ -17,7 +18,7 @@ type Tune = {
   heroLeftPadRem: { base: number; md: number; lg: number };
   heroMaxWidth: string;
   heroObjectPos: string;
-  heroObjectPosY?: string; // ★ 新增：背景上下位置控制
+  heroObjectPosY?: string;
   headingSizes: string;
   subTextSize: string;
   textColorClass: string;
@@ -42,12 +43,10 @@ export default function HeroBanner({
   navHeight?: number;
   tune: Tune;
 }) {
-  // 背景構圖位置：允許自訂上下
   const objectPosition = tune.heroObjectPosY
     ? `${tune.heroObjectPos} ${tune.heroObjectPosY}`
     : tune.heroObjectPos;
 
-  // 預設位移
   const defaults: Required<Required<Tune>["blockOffsets"]> = {
     heading: { xRem: 0, yRem: 0 },
     subheading: { xRem: 0, yRem: 0 },
@@ -68,7 +67,6 @@ export default function HeroBanner({
     transform: `translate(${o?.xRem ?? 0}rem, ${o?.yRem ?? 0}rem)`,
   });
 
-  /** subtitle：第一個句號後換行 */
   const renderSubtitle = (t?: string) => {
     if (!t) return null;
     const m = t.match(/[。．\.!?？！]/);
@@ -90,6 +88,10 @@ export default function HeroBanner({
     );
   };
 
+  // ===== 文字陰影設定 =====
+  const SHADOW = { color: "rgba(0,0,0,0.65)", blur: 10 };
+  const textShadow = `0 2px ${SHADOW.blur}px ${SHADOW.color}`;
+
   return (
     <section
       className="relative z-0 w-full overflow-hidden bg-black"
@@ -103,13 +105,11 @@ export default function HeroBanner({
           fill
           priority
           sizes="100vw"
-          style={{
-            objectFit: "cover",
-            objectPosition: objectPosition,
-          }}
+          style={{ objectFit: "cover", objectPosition }}
         />
       )}
 
+      {/* 內容層 */}
       <div className="absolute inset-0 z-20">
         <div
           className="mx-auto h-full flex items-center pr-4"
@@ -122,54 +122,59 @@ export default function HeroBanner({
           }}
         >
           <div className="w-full md:max-w-[75rem] lg:max-w-[85rem] text-white">
-            {/* 主標 */}
+            {/* 主標題 */}
             {data?.heading && (
               <div style={move(blocks.heading)}>
                 <h1
-                  className="font-extrabold leading-[1.05] text-white tracking-normal md:whitespace-nowrap"
-                  style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)" }}
+                  className="font-extrabold leading-[1.05] tracking-normal md:whitespace-nowrap"
+                  style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)", textShadow }}
                 >
                   {data.heading}
                 </h1>
               </div>
             )}
 
-            {/* 副標（粗體 90% 白） */}
+            {/* 副標題 */}
             {data?.subheading && (
               <div style={move(blocks.subheading)}>
                 <p
-                  className="mt-4 text-white/90 font-semibold"
-                  style={{ fontSize: "clamp(1rem, 1.6vw, 1.25rem)" }}
+                  className="mt-4 font-semibold"
+                  style={{
+                    fontSize: "clamp(1rem, 1.6vw, 1.25rem)",
+                    opacity: 0.95,
+                    textShadow,
+                  }}
                 >
                   {data.subheading}
                 </p>
               </div>
             )}
 
-            {/* subtitle（再粗一點） */}
+            {/* subtitle */}
             {data?.subtitle && (
               <div style={move(blocks.subtitle)}>
-                <p className="mt-3 max-w-[70rem] text-white/90 font-semibold text-sm md:text-base leading-snug">
+                <p
+                  className="mt-3 max-w-[70rem] font-semibold text-sm md:text-base leading-snug"
+                  style={{ opacity: 0.9, textShadow }}
+                >
                   <span className="whitespace-pre-wrap">{renderSubtitle(data.subtitle)}</span>
                 </p>
               </div>
             )}
 
-            {/* CTA */}
+            {/* CTA：放大約 1.5 倍 + hover 變色 */}
             {data?.ctaText && data?.ctaHref && (
               <div style={move(blocks.cta)}>
                 <a
                   href={data.ctaHref}
-                  className="
-                    mt-8 inline-flex h-11 min-w-[220px]
-                    items-center justify-center
-                    rounded-md px-6 text-center
-                    font-semibold leading-none text-white
-                    shadow-lg hover:shadow-xl
-                    ring-1 ring-white/20 hover:ring-white/30
-                    transition
-                  "
-                  style={{ backgroundColor: "#1C3D5A" }}
+                  className="mt-8 inline-flex items-center justify-center rounded-xl text-center font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:bg-[#2a5882]"
+                  style={{
+                    fontSize: "1.125rem", // 原本約 1rem，放大 1.5 倍
+                    minWidth: "260px",
+                    height: "4.2rem",
+                    padding: "0 2rem",
+                    backgroundColor: "#1C3D5A",
+                  }}
                 >
                   {data.ctaText}
                 </a>

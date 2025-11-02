@@ -1,4 +1,4 @@
-// apps/web/src/components/ContactSection.tsx
+// apps/web/src/components/ContactSection.tsx 
 "use client";
 
 import { useState } from "react";
@@ -37,7 +37,6 @@ export default function ContactSection({
     setErr("");
 
     const fd = new FormData(e.currentTarget);
-    // 簡單的 honeypot 防垃圾
     if ((fd.get("website") as string)?.length > 0) {
       setStatus("done");
       return;
@@ -82,7 +81,14 @@ export default function ContactSection({
               href={lineHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-[#2563EB] hover:bg-[#3B82F6] px-6 py-3 font-medium"
+              className="inline-flex items-center justify-center rounded-lg px-6 py-3 font-medium text-white transition-colors"
+              style={{ backgroundColor: "#4A90E2" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2";
+              }}
             >
               {btnLabel[lang].line}
             </a>
@@ -90,7 +96,14 @@ export default function ContactSection({
           {mailHref && (
             <a
               href={mailHref}
-              className="inline-flex items-center justify-center rounded-lg bg-[#2563EB] hover:bg-[#3B82F6] px-6 py-3 font-medium"
+              className="inline-flex items-center justify-center rounded-lg px-6 py-3 font-medium text-white transition-colors"
+              style={{ backgroundColor: "#4A90E2" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2";
+              }}
             >
               {btnLabel[lang].mail}
             </a>
@@ -121,7 +134,6 @@ export default function ContactSection({
               onSubmit={onSubmit}
               className="rounded-2xl bg-white p-6 shadow text-gray-900 space-y-4"
             >
-              {/* 必填 */}
               <input name="name" required placeholder="お名前 / Name ★" className="w-full rounded border p-3" />
               <input name="email" type="email" required placeholder="メールアドレス / Email ★" className="w-full rounded border p-3" />
               <select name="topic" required className="w-full rounded border p-3">
@@ -134,7 +146,6 @@ export default function ContactSection({
               </select>
               <textarea name="message" required placeholder="ご相談内容 / Message ★" rows={4} className="w-full rounded border p-3" />
 
-              {/* 任意 */}
               <input name="company" placeholder="所属会社 / Company" className="w-full rounded border p-3" />
               <input name="phone" placeholder="電話番号 / Phone" className="w-full rounded border p-3" />
               <select name="language" className="w-full rounded border p-3">
@@ -144,13 +155,19 @@ export default function ContactSection({
                 <option>English</option>
               </select>
 
-              {/* honeypot: 隱藏欄位，真用戶不會填 */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="w-full rounded-lg bg-[#2563EB] hover:bg-[#3B82F6] py-3 text-white font-medium"
+                className="w-full rounded-lg py-3 font-medium text-white transition-colors"
+                style={{ backgroundColor: "#4A90E2" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#5AA2F0";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#4A90E2";
+                }}
               >
                 {status === "sending" ? "Sending..." : btnLabel[lang].submit}
               </button>
@@ -159,7 +176,6 @@ export default function ContactSection({
                 <p className="text-sm text-red-600">{err}</p>
               )}
 
-              {/* footer copy */}
               <p className="pt-2 text-xs text-gray-500">
                 {lang === "jp" && "※ 相談は無料です。費用が発生する場合は、必ず事前にお見積りをご提示します。"}
                 {lang === "zh" && "※ 諮詢免費，如需收費服務，將先行提供報價並徵得同意。"}

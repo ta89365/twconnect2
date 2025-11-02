@@ -5,7 +5,6 @@ import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Lang = "zh" | "zh-cn" | "jp" | "en";
-type CC = "TW" | "CN" | "JP" | "US";
 
 function normalizeLang(input?: string | null): Lang {
   const k = String(input ?? "").trim().toLowerCase();
@@ -17,53 +16,10 @@ function normalizeLang(input?: string | null): Lang {
 }
 
 type Props = {
-  current?: Lang;        // 可傳可不傳；會以 URL 為準
-  offsetY?: number;      // rem
-  offsetRight?: number;  // rem
+  current?: Lang;     // 父層可傳目前內容語言，但僅在 URL 無 lang 時才使用
+  offsetY?: number;   // rem
+  offsetRight?: number; // rem
 };
-
-type FlagCC = CC;
-function FlagSVG({ cc }: { cc: FlagCC }) {
-  if (cc === "JP") {
-    return (
-      <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
-        <rect width="16" height="12" fill="#fff" />
-        <circle cx="8" cy="6" r="3.5" fill="#bc002d" />
-      </svg>
-    );
-  }
-  if (cc === "US") {
-    return (
-      <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
-        <rect width="16" height="12" fill="#b22234" />
-        <g fill="#fff">
-          <rect y="2" width="16" height="1" />
-          <rect y="4" width="16" height="1" />
-          <rect y="6" width="16" height="1" />
-          <rect y="8" width="16" height="1" />
-          <rect y="10" width="16" height="1" />
-        </g>
-        <rect width="7" height="5" fill="#3c3b6e" />
-      </svg>
-    );
-  }
-  if (cc === "CN") {
-    return (
-      <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
-        <rect width="16" height="12" fill="#de2910" />
-        <circle cx="3" cy="3" r="1.2" fill="#ffde00" />
-      </svg>
-    );
-  }
-  // TW
-  return (
-    <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
-      <rect width="16" height="12" fill="#fe0000" />
-      <rect width="7" height="5.5" fill="#000095" />
-      <circle cx="3.5" cy="2.75" r="1.5" fill="#fff" />
-    </svg>
-  );
-}
 
 export default function LanguageSwitcher({
   current,
@@ -74,30 +30,47 @@ export default function LanguageSwitcher({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // 以 URL 為準，沒有就參考傳入的 current，最後預設 jp
-  const urlLang = normalizeLang(searchParams?.get("lang"));
-  const activeLang = normalizeLang(current ?? urlLang);
+  // ===== 可調透明度參數 =====
+  const BRAND_BLUE_RGB = "28,61,90"; // #1C3D5A
+  const OP = {
+    bg: 0.14,
+    border: 0.30,
+    active: 0.26,
+    divider: 0.22,
+    text: 0.98,
+    dot: 0.95,
+  };
+
+  // ✅ 以「URL 的 lang」為最高優先，只有沒有時才用 props.current
+  const rawUrlLang = searchParams?.get("lang");
+  const activeLang = normalizeLang(rawUrlLang ?? current);
 
   const items = useMemo(
     () => [
-      { key: "zh" as Lang,    cc: "TW" as CC, label: "繁體中文" },
-      { key: "zh-cn" as Lang, cc: "CN" as CC, label: "简体中文" },
-      { key: "jp" as Lang,    cc: "JP" as CC, label: "日本語" },
-      { key: "en" as Lang,    cc: "US" as CC, label: "English" },
+      { key: "zh" as Lang, label: "繁體中文" },
+      { key: "zh-cn" as Lang, label: "简体中文" },
+      { key: "jp" as Lang, label: "日本語" },
+      { key: "en" as Lang, label: "English" },
     ],
     []
   );
 
   const setLang = (lang: Lang) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
-    params.set("lang", lang); // ✅ 只改 URL 的 lang，停留在當前頁面
+    params.set("lang", lang); // 只改 URL 的 lang，停留在當前頁
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
     <div
-      className="fixed z-[80] flex flex-col overflow-hidden rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 shadow-lg text-[13px] text-white select-none"
-      style={{ top: `${offsetY}rem`, right: `${offsetRight}rem` }}
+      className="fixed z-[80] flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none"
+      style={{
+        top: `${offsetY}rem`,
+        right: `${offsetRight}rem`,
+        backgroundColor: `rgba(255,255,255,1)`,
+        border: `1px solid rgba(255,255,255,${OP.border})`,
+        color: `rgba(${BRAND_BLUE_RGB},${OP.text})`,
+      }}
       role="group"
       aria-label="Language switcher"
     >
@@ -109,17 +82,26 @@ export default function LanguageSwitcher({
             type="button"
             onClick={() => setLang(it.key)}
             aria-pressed={active}
-            className={[
-              "flex items-center gap-3 px-3 py-2 w-40 text-left transition-colors outline-none",
-              idx !== items.length - 1 ? "border-b border-white/25" : "",
-              active ? "bg-white/30 font-semibold" : "hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/60",
-            ].join(" ")}
+            className="relative flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap outline-none"
+            style={{
+              backgroundColor: active ? `rgba(255,255,255,${OP.active})` : undefined,
+            }}
           >
-            <span className="w-4 h-3.5 flex items-center justify-center">
-              <FlagSVG cc={it.cc} />
-            </span>
-            <span className="w-6 text-[11px] uppercase opacity-80">{it.cc}</span>
-            <span className="text-white">{it.label}</span>
+            <span className="truncate">{it.label}</span>
+            <span
+              aria-hidden="true"
+              className="ml-1 h-2 w-2 rounded-full"
+              style={{
+                backgroundColor: active ? `rgba(${BRAND_BLUE_RGB},${OP.dot})` : "transparent",
+              }}
+            />
+            {idx !== items.length - 1 && (
+              <span
+                aria-hidden
+                className="absolute left-0 right-0"
+                style={{ bottom: -0.5, height: 1, backgroundColor: `rgba(255,255,255,${OP.divider})` }}
+              />
+            )}
           </button>
         );
       })}

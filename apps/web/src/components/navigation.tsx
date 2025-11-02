@@ -24,6 +24,9 @@ function isValidSrc(s?: string | null) {
 
 export default function Navigation({ lang = "jp", items = [], brand }: NavigationProps) {
   const displayName = brand?.name?.trim() || "Taiwan Connect";
+  // 日文時固定顯示「株式会社台湾コネクト」，其餘語言不變
+  const brandNameForLang = lang === "jp" ? "株式会社台湾コネクト" : displayName;
+
   const rawLogo = brand?.logoUrl?.trim() || "";
   const logoSrc = isValidSrc(rawLogo) ? rawLogo : "/logo.png";
 
@@ -50,13 +53,13 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
             <div className="h-9 w-9 rounded-lg bg-white/10 ring-1 ring-white/20 overflow-hidden flex items-center justify-center">
               <Image
                 src={logoSrc}
-                alt={displayName}
+                alt={brandNameForLang}
                 width={36}
                 height={36}
                 className="h-7 w-7 object-contain"
               />
             </div>
-            <span className="text-white font-semibold text-base">{displayName}</span>
+            <span className="text-white font-semibold text-base">{brandNameForLang}</span>
           </Link>
 
           {/* 導覽項目群 */}

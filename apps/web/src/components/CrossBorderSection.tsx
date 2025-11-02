@@ -1,3 +1,4 @@
+// apps/web/src/components/CrossBorderSection.tsx
 import Image from "next/image";
 import Link from "next/link";
 import { urlFor } from "@/lib/sanity.image";
@@ -66,30 +67,26 @@ export default function CrossBorderSection({
           />
         )}
 
-        {/* overlays 先渲染 */}
         <div className="absolute inset-0 bg-[#1C3D5A]/70 mix-blend-multiply" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/70" />
 
-        {/* ★ 弧線光軌（放在 overlays 之後，才不會被蓋住） */}
+        {/* ★ 弧線光軌 */}
         <svg
           className="absolute inset-0 w-full h-full opacity-60 pointer-events-none mix-blend-screen"
           viewBox="0 0 1440 900"
           aria-hidden="true"
         >
           <defs>
-            {/* 端點光芒：柔和藍色放射 */}
             <radialGradient id="cbGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"  stopColor="hsl(210 100% 85%)" stopOpacity="1" />
+              <stop offset="0%" stopColor="hsl(210 100% 85%)" stopOpacity="1" />
               <stop offset="40%" stopColor="hsl(210 100% 70%)" stopOpacity=".85" />
               <stop offset="100%" stopColor="hsl(210 100% 65%)" stopOpacity="0" />
             </radialGradient>
-            {/* 輕微高斯模糊讓光更柔 */}
             <filter id="cbBlur" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
             </filter>
           </defs>
 
-          {/* ── 弧線 1：中位弧（較粗）── */}
           <path
             className="cb-arc cb-arc--thick animate-cb-dash"
             vectorEffect="non-scaling-stroke"
@@ -101,7 +98,6 @@ export default function CrossBorderSection({
             }
             d="M 115 850 C 500 740, 760 660, 1180 580"
           />
-          {/* 端點光芒（弧線 1 的終點：對應上方 path 的最後座標 1180,580） */}
           <g
             filter="url(#cbBlur)"
             className="animate-cb-glow"
@@ -110,7 +106,6 @@ export default function CrossBorderSection({
             <circle cx="1180" cy="580" r="22" fill="url(#cbGlow)" />
           </g>
 
-          {/* ── 弧線 2：低位弧（靠近天際線）── */}
           <path
             className="cb-arc animate-cb-dash"
             vectorEffect="non-scaling-stroke"
@@ -122,7 +117,6 @@ export default function CrossBorderSection({
             }
             d="M 1320 160 C 1150 220, 960 500, 120 550"
           />
-          {/* 端點光芒（弧線 2 的終點：對應上方 path 的最後座標 120,550） */}
           <g
             filter="url(#cbBlur)"
             className="animate-cb-glow"
@@ -174,11 +168,14 @@ export default function CrossBorderSection({
           </p>
         )}
 
+        {/* ===== CTA 按鈕（更新顏色） ===== */}
         {data?.ctaText && data?.ctaHref && (
           <div className="mt-10" style={posStyle("cta")}>
             <Link
               href={data.ctaHref}
-              className="inline-block rounded-xl border border-white/15 bg-blue-600 px-6 py-3 text-white font-semibold shadow-md hover:bg-blue-500 focus:outline-none focus:ring-4 focus:ring-white/30 transition-colors duration-200"
+              className="inline-block rounded-xl px-6 py-3 font-semibold text-white shadow-md
+                         bg-[#4A90E2] hover:bg-[#5AA2F0]
+                         focus:outline-none focus:ring-4 focus:ring-[#5AA2F0]/40 transition-colors duration-200"
             >
               {data.ctaText}
             </Link>

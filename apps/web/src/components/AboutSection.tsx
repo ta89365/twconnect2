@@ -113,12 +113,15 @@ export default function AboutSection({ data }: { data: AboutData | null }) {
           </div>
         )}
 
-        {/* CTA 按鈕 */}
+        {/* CTA 按鈕（依要求更新顏色） */}
         {(ctaText || ctaHref) && (
           <div className="mt-8">
             <Link
               href={ctaHref || "#"}
-              className="inline-flex items-center rounded-xl bg-blue-600 px-5 py-3 text-white text-sm sm:text-base font-medium hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+              className="inline-flex items-center rounded-xl px-5 py-3 text-sm sm:text-base font-medium transition
+                         text-white
+                         bg-[#4A90E2] hover:bg-[#5AA2F0]
+                         focus:outline-none focus:ring-2 focus:ring-[#5AA2F0] focus:ring-offset-2 focus:ring-offset-[#1C3D5A]"
             >
               {ctaText || "Learn more"}
             </Link>
