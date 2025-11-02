@@ -8,6 +8,7 @@ import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import { PortableText } from "@portabletext/react";
 import React from "react";
+import type { JSX } from "react";               // ✅ 修正重點：加入 JSX 型別
 import type { TypedObject } from "@portabletext/types";
 
 export const dynamic = "force-dynamic";
