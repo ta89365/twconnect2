@@ -1,72 +1,5 @@
-// apps/cms/schemaTypes/companyOverviewSingleton.ts
-import { defineType, defineField } from "sanity";
-
-/** Simple Portable Text */
-const simpleBlock = defineType({
-  name: "simpleBlock",
-  title: "Company Mission & Profile",
-  type: "array",
-  of: [
-    {
-      type: "block",
-      styles: [{ title: "Normal", value: "normal" }],
-      lists: [],
-      marks: {
-        decorators: [
-          { title: "Strong", value: "strong" },
-          { title: "Emphasis", value: "em" },
-        ],
-        annotations: [
-          {
-            name: "link",
-            type: "object",
-            title: "Link",
-            fields: [
-              { name: "href", type: "url", title: "URL" },
-              { name: "blank", type: "boolean", title: "Open in new tab?" },
-            ],
-          },
-        ],
-      },
-    },
-  ],
-});
-
-/** Localized String */
-const localeString = defineType({
-  name: "localeString",
-  title: "Localized String",
-  type: "object",
-  fields: [
-    defineField({ name: "jp", type: "string", title: "Japanese" }),
-    defineField({ name: "zh", type: "string", title: "Chinese" }),
-    defineField({ name: "en", type: "string", title: "English" }),
-  ],
-});
-
-/** Localized Block */
-const localeBlock = defineType({
-  name: "localeBlock",
-  title: "Localized Block",
-  type: "object",
-  fields: [
-    defineField({ name: "jp", type: "simpleBlock", title: "Japanese" }),
-    defineField({ name: "zh", type: "simpleBlock", title: "Chinese" }),
-    defineField({ name: "en", type: "simpleBlock", title: "English" }),
-  ],
-});
-
-/** Localized String Array */
-const localeStringArray = defineType({
-  name: "localeStringArray",
-  title: "Localized String Array",
-  type: "object",
-  fields: [
-    defineField({ name: "jp", type: "array", title: "Japanese", of: [{ type: "string" }] }),
-    defineField({ name: "zh", type: "array", title: "Chinese", of: [{ type: "string" }] }),
-    defineField({ name: "en", type: "array", title: "English", of: [{ type: "string" }] }),
-  ],
-});
+// File: apps/cms/schemaTypes/companyOverviewSingleton.ts
+import { defineType, defineField } from "sanity"
 
 /** Value Item */
 const valueItem = defineType({
@@ -89,7 +22,7 @@ const valueItem = defineType({
     }),
     defineField({
       name: "title",
-      type: "localeString",
+      type: "localeString", // ← 使用共用型別
       title: "Title (localized)",
       validation: (r) => r.required(),
     }),
@@ -106,7 +39,7 @@ const valueItem = defineType({
       validation: (r) => r.required(),
     }),
   ],
-});
+})
 
 /** Founder Profile */
 const founderProfile = defineType({
@@ -132,7 +65,7 @@ const founderProfile = defineType({
       title: "Photo",
       type: "image",
       options: { hotspot: true },
-      fields: [{ name: "alt", type: "string", title: "Alt Text" }], // ❌ no longer required
+      fields: [{ name: "alt", type: "string", title: "Alt Text" }],
     }),
     defineField({
       name: "credentials",
@@ -144,7 +77,7 @@ const founderProfile = defineType({
     defineField({
       name: "bioLong",
       title: "Biography Long (localized)",
-      type: "localeBlock",
+      type: "localeBlock", // ← 使用共用型別
       validation: (r) => r.required(),
     }),
     defineField({
@@ -164,7 +97,7 @@ const founderProfile = defineType({
       ],
     }),
   ],
-});
+})
 
 const companyOverviewSingleton = defineType({
   name: "companyOverviewSingleton",
@@ -215,7 +148,7 @@ const companyOverviewSingleton = defineType({
       type: "image",
       options: { hotspot: true },
       fields: [
-        defineField({ name: "alt", type: "string", title: "Alt Text" }), // ❌ optional now
+        defineField({ name: "alt", type: "string", title: "Alt Text" }),
       ],
       description: "Hero/banner image at the top of the overview page.",
       validation: (r) => r.required(),
@@ -242,7 +175,7 @@ const companyOverviewSingleton = defineType({
 
     // ===== Founder / Co-Founder =====
     defineField({ name: "founder", title: "About the Founder", type: "founderProfile", validation: (r) => r.required() }),
-    defineField({ name: "coFounder", title: "Co-Founder", type: "founderProfile" }), // ✅ not required
+    defineField({ name: "coFounder", title: "Co-Founder", type: "founderProfile" }),
 
     // ===== Representative Message =====
     defineField({ name: "repMessageLong", title: "Representative Message (Long, localized)", type: "localeBlock", validation: (r) => r.required() }),
@@ -309,18 +242,15 @@ const companyOverviewSingleton = defineType({
   preview: {
     select: { media: "logo" },
     prepare({ media }) {
-      return { title: "Company Overview", media };
+      return { title: "Company Overview", media }
     },
   },
-});
+})
 
-export default companyOverviewSingleton;
+export default companyOverviewSingleton
 
+// 只匯出本檔自有子型別，避免把共用 locale* 再次註冊
 export const companyOverviewTypes = [
-  simpleBlock,
-  localeString,
-  localeBlock,
-  localeStringArray,
   valueItem,
   founderProfile,
-];
+]
