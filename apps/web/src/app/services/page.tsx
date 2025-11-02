@@ -20,7 +20,7 @@ type SanityServiceCard = {
   title: string;
   excerpt?: string | null;
   coverImage?: { url?: string | null } | null;
-  href?: string | null; // 舊欄位
+  href?: string | null;
   order?: number;
 };
 
@@ -33,10 +33,9 @@ function lastPathSegment(href?: string | null) {
   return segs[segs.length - 1];
 }
 
-// Sanity canonical slug（或舊 href 最末段） → 站內實際路由段
 const ROUTE_ALIASES: Record<string, string> = {
   "taiwan-market-entry-support": "TaiwanService",
-  "market-entry": "TaiwanService", // ← 已加引號
+  "market-entry": "TaiwanService",
   "visa-residency-support": "visa-residency",
   "overseas-residence-relocation-support": "overseasRelocation",
   "financial-accounting-advisory": "finance-advisory",
@@ -45,7 +44,6 @@ const ROUTE_ALIASES: Record<string, string> = {
 export const revalidate = 60;
 
 export default async function ServicesPage({
-  // Next 15 之後 searchParams 需 await
   searchParams,
 }: {
   searchParams: Promise<{ lang?: string | string[] }>;
@@ -63,7 +61,6 @@ export default async function ServicesPage({
     ctaText: { jp: "詳細を見る", zh: "詳細資訊", en: "Learn more" },
   };
 
-  // 取資料並加上預設空陣列，避免 null/undefined 導致 map 崩潰
   const rows =
     (await sfetch<SanityServiceCard[]>(servicesLandingByLang, { lang })) ?? [];
 
@@ -75,30 +72,23 @@ export default async function ServicesPage({
       base === "#"
         ? (console.error("[Services] 卡片缺少 slug 與 href：", r), "#")
         : `${base}?lang=${lang}`;
-
-    return {
-      ...(r as any),
-      href,
-    };
+    return { ...(r as any), href };
   });
 
   return (
     <div className="min-h-screen bg-[#1C3D5A] text-white">
-      {/** @ts-expect-error Async Server Component */}
-      <NavigationServer lang={lang} />
+      {/* async server components 用 await 呼叫 */}
+      {await NavigationServer({ lang })}
 
       <main className="mx-auto max-w-[1200px] px-4 py-12">
         <h1 className="text-3xl font-semibold">{t.heading[lang]}</h1>
         <p className="mt-2 opacity-80">{t.subheading[lang]}</p>
-
-        {/* 把服務卡片實際渲染出來 */}
         <div className="mt-8">
           <ServiceSection items={items} ctaText={t.ctaText[lang]} />
         </div>
       </main>
 
-      {/** @ts-expect-error Async Server Component */}
-      <FooterServer lang={lang} />
+      {await FooterServer({ lang })}
     </div>
   );
 }
