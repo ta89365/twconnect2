@@ -8,6 +8,7 @@ import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import { sfetch } from "@/lib/sanity/fetch";
 import { cnInvestmentWhitelistQuery, type WhitelistDoc } from "@/lib/queries/cnInvestmentWhitelist";
+import type { JSX } from "react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -94,6 +95,10 @@ function Title({ children }: { children: React.ReactNode }) {
   return <h2 className="text-2xl md:text-3xl font-semibold mb-3">{children}</h2>;
 }
 
+/* 用型別斷言包裝 async Server Component，取代 @ts-expect-error */
+const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
+const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
+
 /* ============================ Page ============================ */
 export default async function Page() {
   const doc = (await sfetch(cnInvestmentWhitelistQuery)) as WhitelistDoc | null;
@@ -104,8 +109,7 @@ export default async function Page() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE, color: "#fff" }}>
       {/* 導覽列 */}
-      {/** @ts-expect-error Async Server Component */}
-      <NavigationServer lang="zh" />
+      <Nav lang="zh" />
 
       {/* Hero */}
       <div
@@ -130,11 +134,7 @@ export default async function Page() {
               blurDataURL={hero?.lqip}
               priority
             />
-            <div
-              className="absolute inset-0"
-              style={{ background: HERO_OVERLAY }}
-              aria-hidden
-            />
+            <div className="absolute inset-0" style={{ background: HERO_OVERLAY }} aria-hidden />
           </div>
         )}
         <div className="relative mx-auto flex h-full max-w-[1100px] flex-col justify-end px-5 py-16 md:px-6">
@@ -142,9 +142,7 @@ export default async function Page() {
             {doc?.heroTitleZhCn ?? "陆资来台投资「正面表列」指南"}
           </h1>
           {doc?.heroSubtitleZhCn && (
-            <p className="mt-3 max-w-3xl text-base md:text-lg opacity-90">
-              {doc.heroSubtitleZhCn}
-            </p>
+            <p className="mt-3 max-w-3xl text-base md:text-lg opacity-90">{doc.heroSubtitleZhCn}</p>
           )}
         </div>
       </div>
@@ -269,7 +267,12 @@ export default async function Page() {
                 {doc?.contact?.lineUrl && (
                   <p>
                     LINE：
-                    <a className="underline hover:opacity-80" href={doc.contact.lineUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className="underline hover:opacity-80"
+                      href={doc.contact.lineUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       前往加好友
                     </a>
                   </p>
@@ -290,7 +293,12 @@ export default async function Page() {
                 {doc.meta?.sourceUrl && (
                   <div>
                     参考：
-                    <a className="underline hover:opacity-80" href={doc.meta.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className="underline hover:opacity-80"
+                      href={doc.meta.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       官方资料
                     </a>
                   </div>
@@ -309,8 +317,7 @@ export default async function Page() {
       </main>
 
       {/* Footer */}
-      {/** @ts-expect-error Async Server Component */}
-      <FooterServer lang="zh" />
+      <Footer lang="zh" />
     </div>
   );
 }
