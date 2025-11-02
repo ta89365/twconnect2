@@ -1,337 +1,171 @@
 // File: apps/web/src/app/cn-investment-whitelist/page.tsx
-// CN Investment Whitelist (ZH-CN) — 全頁品牌藍背景
 
+import React from "react";
+import type { JSX } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { PortableText, type PortableTextComponents } from "@portabletext/react";
+import { notFound } from "next/navigation";
+import { PortableText } from "@portabletext/react";
+import type { TypedObject } from "@portabletext/types";
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import { sfetch } from "@/lib/sanity/fetch";
-import { cnInvestmentWhitelistQuery, type WhitelistDoc } from "@/lib/queries/cnInvestmentWhitelist";
-import type { JSX } from "react";
+import { cnInvestmentWhitelistQuery } from "@/lib/queries/cnInvestmentWhitelist.groq";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
-/* ============================ 視覺設定 ============================ */
 const BRAND_BLUE = "#1C3D5A";
-const CONTENT_MAX_W = "1100px";
-const CARD_BG = "rgba(255,255,255,0.10)";
-const CARD_BORDER = "rgba(255,255,255,0.18)";
-const HERO_MIN_H = "56vh";
-const HERO_OVERLAY =
-  "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.30) 100%)";
+const CONTENT_MAX_W = "900px";
 
-/* ============================ PortableText 樣式 ============================ */
-const ptComponents: PortableTextComponents = {
-  block: {
-    normal: ({ children }) => <p className="leading-7 whitespace-pre-wrap">{children}</p>,
-    h2: ({ children }) => <h2 className="mt-8 mb-3 text-2xl font-semibold">{children}</h2>,
-    h3: ({ children }) => <h3 className="mt-6 mb-2 text-xl font-semibold">{children}</h3>,
-    blockquote: ({ children }) => (
-      <blockquote className="border-l-4 pl-4 italic opacity-90">{children}</blockquote>
-    ),
-  },
-  list: {
-    bullet: ({ children }) => <ul className="list-disc pl-6 space-y-1">{children}</ul>,
-    number: ({ children }) => <ol className="list-decimal pl-6 space-y-1">{children}</ol>,
-  },
-  marks: {
-    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-    em: ({ children }) => <em className="italic">{children}</em>,
-    code: ({ children }) => (
-      <code className="rounded bg-black/30 px-1 py-0.5 text-sm">{children}</code>
-    ),
-    link: ({ value, children }) => {
-      const href = (value as any)?.href as string | undefined;
-      const openInNewTab = Boolean((value as any)?.openInNewTab ?? true);
-      if (!href) return <>{children}</>;
-      return (
-        <a
-          href={href}
-          target={openInNewTab ? "_blank" : undefined}
-          rel={openInNewTab ? "noopener noreferrer" : undefined}
-          className="underline hover:opacity-80"
-        >
-          {children}
-        </a>
-      );
-    },
-  },
-  types: {
-    image: ({ value }) => {
-      const url = (value as any)?.asset?._ref ? undefined : (value as any)?.url;
-      const alt = (value as any)?.alt || "";
-      if (!url) return null;
-      return (
-        <div className="my-4 overflow-hidden rounded-xl border border-white/10">
-          {/* 若需要完整 hotspot/crop，可改用 @sanity/image-url */}
-          {/* 這裡先用原始 URL，維持簡潔 */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt={alt} className="w-full h-auto" />
-        </div>
-      );
-    },
-  },
-};
+/* ============================ Types ============================ */
+type PT = TypedObject[];
 
-/* ============================ 小工具 ============================ */
-function SectionCard({ children }: { children: React.ReactNode }) {
-  return (
-    <section
-      className="rounded-2xl p-6 md:p-8"
-      style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
-    >
-      {children}
-    </section>
-  );
+interface Category {
+  key?: string;
+  titleZhCn?: string;
+  introZhCn?: PT;
+  policyItems?: {
+    titleZhCn?: string;
+    bodyZhCn?: PT;
+  }[];
 }
 
-function Kicker({ children }: { children: React.ReactNode }) {
-  return <div className="mb-2 text-sm tracking-widest opacity-80">{children}</div>;
+interface WhitelistDoc {
+  _id: string;
+  slug?: string;
+  heroTitleZhCn?: string;
+  heroSubtitleZhCn?: string;
+  heroImage?: {
+    url?: string;
+    alt?: string;
+    lqip?: string;
+    dimensions?: { width: number; height: number; aspectRatio: number };
+  };
+  introZhCn?: PT;
+  policyBackgroundZhCn?: PT;
+  categories?: Category[];
+  contact?: {
+    email?: string;
+    lineId?: string;
+    contactNoteZhCn?: PT;
+  };
 }
 
-function Title({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl md:text-3xl font-semibold mb-3">{children}</h2>;
-}
-
-/* 用型別斷言包裝 async Server Component，取代 @ts-expect-error */
+/* ============================ Components ============================ */
+// 包裝 Server Component 避免 TS2786
 const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 
 /* ============================ Page ============================ */
 export default async function Page() {
-  const doc = (await sfetch(cnInvestmentWhitelistQuery)) as WhitelistDoc | null;
+  const data = (await sfetch(cnInvestmentWhitelistQuery)) as WhitelistDoc | null;
+  if (!data) notFound();
 
-  const hero = doc?.heroImage;
-  const hasHero = Boolean(hero?.url);
+  const doc = data;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE, color: "#fff" }}>
-      {/* 導覽列 */}
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: BRAND_BLUE }}>
       <Nav lang="zh" />
 
-      {/* Hero */}
-      <div
-        className="relative w-full"
-        style={{
-          minHeight: HERO_MIN_H,
-          background:
-            hasHero && hero?.url
-              ? undefined
-              : `linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.00) 100%)`,
-        }}
-      >
-        {hasHero && (
-          <div className="absolute inset-0">
-            <Image
-              src={hero!.url!}
-              alt={hero?.alt ?? ""}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              placeholder={hero?.lqip ? "blur" : "empty"}
-              blurDataURL={hero?.lqip}
-              priority
-            />
-            <div className="absolute inset-0" style={{ background: HERO_OVERLAY }} aria-hidden />
-          </div>
+      {/* Hero Section */}
+      <section className="relative w-full min-h-[60vh] flex flex-col justify-center items-center text-center text-white px-6">
+        {doc.heroImage?.url && (
+          <Image
+            src={doc.heroImage.url}
+            alt={doc.heroImage.alt || "陆资白名单指南"}
+            fill
+            className="object-cover opacity-30"
+            priority
+            sizes="100vw"
+          />
         )}
-        <div className="relative mx-auto flex h-full max-w-[1100px] flex-col justify-end px-5 py-16 md:px-6">
-          <h1 className="text-3xl md:text-5xl font-bold drop-shadow-sm">
-            {doc?.heroTitleZhCn ?? "陆资来台投资「正面表列」指南"}
-          </h1>
-          {doc?.heroSubtitleZhCn && (
-            <p className="mt-3 max-w-3xl text-base md:text-lg opacity-90">{doc.heroSubtitleZhCn}</p>
+        <div className="relative z-10 max-w-3xl">
+          <h1 className="text-4xl font-bold mb-3">{doc.heroTitleZhCn}</h1>
+          {doc.heroSubtitleZhCn && (
+            <p className="text-lg opacity-90">{doc.heroSubtitleZhCn}</p>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* 內容 */}
-      <main className="mx-auto w-full max-w-[1100px] px-5 md:px-6 py-10 md:py-14 space-y-8 md:space-y-10">
-        {/* Intro */}
-        {doc?.introZhCn?.length ? (
-          <SectionCard>
-            <Kicker>导读</Kicker>
-            <PortableText value={doc.introZhCn} components={ptComponents} />
-          </SectionCard>
-        ) : null}
+      {/* Main Content */}
+      <main className="flex-grow text-white px-6 py-12 flex justify-center">
+        <div className="w-full space-y-12 leading-relaxed" style={{ maxWidth: CONTENT_MAX_W }}>
+          {doc.introZhCn && (
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">一、白名单制度简介</h2>
+              <PortableText value={doc.introZhCn} />
+            </section>
+          )}
 
-        {/* Policy Background */}
-        {doc?.policyBackgroundZhCn?.length ? (
-          <SectionCard>
-            <Kicker>制度背景</Kicker>
-            <PortableText value={doc.policyBackgroundZhCn} components={ptComponents} />
-          </SectionCard>
-        ) : null}
+          {doc.policyBackgroundZhCn && (
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">二、政策背景</h2>
+              <PortableText value={doc.policyBackgroundZhCn} />
+            </section>
+          )}
 
-        {/* Categories */}
-        {doc?.categories?.length ? (
-          <SectionCard>
-            <Kicker>开放类别</Kicker>
-            <div className="space-y-6">
-              {doc.categories!.map((c, idx) => (
-                <div key={`${c.key ?? "cat"}-${idx}`} className="rounded-xl border border-white/15 p-5 md:p-6">
-                  <h3 className="text-xl md:text-2xl font-semibold">
-                    {c.titleZhCn ?? labelFromKey(c.key)}
-                  </h3>
-                  {c.introZhCn?.length ? (
-                    <div className="mt-2">
-                      <PortableText value={c.introZhCn} components={ptComponents} />
-                    </div>
-                  ) : null}
-                  {c.allowedExamplesZhCn?.length ? (
-                    <div className="mt-3">
-                      <div className="text-sm opacity-80 mb-1">允许项目举例</div>
-                      <ul className="list-disc pl-6 space-y-1">
-                        {c.allowedExamplesZhCn!.map((t, i) => (
-                          <li key={i}>{t}</li>
+          {Array.isArray(doc.categories) && doc.categories.length > 0 && (
+            <section>
+              <h2 className="text-2xl font-semibold mb-4">三、适用类别与政策要点</h2>
+              <div className="space-y-10">
+                {doc.categories.map((cat, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl bg-white/10 border border-white/15 p-6"
+                  >
+                    <h3 className="text-xl font-semibold mb-3">
+                      {cat.titleZhCn ?? `类别 ${i + 1}`}
+                    </h3>
+                    {cat.introZhCn && (
+                      <div className="mb-4">
+                        <PortableText value={cat.introZhCn} />
+                      </div>
+                    )}
+                    {Array.isArray(cat.policyItems) && cat.policyItems.length > 0 && (
+                      <div className="space-y-4">
+                        {cat.policyItems.map((item, j) => (
+                          <div key={j}>
+                            {item.titleZhCn && (
+                              <h4 className="font-semibold mb-1">{item.titleZhCn}</h4>
+                            )}
+                            {item.bodyZhCn && <PortableText value={item.bodyZhCn} />}
+                          </div>
                         ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  {c.restrictionsZhCn?.length ? (
-                    <div className="mt-3">
-                      <div className="text-sm opacity-80 mb-1">限制与注意</div>
-                      <PortableText value={c.restrictionsZhCn} components={ptComponents} />
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {/* Review Focus */}
-        {doc?.reviewFocus?.length ? (
-          <SectionCard>
-            <Kicker>审查重点</Kicker>
-            <div className="space-y-5">
-              {doc.reviewFocus!.map((f, i) => (
-                <div key={`focus-${f.order ?? i}`} className="rounded-lg border border-white/15 p-5">
-                  <div className="mb-1 text-sm opacity-80">重点 #{f.order ?? i + 1}</div>
-                  <h3 className="text-xl font-semibold">{f.titleZhCn ?? "审查项目"}</h3>
-                  {f.bodyZhCn?.length ? (
-                    <div className="mt-2">
-                      <PortableText value={f.bodyZhCn} components={ptComponents} />
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {/* Pitfalls */}
-        {doc?.pitfalls?.length ? (
-          <SectionCard>
-            <Kicker>常见误区与建议</Kicker>
-            <div className="space-y-5">
-              {doc.pitfalls!.map((p, i) => (
-                <div key={`pit-${i}`} className="rounded-lg border border-white/15 p-5">
-                  <h3 className="text-lg md:text-xl font-semibold">{p.titleZhCn ?? "常见误区"}</h3>
-                  {p.adviceZhCn?.length ? (
-                    <div className="mt-2">
-                      <PortableText value={p.adviceZhCn} components={ptComponents} />
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {/* Summary */}
-        {doc?.summaryZhCn?.length ? (
-          <SectionCard>
-            <Kicker>总结与建议</Kicker>
-            <PortableText value={doc.summaryZhCn} components={ptComponents} />
-          </SectionCard>
-        ) : null}
-
-        {/* Contact */}
-        {(doc?.contact?.email || doc?.contact?.lineId || doc?.contact?.lineUrl || doc?.contact?.noteZhCn?.length) ? (
-          <SectionCard>
-            <Kicker>联系 Taiwan Connect</Kicker>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                {doc?.contact?.email && (
-                  <p>
-                    邮件：
-                    <a className="underline hover:opacity-80" href={`mailto:${doc.contact.email}`}>
-                      {doc.contact.email}
-                    </a>
-                  </p>
-                )}
-                {doc?.contact?.lineId && <p>LINE ID：{doc.contact.lineId}</p>}
-                {doc?.contact?.lineUrl && (
-                  <p>
-                    LINE：
-                    <a
-                      className="underline hover:opacity-80"
-                      href={doc.contact.lineUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      前往加好友
-                    </a>
-                  </p>
-                )}
-              </div>
-              {doc?.contact?.noteZhCn?.length ? (
-                <div>
-                  <PortableText value={doc.contact.noteZhCn} components={ptComponents} />
-                </div>
-              ) : null}
-            </div>
-            {/* Meta: 更新時間與來源 */}
-            {(doc?.meta?.updatedAt || doc?.meta?.sourceUrl) && (
-              <div className="mt-6 border-t border-white/10 pt-4 text-sm opacity-80">
-                {doc.meta?.updatedAt && (
-                  <div>更新：{new Date(doc.meta.updatedAt).toLocaleDateString("zh-CN")}</div>
-                )}
-                {doc.meta?.sourceUrl && (
-                  <div>
-                    参考：
-                    <a
-                      className="underline hover:opacity-80"
-                      href={doc.meta.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      官方资料
-                    </a>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-            )}
-          </SectionCard>
-        ) : null}
+            </section>
+          )}
 
-        {/* 回到頂部 或 其他導覽 */}
-        <div className="flex justify-end">
-          <Link href="/" className="rounded-lg border border-white/20 px-4 py-2 hover:bg-white/10">
-            返回首页
-          </Link>
+          {doc.contact && (doc.contact.email || doc.contact.lineId || doc.contact.contactNoteZhCn) && (
+            <section className="border-t border-white/20 pt-8">
+              <h2 className="text-2xl font-semibold mb-4">📩 联系我们</h2>
+              {doc.contact.email && (
+                <p>
+                  Email：
+                  <a href={`mailto:${doc.contact.email}`} className="underline">
+                    {doc.contact.email}
+                  </a>
+                </p>
+              )}
+              {doc.contact.lineId && (
+                <p>
+                  LINE：<span className="font-mono">{doc.contact.lineId}</span>
+                </p>
+              )}
+              {doc.contact.contactNoteZhCn && (
+                <div className="mt-3">
+                  <PortableText value={doc.contact.contactNoteZhCn} />
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </main>
 
-      {/* Footer */}
       <Footer lang="zh" />
     </div>
   );
-}
-
-/* ============================ 輔助：分類 key 對應中文 ============================ */
-function labelFromKey(key?: string) {
-  switch (key) {
-    case "manufacturing":
-      return "制造业";
-    case "services":
-      return "服务业";
-    case "public_infrastructure":
-      return "公共建设";
-    default:
-      return "产业类别";
-  }
 }
