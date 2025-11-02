@@ -34,6 +34,7 @@ import { contactByLang } from "@/lib/queries/contact";
 import { newsEntranceByLang } from "@/lib/queries/news";
 
 import Link from "next/link";
+import type { JSX } from "react";
 
 type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
 type Lang = "jp" | "zh" | "en";
@@ -123,6 +124,10 @@ type HomeNewsItem = {
   badge?: string | null; // 類別名稱
   hashtags?: string[]; // tags 名稱陣列
 };
+
+/* 包裝 Server Components，避免使用 @ts-expect-error */
+const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
+const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 
 export default async function Home({
   searchParams,
@@ -216,8 +221,7 @@ export default async function Home({
   return (
     <main id="top" className="bg-background text-foreground">
       {/* 導覽列：僅導覽列支援 zh-cn 其餘內容用 contentLang */}
-      {/** @ts-expect-error Async Server Component */}
-      <NavigationServer lang={spRaw?.lang as string} />
+      <Nav lang={spRaw?.lang as string} />
 
       {/* 語言切換器：直接改 URL 參數 停留在當前頁面 */}
       <LanguageSwitcher
@@ -252,14 +256,12 @@ export default async function Home({
       <SectionDivider className="-mt-2 md:-mt-4" />
 
       {/* Footer */}
-      {/** @ts-expect-error Async Server Component */}
-      <FooterServer
+      <Footer
         lang={(spRaw?.lang?.toLowerCase() as "jp" | "zh" | "en" | "zh-cn") || contentLang}
       />
     </main>
   );
 }
-
 
 /** News Section 藍色主題：視覺維持不變 改成吃 props.items */
 function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
