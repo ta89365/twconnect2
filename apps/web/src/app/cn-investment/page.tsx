@@ -68,8 +68,8 @@ interface LandingDoc {
 }
 
 // Element type of `recommended` (handles optional array)
- type Topic = NonNullable<LandingDoc["recommended"]>[number];
- 
+type Topic = NonNullable<LandingDoc["recommended"]>[number];
+
 /* ============================ HELPERS ============================ */
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -84,13 +84,18 @@ function safeHref(item: Topic) {
   return item?.external ?? "#";
 }
 
+/* ===== 包裝 Server Components，避免使用 @ts-expect-error ===== */
+const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
+const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
+
 /* ============================ PAGE ============================ */
 export default async function Page({
   // Next 15 may pass searchParams as a Promise
   searchParams,
 }: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>> |
-    Record<string, string | string[] | undefined>;
+  searchParams?:
+    | Promise<Record<string, string | string[] | undefined>>
+    | Record<string, string | string[] | undefined>;
 }): Promise<JSX.Element> {
   // Ensure compliance with Next.js "sync dynamic APIs" warning
   // even if we do not use search params here
@@ -147,8 +152,7 @@ export default async function Page({
   return (
     <div style={{ backgroundColor: BRAND_BLUE }} className="min-h-screen text-white">
       {/* Nav */}
-      {/** @ts-expect-error Async Server Component */}
-      <NavigationServer />
+      <Nav />
 
       {/* Hero */}
       <section className="relative w-full" style={{ minHeight: TUNE.heroMinH }}>
@@ -161,12 +165,10 @@ export default async function Page({
             fill
             className="object-cover"
             priority
+            sizes="100vw"
           />
         ) : null}
-        <div
-          className="absolute inset-0"
-          style={{ background: TUNE.heroOverlay }}
-        />
+        <div className="absolute inset-0" style={{ background: TUNE.heroOverlay }} />
         <div className="relative mx-auto px-6 py-16" style={{ maxWidth: TUNE.contentMaxW }}>
           <h1 className="text-3xl md:text-5xl font-semibold leading-tight">
             {doc?.titleZh || "陆资企业进入台湾市场专区"}
@@ -184,14 +186,15 @@ export default async function Page({
             <PortableText value={doc.whyZh} />
           </div>
         ) : null}
-        {doc?.principleZh ? (
-          <p className="mt-6 text-lg font-medium">{doc.principleZh}</p>
-        ) : null}
+        {doc?.principleZh ? <p className="mt-6 text-lg font-medium">{doc.principleZh}</p> : null}
       </section>
 
       {/* Definition + Authorities */}
-      {(doc?.regulationDefinitionZh?.length || doc?.authorities?.length) ? (
-        <section className="mx-auto px-6 py-10 md:py-14 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+      {doc?.regulationDefinitionZh?.length || doc?.authorities?.length ? (
+        <section
+          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           {doc?.regulationDefinitionZh?.length ? (
             <div className="prose prose-invert max-w-none">
               <h2>陆资的定义与法规依据</h2>
@@ -222,22 +225,30 @@ export default async function Page({
 
       {/* Review Focus */}
       {doc?.reviewFocus?.length ? (
-        <section className="mx-auto px-6 py-10 md:py-14 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+        <section
+          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           <h2 className="text-2xl font-semibold mb-4">主要审查重点</h2>
           <ol className="grid md:grid-cols-2 gap-4">
-            {[...doc.reviewFocus].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((x, idx) => (
-              <li key={idx} className="rounded-2xl bg-white/5 p-4">
-                <p className="font-semibold mb-1">{x.titleZh}</p>
-                <p className="opacity-90 whitespace-pre-line">{x.bodyZh}</p>
-              </li>
-            ))}
+            {[...doc.reviewFocus]
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+              .map((x, idx) => (
+                <li key={idx} className="rounded-2xl bg-white/5 p-4">
+                  <p className="font-semibold mb-1">{x.titleZh}</p>
+                  <p className="opacity-90 whitespace-pre-line">{x.bodyZh}</p>
+                </li>
+              ))}
           </ol>
         </section>
       ) : null}
 
       {/* Doubts + CTA */}
-      {(doc?.doubtsZh?.length || doc?.contactFormHref) ? (
-        <section className="mx-auto px-6 py-10 md:py-14 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+      {doc?.doubtsZh?.length || doc?.contactFormHref ? (
+        <section
+          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           {doc?.doubtsZh?.length ? (
             <div className="prose prose-invert max-w-none">
               <h2>你是否也有以下疑问？</h2>
@@ -246,7 +257,10 @@ export default async function Page({
           ) : null}
           {doc?.contactFormHref ? (
             <div className="mt-6">
-              <Link href={doc.contactFormHref} className="inline-block rounded-full bg-white text-black px-5 py-2 text-sm font-semibold">
+              <Link
+                href={doc.contactFormHref}
+                className="inline-block rounded-full bg-white text-black px-5 py-2 text-sm font-semibold"
+              >
                 連到表單
               </Link>
             </div>
@@ -256,7 +270,10 @@ export default async function Page({
 
       {/* Process Steps + Timeline */}
       {doc?.processSteps?.length ? (
-        <section className="mx-auto px-6 py-10 md:py-14 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+        <section
+          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           <h2 className="text-2xl font-semibold mb-5">陆资投资与公司设立流程</h2>
           <ol className="space-y-4">
             {[...doc.processSteps]
@@ -279,8 +296,11 @@ export default async function Page({
       ) : null}
 
       {/* Advantages + Services + Team image */}
-      {(doc?.advantagesIntroZh?.length || doc?.serviceBulletsZh?.length || doc?.teamImage?.url) ? (
-        <section className="mx-auto px-6 py-10 md:py-14 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+      {doc?.advantagesIntroZh?.length || doc?.serviceBulletsZh?.length || doc?.teamImage?.url ? (
+        <section
+          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           {doc?.advantagesIntroZh?.length ? (
             <div className="prose prose-invert max-w-none">
               <h2>我们的优势</h2>
@@ -291,7 +311,9 @@ export default async function Page({
           {doc?.serviceBulletsZh?.length ? (
             <ul className="mt-6 grid md:grid-cols-2 gap-3">
               {doc.serviceBulletsZh.map((b, i) => (
-                <li key={i} className="rounded-xl bg-white/5 p-3">{b.textZh}</li>
+                <li key={i} className="rounded-xl bg-white/5 p-3">
+                  {b.textZh}
+                </li>
               ))}
             </ul>
           ) : null}
@@ -314,7 +336,10 @@ export default async function Page({
 
       {/* FAQ */}
       {doc?.faq?.length ? (
-        <section className="mx-auto px-6 py-10 md:py-14 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+        <section
+          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           <h2 className="text-2xl font-semibold mb-4">常见问题（Q&A）</h2>
           <div className="space-y-3">
             {doc.faq.map((f, i) => (
@@ -332,7 +357,10 @@ export default async function Page({
       ) : null}
 
       {/* ===================  FOUR TOPIC LINKS  =================== */}
-      <section className="mx-auto px-6 py-12 md:py-16 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+      <section
+        className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+        style={{ maxWidth: TUNE.contentMaxW }}
+      >
         <h2 className="text-2xl md:text-3xl font-semibold mb-6">推荐阅读｜Recommended Articles</h2>
         <div className="grid md:grid-cols-4 gap-4">
           {finalTopics.map((t, i) => (
@@ -367,12 +395,15 @@ export default async function Page({
       </section>
 
       {/* Contact */}
-      {(doc?.contactEmail || doc?.contactLine || doc?.bookingHref) ? (
-        <section className="mx-auto px-6 py-12 md:py-16 border-t border-white/10" style={{ maxWidth: TUNE.contentMaxW }}>
+      {doc?.contactEmail || doc?.contactLine || doc?.bookingHref ? (
+        <section
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
           <h2 className="text-2xl font-semibold mb-4">联系我们</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {doc?.contactEmail ? (
-              <div className="rounded-2xl bg-white/5 p-4">
+              <div className="rounded-2xl bg白/5 p-4">
                 <p className="text-sm opacity-80">Email</p>
                 <p className="font-semibold">{doc.contactEmail}</p>
               </div>
@@ -386,7 +417,10 @@ export default async function Page({
             {doc?.bookingHref ? (
               <div className="rounded-2xl bg-white/5 p-4">
                 <p className="text-sm opacity-80 mb-1">预约咨询</p>
-                <Link href={doc.bookingHref} className="inline-block rounded-full bg-white text-black px-5 py-2 text-sm font-semibold">
+                <Link
+                  href={doc.bookingHref}
+                  className="inline-block rounded-full bg白 text-black px-5 py-2 text-sm font-semibold"
+                >
                   立即预约 →
                 </Link>
               </div>
@@ -396,8 +430,7 @@ export default async function Page({
       ) : null}
 
       {/* Footer */}
-      {/** @ts-expect-error Async Server Component */}
-      <FooterServer />
+      <Footer />
     </div>
   );
 }
