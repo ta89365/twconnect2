@@ -7,7 +7,6 @@ import Link from "next/link";
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import { sfetch } from "@/lib/sanity/fetch";
-// 改成從 contactus.ts 取資料
 import { contactPageByLang } from "@/lib/queries/contactus";
 import { PortableText } from "@portabletext/react";
 
@@ -22,6 +21,23 @@ const CONTENT_MAX_W = "1100px";
 const HERO_MIN_H = "56vh";
 const HERO_OVERLAY =
   "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.30) 100%)";
+const HERO_OBJECT_POS = "50% 62%";
+
+/* ============================ 可調 Hero 位置 ============================ */
+const HERO_OFFSET = { x: 0, y: -20 };
+function parseObjectPos(p: string): { x: number; y: number } {
+  const [xs, ys] = p.split(/\s+/);
+  const x = Number(String(xs).replace("%", "")) || 50;
+  const y = Number(String(ys).replace("%", "")) || 50;
+  return { x, y };
+}
+function heroObjectPosition(): string {
+  const base = parseObjectPos(HERO_OBJECT_POS);
+  const x = Math.max(0, Math.min(100, base.x + HERO_OFFSET.x));
+  const y = Math.max(0, Math.min(100, base.y + HERO_OFFSET.y));
+  return `${x}% ${y}%`;
+}
+/* ========================================================================= */
 
 function resolveLang(sp?: { lang?: string | string[] } | null): Lang {
   let v = sp?.lang;
@@ -86,10 +102,10 @@ type ContactDoc = {
     summaryHint?: string;
     datetimeHint?: string;
     attachmentHint?: string;
-    consentText?: any[]; // Portable Text blocks
+    consentText?: any[];
   };
   success?: {
-    message?: any[]; // not used on page, but is PT blocks in schema
+    message?: any[];
     email?: { subject?: string; body?: any[] };
   };
   addresses?: { label?: string; address?: string; note?: string }[];
@@ -100,7 +116,6 @@ type ContactQueryResult = { doc?: ContactDoc };
 export default async function Page({
   searchParams,
 }: {
-  // ✅ App Router 直接給物件，不是 Promise
   searchParams: Promise<SearchParamsNow>;
 }) {
   const sp = (await searchParams) ?? {};
@@ -137,10 +152,39 @@ export default async function Page({
   const faqTopics = Array.isArray(doc.faqTopics) ? doc.faqTopics : [];
   const heroHasImage = !!hero?.image?.url;
 
+  // ===== 成功 / 失敗提示（讀取 ?submitted 與 ?error） =====
+  const submitted = Array.isArray(sp?.submitted) ? sp?.submitted[0] : sp?.submitted;
+  const errMsg = Array.isArray(sp?.error) ? sp?.error[0] : sp?.error;
+  const hasSubmitted = submitted === "1" || submitted === "0";
+  const isOk = submitted === "1";
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }}>
       <NavigationServer lang={lang} />
 
+      {/* 頁面訊息條 */}
+      {hasSubmitted && (
+        <div className={["mx-auto w-full px-4 pt-4", "transition-all duration-200"].join(" ")} style={{ maxWidth: CONTENT_MAX_W }}>
+          <div
+            className={[
+              "rounded-2xl px-4 py-3 text-sm",
+              isOk ? "bg-emerald-500/15 text-emerald-100 ring-1 ring-emerald-500/30"
+                   : "bg-red-500/15 text-red-100 ring-1 ring-red-500/30",
+            ].join(" ")}
+          >
+            {isOk ? (
+              <span>{labelByLang("Submitted successfully. Please check your mailbox.", lang)}</span>
+            ) : (
+              <span>
+                {labelByLang("Submission failed.", lang)}{" "}
+                {errMsg && <em className="opacity-80">({String(errMsg)})</em>}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* === Hero === */}
       <section
         className="relative w-full"
         style={{ minHeight: HERO_MIN_H, background: heroHasImage ? `#000` : BRAND_BLUE }}
@@ -153,44 +197,49 @@ export default async function Page({
               fill
               className="object-cover"
               priority
+              style={{ objectPosition: heroObjectPosition() }}
             />
             <div className="absolute inset-0" style={{ background: HERO_OVERLAY }} />
+            <div className="absolute inset-0 bg-black/30 md:bg-black/25" />
           </>
         )}
 
         <div
-          className="relative mx-auto h-full w-full px-4 py-16 text-white"
+          className="relative mx-auto flex h-full w-full items-center justify-center px-4 py-16 text-white"
           style={{ maxWidth: CONTENT_MAX_W }}
         >
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-            {hero?.title ?? "Contact"}
-          </h1>
-          {hero?.subtitle ? (
-            <p className="mt-4 max-w-3xl text-lg opacity-95">{hero.subtitle}</p>
-          ) : null}
+          <div className="w-full text-center">
+            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+              {hero?.title ?? "Contact"}
+            </h1>
 
-          {Array.isArray(hero?.ctas) && hero.ctas.length > 0 ? (
-            <div className="mt-8 flex flex-wrap gap-3">
-              {hero.ctas.map((c, i) => {
-                const href = c?.href || "#";
-                const label = c?.label || "";
-                const isPrimary = !!c?.recommended;
-                return (
-                  <CtaLink
-                    key={`${label}-${i}`}
-                    href={href}
-                    lang={lang}
-                    className={[
-                      "rounded-2xl px-5 py-2 text-sm font-medium",
-                      isPrimary ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20",
-                    ].join(" ")}
-                  >
-                    {label}
-                  </CtaLink>
-                );
-              })}
-            </div>
-          ) : null}
+            {hero?.subtitle ? (
+              <p className="mx-auto mt-4 max-w-3xl text-lg opacity-95">{hero.subtitle}</p>
+            ) : null}
+
+            {Array.isArray(hero?.ctas) && hero.ctas.length > 0 ? (
+              <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-3">
+                {hero.ctas.map((c, i) => {
+                  const href = c?.href || "#";
+                  const label = c?.label || "";
+                  const isPrimary = !!c?.recommended;
+                  return (
+                    <CtaLink
+                      key={`${label}-${i}`}
+                      href={href}
+                      lang={lang}
+                      className={[
+                        "rounded-2xl px-5 py-2 text-sm font-medium",
+                        isPrimary ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </CtaLink>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
         </div>
       </section>
 
@@ -237,10 +286,13 @@ export default async function Page({
           <h2 className="text-2xl font-semibold">{labelByLang("Contact form", lang)}</h2>
           <form
             className="mt-6 grid gap-4 rounded-2xl bg-white/5 p-6"
-            action={linkWithLang("/api/contact", lang)}
+            action={"/api/contact"}
             method="post"
             encType="multipart/form-data"
           >
+            {/* ✅ 提供 API 讀取語系 */}
+            <input type="hidden" name="lang" value={lang} />
+
             <div className="grid gap-4 md:grid-cols-2">
               <Field label={labelByLang("Your name", lang)} name="name" required />
               <Field label="Email" name="email" type="email" required />
@@ -251,10 +303,17 @@ export default async function Page({
             {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
               <div className="grid gap-2">
                 <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
-                <select name="subject" className="rounded-xl bg-white/10 px-3 py-2 outline-none" required>
-                  <option value="">{labelByLang("Please select", lang)}</option>
+                {/* 白底黑字避免受父層 text-white 影響 */}
+                <select
+                  name="subject"
+                  className="rounded-xl bg-white/90 px-3 py-2 outline-none text-black"
+                  required
+                >
+                  <option value="" className="text-black bg-white">
+                    {labelByLang("Please select", lang)}
+                  </option>
                   {form.subjectOptions.map((s, i) => (
-                    <option key={`sub-${i}`} value={s}>
+                    <option key={`sub-${i}`} value={s} className="text-black bg-white">
                       {s}
                     </option>
                   ))}
@@ -290,7 +349,7 @@ export default async function Page({
               <label className="text-sm opacity-90">{labelByLang("Preferred date and time", lang)}</label>
               <input
                 type="datetime-local"
-                name="preferredDatetime"
+                name="datetime"
                 className="rounded-xl bg-white/10 px-3 py-2 outline-none"
               />
               {form?.datetimeHint ? <p className="text-xs opacity-75">{form.datetimeHint}</p> : null}
@@ -300,7 +359,8 @@ export default async function Page({
               <label className="text-sm opacity-90">{labelByLang("Attachment", lang)}</label>
               <input
                 type="file"
-                name="attachment"
+                name="attachments"
+                multiple
                 className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-sm file:text-black"
               />
               {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
@@ -309,7 +369,7 @@ export default async function Page({
             {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
               <label className="mt-2 grid gap-2">
                 <div className="flex items-start gap-2">
-                  <input type="checkbox" name="consent" required className="mt-1" />
+                  <input type="checkbox" name="consent" value="yes" required className="mt-1" />
                   <div className="text-sm opacity-90">
                     <PortableText value={form.consentText} />
                   </div>
@@ -385,6 +445,13 @@ function labelByLang(key: string, lang: Lang): string {
     Attachment: { zh: "附件", jp: "添付ファイル", en: "Attachment" },
     Send: { zh: "送出", jp: "送信", en: "Send" },
     "View services": { zh: "查看服務", jp: "サービスを見る", en: "View Services" },
+    // 新增提示字串
+    "Submitted successfully. Please check your mailbox.": {
+      zh: "已成功送出，請留意您的信箱。",
+      jp: "送信しました。メールをご確認ください。",
+      en: "Submitted successfully. Please check your mailbox.",
+    },
+    "Submission failed.": { zh: "送出失敗。", jp: "送信に失敗しました。", en: "Submission failed." },
   };
   const found = dict[key];
   if (!found) return key;
