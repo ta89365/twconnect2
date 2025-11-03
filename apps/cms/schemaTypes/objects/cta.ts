@@ -1,39 +1,42 @@
-import { defineType, defineField } from 'sanity';
+import { defineType, defineField } from "sanity";
 
 export default defineType({
-  name: 'cta',
-  title: 'CTA',
-  type: 'object',
+  name: "cta",
+  title: "CTA",
+  type: "object",
   fields: [
     defineField({
-      name: 'label',
-      title: '按鈕文字',
-      type: 'mlText',
+      name: "label",
+      title: "Button Label",
+      type: "mlText",
+      description: "Text displayed on the button (supports multiple languages).",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'href',
-      title: '連結（可為內部或外部網址）',
-      type: 'string',
+      name: "href",
+      title: "Link (can be internal or external URL)",
+      type: "string",
+      description: "Enter either an internal path starting with '/' or a full external URL.",
       validation: (Rule) =>
         Rule.required().custom((value) => {
-          if (!value) return '必填';
-          // 允許 / 開頭的內部路徑或 http/https 完整網址
-          if (value.startsWith('/') || /^https?:\/\//.test(value)) return true;
-          return '請輸入以 / 開頭的內部路徑或完整網址';
+          if (!value) return "This field is required.";
+          // Allow internal path starting with '/' or full http/https URL
+          if (value.startsWith("/") || /^https?:\/\//.test(value)) return true;
+          return "Please enter a valid internal path starting with '/' or a full URL.";
         }),
     }),
     defineField({
-      name: 'external',
-      title: '在新分頁開啟',
-      type: 'boolean',
+      name: "external",
+      title: "Open in New Tab",
+      type: "boolean",
+      description: "If enabled, the link will open in a new browser tab.",
       initialValue: false,
     }),
   ],
   preview: {
-    select: { label: 'label.zh', href: 'href' },
+    select: { label: "label.zh", href: "href" },
     prepare: ({ label, href }) => ({
-      title: label || 'CTA',
+      title: label || "CTA",
       subtitle: href,
     }),
   },

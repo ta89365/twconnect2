@@ -3,7 +3,7 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "post",
-  title: "News & Articles",
+  title: "News & Columns",
   type: "document",
   fields: [
     // 內容頻道區分：news 或 column

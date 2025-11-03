@@ -1,30 +1,33 @@
 // File: apps/cms/schemaTypes/objects/contactAddress.ts
-import {defineType} from 'sanity'
+import { defineType } from "sanity"
 
 export default defineType({
-  name: 'contactAddress', // ← 物件型別名稱，請勿與 contactPage 重複
-  title: '公司地址',
-  type: 'object',
+  name: "contactAddress", // Object type name (must not duplicate with contactPage)
+  title: "Company Address",
+  type: "object",
   fields: [
     {
-      name: 'label',
-      title: '據點標籤',
-      type: 'localeString',
-      validation: Rule => Rule.required(),
+      name: "label",
+      title: "Location Label",
+      type: "localeString",
+      description: "Label or name for the office or branch location (e.g., Taipei Office, Tokyo Branch).",
+      validation: (Rule) => Rule.required(),
     },
     {
-      name: 'address',
-      title: '地址內容',
-      type: 'localeText',
-      validation: Rule => Rule.required(),
+      name: "address",
+      title: "Address Details",
+      type: "localeText",
+      description: "Full address information in each supported language.",
+      validation: (Rule) => Rule.required(),
     },
     {
-      name: 'note',
-      title: '備註',
-      type: 'localeString',
+      name: "note",
+      title: "Notes",
+      type: "localeString",
+      description: "Optional remarks such as floor, landmark, or additional directions.",
     },
   ],
   preview: {
-    select: {title: 'label.zh', subtitle: 'address.zh'},
+    select: { title: "label.zh", subtitle: "address.zh" },
   },
 })

@@ -7,35 +7,45 @@ const valueItem = defineType({
   title: "Value Item",
   type: "object",
   fields: [
-    defineField({ name: "order", type: "number", title: "Order", validation: (r) => r.required() }),
+    defineField({
+      name: "order",
+      type: "number",
+      title: "Order",
+      description: "Display order of this value item.",
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "key",
       type: "string",
       title: "Key (e.g., local-expertise, grow-with-clients)",
+      description: "Unique key used for reference or translation mapping.",
       validation: (r) => r.required(),
     }),
     defineField({
       name: "iconKey",
       type: "string",
-      title: "Icon Key (mapped to lucide/custom icon)",
+      title: "Icon Key (linked to Lucide/custom icons)",
       description: "Examples: building-2, handshake, globe-2.",
     }),
     defineField({
       name: "title",
-      type: "localeString", // ← 使用共用型別
+      type: "localeString",
       title: "Title (localized)",
+      description: "Value title for each supported language.",
       validation: (r) => r.required(),
     }),
     defineField({
       name: "descLong",
       type: "localeString",
-      title: "Description Long (localized)",
+      title: "Long Description (localized)",
+      description: "Detailed description for this value item.",
       validation: (r) => r.required(),
     }),
     defineField({
       name: "descShort",
       type: "localeString",
-      title: "Description Short (localized, used in 4-column icon section)",
+      title: "Short Description (localized, used in 4-column icon section)",
+      description: "A concise version of the value description displayed in the overview icon section.",
       validation: (r) => r.required(),
     }),
   ],
@@ -58,32 +68,35 @@ const founderProfile = defineType({
       name: "title",
       title: "Title (localized)",
       type: "localeString",
-      description: "Example: Representative Director / Managing Director.",
+      description: "Example: Representative Director or Managing Director.",
     }),
     defineField({
       name: "photo",
       title: "Photo",
       type: "image",
+      description: "Portrait photo of the founder.",
       options: { hotspot: true },
-      fields: [{ name: "alt", type: "string", title: "Alt Text" }],
+      fields: [{ name: "alt", type: "string", title: "Alt Text", description: "Alternative text for accessibility and SEO." }],
     }),
     defineField({
       name: "credentials",
-      title: "Credentials (free text, multiple)",
+      title: "Credentials (multiple entries allowed)",
       type: "array",
       of: [{ type: "string" }],
       description: "Example: USCPA, Taiwan CPA, Big4 audit, cross-border advisory.",
     }),
     defineField({
       name: "bioLong",
-      title: "Biography Long (localized)",
-      type: "localeBlock", // ← 使用共用型別
+      title: "Long Biography (localized)",
+      type: "localeBlock",
+      description: "Detailed introduction of the founder, used for the full profile section.",
       validation: (r) => r.required(),
     }),
     defineField({
       name: "bioShort",
-      title: "Biography Short (localized)",
+      title: "Short Biography (localized)",
       type: "localeString",
+      description: "Condensed version of the founder biography.",
       validation: (r) => r.required(),
     }),
     defineField({
@@ -99,6 +112,7 @@ const founderProfile = defineType({
   ],
 })
 
+/** Company Overview Singleton */
 const companyOverviewSingleton = defineType({
   name: "companyOverviewSingleton",
   title: "Company Overview",
@@ -109,22 +123,23 @@ const companyOverviewSingleton = defineType({
       name: "logo",
       title: "Logo",
       type: "image",
+      description: "Upload the company logo. The frontend may display it in the navigation or footer.",
       options: { hotspot: true },
       fields: [
         defineField({
           name: "alt",
           type: "string",
           title: "Alt Text",
+          description: "Alternative text for accessibility and SEO.",
           validation: (r) => r.min(2),
         }),
       ],
-      description: "Upload the brand logo. The frontend may use it in Navigation / Footer.",
       validation: (r) => r.required(),
     }),
     defineField({
       name: "logoText",
       type: "string",
-      title: "Logo Text (display name beside the logo)",
+      title: "Logo Text (display name beside logo)",
       description: "Example: Taiwan Connect Inc.",
       validation: (r) => r.required(),
     }),
@@ -134,13 +149,14 @@ const companyOverviewSingleton = defineType({
       name: "heading",
       title: "Heading (localized)",
       type: "localeString",
-      description: "Example: Mission and Company Profile.",
+      description: "Main heading text, such as 'Mission and Company Profile'.",
       validation: (r) => r.required(),
     }),
     defineField({
       name: "headingTaglines",
       title: "Heading Taglines (localized, multiple lines)",
       type: "localeStringArray",
+      description: "Multiple tagline lines displayed below the main heading.",
     }),
     defineField({
       name: "topImage",
@@ -148,44 +164,81 @@ const companyOverviewSingleton = defineType({
       type: "image",
       options: { hotspot: true },
       fields: [
-        defineField({ name: "alt", type: "string", title: "Alt Text" }),
+        defineField({ name: "alt", type: "string", title: "Alt Text", description: "Alternative text for accessibility and SEO." }),
       ],
-      description: "Hero/banner image at the top of the overview page.",
+      description: "Hero or banner image at the top of the company overview page.",
       validation: (r) => r.required(),
     }),
 
     // ===== Mission & Vision =====
-    defineField({ name: "mission", title: "Mission (localized)", type: "localeBlock", validation: (r) => r.required() }),
-    defineField({ name: "vision", title: "Vision (localized)", type: "localeBlock", validation: (r) => r.required() }),
+    defineField({
+      name: "mission",
+      title: "Mission (localized)",
+      type: "localeBlock",
+      description: "Company mission statement.",
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "vision",
+      title: "Vision (localized)",
+      type: "localeBlock",
+      description: "Company vision statement.",
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "visionShort",
-      title: "Vision Short Cards (localized, multiple lines per language)",
+      title: "Short Vision Cards (localized, multiple lines per language)",
       type: "localeStringArray",
-      description: "Used for card-style short lines; if empty, the frontend may fall back to the vision block.",
+      description: "Used for short card-style statements; if empty, the frontend may use the vision block as fallback.",
     }),
 
     // ===== Values =====
     defineField({
       name: "values",
-      title: "Values",
+      title: "Core Values",
       type: "array",
       of: [{ type: "valueItem" }],
+      description: "Key values that represent the company’s mission and principles.",
       validation: (r) => r.min(4).max(12),
     }),
 
     // ===== Founder / Co-Founder =====
-    defineField({ name: "founder", title: "About the Founder", type: "founderProfile", validation: (r) => r.required() }),
-    defineField({ name: "coFounder", title: "Co-Founder", type: "founderProfile" }),
+    defineField({
+      name: "founder",
+      title: "Founder Profile",
+      type: "founderProfile",
+      description: "Main founder profile information.",
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "coFounder",
+      title: "Co-Founder Profile",
+      type: "founderProfile",
+      description: "Optional co-founder profile information.",
+    }),
 
     // ===== Representative Message =====
-    defineField({ name: "repMessageLong", title: "Representative Message (Long, localized)", type: "localeBlock", validation: (r) => r.required() }),
-    defineField({ name: "repMessageShort", title: "Representative Message (Short, localized)", type: "localeString", validation: (r) => r.required() }),
+    defineField({
+      name: "repMessageLong",
+      title: "Representative Message (Long, localized)",
+      type: "localeBlock",
+      description: "Full message or greeting from the company representative.",
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "repMessageShort",
+      title: "Representative Message (Short, localized)",
+      type: "localeString",
+      description: "Brief version of the representative message used in summaries.",
+      validation: (r) => r.required(),
+    }),
 
     // ===== Company Info =====
     defineField({
       name: "companyInfo",
-      title: "Company Profile (localized)",
+      title: "Company Information (localized)",
       type: "object",
+      description: "Basic company information displayed per language.",
       fields: [
         defineField({
           name: "jp",
@@ -195,8 +248,8 @@ const companyOverviewSingleton = defineType({
             defineField({ name: "companyName", type: "string", title: "Company Name" }),
             defineField({ name: "representative", type: "string", title: "Representative" }),
             defineField({ name: "activities", type: "array", title: "Business Activities", of: [{ type: "string" }] }),
-            defineField({ name: "addressJapan", type: "string", title: "Address Japan" }),
-            defineField({ name: "addressTaiwan", type: "string", title: "Address Taiwan" }),
+            defineField({ name: "addressJapan", type: "string", title: "Address (Japan)" }),
+            defineField({ name: "addressTaiwan", type: "string", title: "Address (Taiwan)" }),
           ],
         }),
         defineField({
@@ -207,8 +260,8 @@ const companyOverviewSingleton = defineType({
             defineField({ name: "companyName", type: "string", title: "Company Name" }),
             defineField({ name: "representative", type: "string", title: "Representative" }),
             defineField({ name: "activities", type: "array", title: "Business Activities", of: [{ type: "string" }] }),
-            defineField({ name: "addressJapan", type: "string", title: "Address Japan" }),
-            defineField({ name: "addressTaiwan", type: "string", title: "Address Taiwan" }),
+            defineField({ name: "addressJapan", type: "string", title: "Address (Japan)" }),
+            defineField({ name: "addressTaiwan", type: "string", title: "Address (Taiwan)" }),
           ],
         }),
         defineField({
@@ -219,8 +272,8 @@ const companyOverviewSingleton = defineType({
             defineField({ name: "companyName", type: "string", title: "Company Name" }),
             defineField({ name: "representative", type: "string", title: "Representative" }),
             defineField({ name: "activities", type: "array", title: "Business Activities", of: [{ type: "string" }] }),
-            defineField({ name: "addressJapan", type: "string", title: "Address Japan" }),
-            defineField({ name: "addressTaiwan", type: "string", title: "Address Taiwan" }),
+            defineField({ name: "addressJapan", type: "string", title: "Address (Japan)" }),
+            defineField({ name: "addressTaiwan", type: "string", title: "Address (Taiwan)" }),
           ],
         }),
       ],
@@ -229,16 +282,24 @@ const companyOverviewSingleton = defineType({
     // ===== Contact CTA =====
     defineField({
       name: "contactCta",
-      title: "Contact CTA (localized)",
+      title: "Contact Call-to-Action (localized)",
       type: "object",
+      description: "Localized text and link settings for the contact call-to-action section.",
       fields: [
         defineField({ name: "heading", type: "localeString", title: "Heading" }),
         defineField({ name: "subtext", type: "localeString", title: "Subtext" }),
         defineField({ name: "buttonText", type: "localeString", title: "Button Text" }),
-        defineField({ name: "href", type: "string", title: "Link", description: "Example: /contact", initialValue: "/contact" }),
+        defineField({
+          name: "href",
+          type: "string",
+          title: "Link URL",
+          description: "Example: /contact",
+          initialValue: "/contact",
+        }),
       ],
     }),
   ],
+
   preview: {
     select: { media: "logo" },
     prepare({ media }) {
@@ -249,8 +310,5 @@ const companyOverviewSingleton = defineType({
 
 export default companyOverviewSingleton
 
-// 只匯出本檔自有子型別，避免把共用 locale* 再次註冊
-export const companyOverviewTypes = [
-  valueItem,
-  founderProfile,
-]
+// Export only locally defined subtypes to avoid duplicate registration
+export const companyOverviewTypes = [valueItem, founderProfile]

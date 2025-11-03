@@ -3,7 +3,7 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "newsSettings",
-  title: "News & Articles Settings",
+  title: "News Settings",
   type: "document",
   fields: [
     /* ✅ Hero Background Image */

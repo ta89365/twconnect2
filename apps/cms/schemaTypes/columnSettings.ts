@@ -12,32 +12,65 @@ export default defineType({
       title: "Hero Image",
       type: "image",
       description:
-        "Column 入口頁頂部背景圖。建議使用寬圖並啟用 Hotspot。",
+        "Background image for the top section of the Column landing page. It is recommended to use a wide image and enable the Hotspot option.",
       options: { hotspot: true },
       fields: [
         defineField({
           name: "alt",
           title: "Alt Text",
           type: "string",
-          description: "無障礙與 SEO 的替代文字。",
+          description: "Alternative text for accessibility and SEO purposes.",
         }),
       ],
     }),
 
     // Hero Texts
-    defineField({ name: "heroTitleJp", title: "Hero Title (Japanese)", type: "string" }),
-    defineField({ name: "heroTitleZh", title: "Hero Title (Chinese)", type: "string" }),
-    defineField({ name: "heroTitleEn", title: "Hero Title (English)", type: "string" }),
-    defineField({ name: "heroSubtitleJp", title: "Hero Subtitle (Japanese)", type: "text", rows: 3 }),
-    defineField({ name: "heroSubtitleZh", title: "Hero Subtitle (Chinese)", type: "text", rows: 3 }),
-    defineField({ name: "heroSubtitleEn", title: "Hero Subtitle (English)", type: "text", rows: 3 }),
+    defineField({
+      name: "heroTitleJp",
+      title: "Hero Title (Japanese)",
+      type: "string",
+      description: "Main title displayed in the hero section (Japanese).",
+    }),
+    defineField({
+      name: "heroTitleZh",
+      title: "Hero Title (Chinese)",
+      type: "string",
+      description: "Main title displayed in the hero section (Chinese).",
+    }),
+    defineField({
+      name: "heroTitleEn",
+      title: "Hero Title (English)",
+      type: "string",
+      description: "Main title displayed in the hero section (English).",
+    }),
+    defineField({
+      name: "heroSubtitleJp",
+      title: "Hero Subtitle (Japanese)",
+      type: "text",
+      rows: 3,
+      description: "Subtitle text displayed below the hero title (Japanese).",
+    }),
+    defineField({
+      name: "heroSubtitleZh",
+      title: "Hero Subtitle (Chinese)",
+      type: "text",
+      rows: 3,
+      description: "Subtitle text displayed below the hero title (Chinese).",
+    }),
+    defineField({
+      name: "heroSubtitleEn",
+      title: "Hero Subtitle (English)",
+      type: "text",
+      rows: 3,
+      description: "Subtitle text displayed below the hero title (English).",
+    }),
 
     // Listing Strategy
     defineField({
       name: "listStrategy",
       title: "Listing Strategy",
       type: "string",
-      description: "選擇入口清單的排序方式。",
+      description: "Choose how the post list on the entrance page should be sorted.",
       options: {
         list: [
           { title: "Newest", value: "newest" },
@@ -55,7 +88,7 @@ export default defineType({
       name: "manualOrder",
       title: "Manual Order",
       type: "array",
-      description: "當上方選 Manual 時，依此順序顯示文章。",
+      description: "When 'Manual order' is selected above, posts will be displayed in this order.",
       of: [{ type: "reference", to: [{ type: "post" }] }],
       hidden: ({ parent }) => parent?.listStrategy !== "manual",
     }),
@@ -65,16 +98,16 @@ export default defineType({
       name: "featuredPosts",
       title: "Featured Posts",
       type: "array",
-      description: "入口重點推薦文章清單。",
+      description: "Highlighted or recommended posts shown on the entrance page.",
       of: [{ type: "reference", to: [{ type: "post" }] }],
     }),
 
     // Quick Topics
     defineField({
       name: "quickTopics",
-      title: "Quick Topics Chips",
+      title: "Quick Topic Chips",
       type: "array",
-      description: "Hero 下方快速主題籤。",
+      description: "Quick topic tags displayed below the hero section.",
       of: [{ type: "reference", to: [{ type: "category" }] }],
     }),
   ],

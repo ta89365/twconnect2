@@ -3,7 +3,7 @@ import { defineType, defineField } from "sanity";
 
 export default defineType({
   name: "category",
-  title: "Article Categories",
+  title: "News & Columns Categories",
   type: "document",
   fields: [
     defineField({ name: "titleJp", title: "Title JP", type: "string", validation: r => r.required() }),
