@@ -13,13 +13,23 @@ export type AboutData = {
   logo?: {
     crop?: any;
     hotspot?: { x: number; y: number } | null;
-    asset?: { _id: string; url: string; mimeType?: string; metadata?: { dimensions?: { width: number; height: number } } } | null;
+    asset?: {
+      _id: string;
+      url: string;
+      mimeType?: string;
+      metadata?: { dimensions?: { width: number; height: number } };
+    } | null;
   } | null;
   bgUrl?: string | null;
   bgImage?: {
     crop?: any;
     hotspot?: { x: number; y: number } | null;
-    asset?: { _id: string; url: string; mimeType?: string; metadata?: { dimensions?: { width: number; height: number } } } | null;
+    asset?: {
+      _id: string;
+      url: string;
+      mimeType?: string;
+      metadata?: { dimensions?: { width: number; height: number } };
+    } | null;
   } | null;
   isActive?: boolean;
   order?: number;
@@ -38,7 +48,7 @@ function objectPositionFromHotspot(hotspot?: { x: number; y: number } | null) {
 export default function AboutSection({ data }: { data: AboutData | null }) {
   if (!data) return null;
 
-  const { title, sloganMain, sloganSub, intro, ctaText, ctaHref, logoUrl, bgUrl, bgImage } = data;
+  const { title, sloganMain, sloganSub, intro, ctaText, logoUrl, bgUrl, bgImage } = data;
 
   const bgPos = objectPositionFromHotspot(bgImage?.hotspot);
 
@@ -113,20 +123,18 @@ export default function AboutSection({ data }: { data: AboutData | null }) {
           </div>
         )}
 
-        {/* CTA 按鈕（依要求更新顏色） */}
-        {(ctaText || ctaHref) && (
-          <div className="mt-8">
-            <Link
-              href={ctaHref || "#"}
-              className="inline-flex items-center rounded-xl px-5 py-3 text-sm sm:text-base font-medium transition
-                         text-white
-                         bg-[#4A90E2] hover:bg-[#5AA2F0]
-                         focus:outline-none focus:ring-2 focus:ring-[#5AA2F0] focus:ring-offset-2 focus:ring-offset-[#1C3D5A]"
-            >
-              {ctaText || "Learn more"}
-            </Link>
-          </div>
-        )}
+        {/* CTA 按鈕（固定導向 /company） */}
+        <div className="mt-8">
+          <Link
+            href="/company"
+            className="inline-flex items-center rounded-xl px-5 py-3 text-sm sm:text-base font-medium transition
+                       text-white
+                       bg-[#4A90E2] hover:bg-[#5AA2F0]
+                       focus:outline-none focus:ring-2 focus:ring-[#5AA2F0] focus:ring-offset-2 focus:ring-offset-[#1C3D5A]"
+          >
+            {ctaText || "Learn more"}
+          </Link>
+        </div>
       </div>
     </section>
   );

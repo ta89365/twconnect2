@@ -24,8 +24,10 @@ export const revalidate = 60;
 const BRAND_BLUE = "#1C3D5A";
 const CONTENT_MAX_W = 1100;
 const HERO_MIN_H = "52vh";
+
+// 加深：頂部 22% 中段 36% 底部 62% 的黑色漸層
 const HERO_OVERLAY =
-  "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 45%, rgba(0,0,0,0.40) 100%)";
+  "linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.36) 45%, rgba(0,0,0,0.62) 100%)";
 
 // ✅ 固定簡中字體
 const notoSC = Noto_Sans_SC({ subsets: ["latin"], weight: ["400", "500", "700"] });
@@ -114,12 +116,10 @@ function iconForIndex(idx: number) {
 
 // ============================ MAIN PAGE ============================
 export default async function Page(): Promise<JSX.Element> {
-  // 取得最新文章 slug
   const entrance = (await sfetch(mainlandInvestmentGuideEntrance, { limit: 1 })) as EntranceItem[];
   const latest = entrance?.[0];
   if (!latest?.slug) notFound();
 
-  // 讀取單篇內容
   const doc = (await sfetch(mainlandInvestmentGuideBySlug, { slug: latest.slug })) as Article | null;
   if (!doc?.id) notFound();
 
@@ -143,6 +143,13 @@ export default async function Page(): Promise<JSX.Element> {
               : BRAND_BLUE,
         }}
       >
+        {/* 額外遮罩：再壓暗一層，確保文字可讀性 */}
+        <div className="pointer-events-none absolute inset-0 bg-black/20 sm:bg-black/28 md:bg-black/36" />
+
+        {/* 若想帶一點向下加深的趨勢，再疊一層漸層（可留可去） */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40" />
+
+        {/* 裝飾 SVG（會被遮罩略微壓暗，保留或可移除） */}
         <svg
           aria-hidden="true"
           className="pointer-events-none absolute -right-20 -top-24 h-[420px] w-[420px] opacity-20"
@@ -157,7 +164,8 @@ export default async function Page(): Promise<JSX.Element> {
           <circle cx="100" cy="100" r="90" fill="url(#g1)" />
         </svg>
 
-        <div className="mx-auto px-6 pb-10 pt-28" style={{ maxWidth: CONTENT_MAX_W }}>
+        {/* 內容層：確保壓在遮罩之上 */}
+        <div className="relative z-10 mx-auto px-6 pb-10 pt-28" style={{ maxWidth: CONTENT_MAX_W }}>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {doc?.publishDate ? (
               <span className="rounded-full border border-white/30 bg-white/10 px-3 py-1">
@@ -205,6 +213,7 @@ export default async function Page(): Promise<JSX.Element> {
           </div>
         </div>
 
+        {/* 讓 Next.js 提前載入圖片，但實際顯示靠 background */}
         {heroUrl ? (
           <Image src={heroUrl} alt={heroAlt} fill className="opacity-0" priority sizes="100vw" />
         ) : null}
