@@ -185,37 +185,26 @@ export default async function CompanyStrengthsAndFAQPage({
           }}
         />
 
-{/* 文字 + 透明遮罩（品牌藍字） */}
-<div
-  className="relative h-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center"
-  style={{
-    maxWidth: HERO_TUNE.contentMaxW,
-    transform: "translateY(8%)",
-  }}
->
-  <div
-    className="inline-block max-w-3xl mx-auto rounded-3xl bg-white/55 backdrop-blur-[6px] shadow-lg border border-white/30 px-6 py-5 sm:px-8 sm:py-6"
-  >
-    <p
-      className="text-sm tracking-wide mb-1"
-      style={{ color: BRAND_BLUE, letterSpacing: "0.05em" }}
-    >
-      {crumb}
-    </p>
-    <h1
-      className="text-4xl sm:text-5xl font-bold tracking-tight"
-      style={{ color: BRAND_BLUE }}
-    >
-      {data.title ?? "Our Strengths"}
-    </h1>
-    <p
-      className="mt-3 text-base sm:text-lg leading-relaxed"
-      style={{ color: `${BRAND_BLUE}CC` }}
-    >
-      {pageIntro}
-    </p>
-  </div>
-</div>
+        {/* 文字 + 透明遮罩（品牌藍字） */}
+        <div
+          className="relative h-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center"
+          style={{
+            maxWidth: HERO_TUNE.contentMaxW,
+            transform: "translateY(8%)",
+          }}
+        >
+          <div className="inline-block max-w-3xl mx-auto rounded-3xl bg-white/55 backdrop-blur-[6px] shadow-lg border border-white/30 px-6 py-5 sm:px-8 sm:py-6">
+            <p className="text-sm tracking-wide mb-1" style={{ color: BRAND_BLUE, letterSpacing: "0.05em" }}>
+              {crumb}
+            </p>
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: BRAND_BLUE }}>
+              {data.title ?? "Our Strengths"}
+            </h1>
+            <p className="mt-3 text-base sm:text-lg leading-relaxed" style={{ color: `${BRAND_BLUE}CC` }}>
+              {pageIntro}
+            </p>
+          </div>
+        </div>
 
         {/* 分隔線 */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-white/15" />
@@ -285,20 +274,25 @@ export default async function CompanyStrengthsAndFAQPage({
             ))}
           </div>
 
-          {/* CTA */}
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <a
-              // ✅ 保留 from 並帶上 lang，避免跳頁後語言重置
-              href={`/contact?from=companyStrengthsAndFAQ${lang ? `&lang=${lang}` : ""}`}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-slate-900 bg白 hover:bg-slate-100 shadow-sm"
-            >
-              <Lucide.MessageCircle className="h-4 w-4" />
-              {ctaText}
-            </a>
-            <span className="text-sm text-slate-100/85">
-              {lang === "zh" ? "首次諮詢免費" : lang === "en" ? "The first consultation is free" : "初回相談は無料です"}
-            </span>
+          {/* ================= CTA 區塊：只調整這裡的視覺 ================= */}
+          <div className="mt-10">
+            <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur-sm">
+              <a
+                href={`/contact?from=companyStrengthsAndFAQ${lang ? `&lang=${lang}` : ""}`}
+                className="group inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-2.5 text-white transition hover:border-white/60 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              >
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/30 bg-white/10">
+                  <Lucide.MessageCircle className="h-3.5 w-3.5" />
+                </span>
+                <span className="font-medium tracking-wide">{ctaText}</span>
+              </a>
+
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-slate-100/95">
+                {lang === "zh" ? "首次諮詢免費" : lang === "en" ? "First consultation is free" : "初回相談は無料です"}
+              </span>
+            </div>
           </div>
+          {/* ================= CTA 視覺調整結束 ================= */}
         </section>
       </main>
 

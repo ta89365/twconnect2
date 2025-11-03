@@ -51,8 +51,8 @@ function dict(channel: Channel, lang: Lang) {
       };
     if (lang === "zh")
       return {
-        breadcrumb: "首頁 / 專欄與新聞",
-        title: "專欄與新聞",
+        breadcrumb: "首頁 / 新聞",
+        title: "新聞",
         subtitle:
           "從制度變動、會計稅務、簽證居留與跨境交易等面向，分享實務觀點與最新解讀",
         quickNav: "主題快速定位",
@@ -155,10 +155,11 @@ export default async function ChannelEntrancePage({
     <div style={{ backgroundColor: BRAND_BLUE }} className="min-h-screen text-white">
       <NavigationServer lang={lang} />
 
-      {/* 右上角語言切換（旗幟樣式下拉） */}
+      {/* 右上角語言切換移除（依需求隱藏，其餘不動）
       <div className="absolute right-6 top-6 z-30">
         <LangDropdown current={lang} basePath={basePath} />
       </div>
+      */}
 
       {/* Hero */}
       <section className="relative w-full overflow-hidden" style={{ minHeight: TUNE.heroMinH }}>
@@ -213,7 +214,7 @@ export default async function ChannelEntrancePage({
                 <a
                   key={topic.slug}
                   href={`#tag-${topic.slug}`}
-                  className="shrink-0 inline-flex items-center rounded-full border border-white/50 bg-white/30 backdrop-blur-[2px] px-3 py-2 text-sm text-white hover:bg-white/40 hover:text-white transition"
+                  className="shrink-0 inline-flex items-center rounded-full border border-white/50 bg-white/30 backdrop-blur-[2px] px-3 py-2 text-sm text-white hover:bg白色/40 hover:text-white transition"
                 >
                   {topic.title}
                 </a>
@@ -271,7 +272,7 @@ export default async function ChannelEntrancePage({
               ))}
             </div>
           ) : (
-            <p className="mt-10 text-white/90">{t.empty}</p>
+            <p className="mt-10 text白色/90">{t.empty}</p>
           )}
         </div>
       </section>
@@ -308,7 +309,7 @@ function FeaturedCard({
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
           ) : (
-            <div className="h-full w-full bg-white/10" />
+            <div className="h-full w-full bg白色/10" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
           {post?.category?.title && (
@@ -325,7 +326,7 @@ function FeaturedCard({
             </Link>
           </h3>
           {post?.excerpt && <p className="mt-3 text-white/90 line-clamp-4">{post.excerpt}</p>}
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/80">
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text白色/80">
             {post?.author?.name && <span>👤 {post.author.name}</span>}
             {Array.isArray(post?.tags) && post.tags.length > 0 && (
               <span>🏷️ {post.tags.map((t: any) => t?.title).filter(Boolean).join(", ")}</span>
