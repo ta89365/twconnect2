@@ -206,100 +206,99 @@ export default async function OverseasRelocationPage({
     <div className="min-h-screen flex flex-col text-white" style={{ backgroundColor: BRAND_BLUE }}>
       <NavigationServer lang={lang} />
 
-{/* ============================== Hero ============================== */}
-<section className="relative w-full">
-  <div className="relative h-[40vh] sm:h-[46vh] md:h-[45vh] lg:h-[60vh] overflow-hidden">
-    {heroUrl ? (
-      <Image
-        key={heroUrl}
-        src={heroUrl}
-        alt={$data.heroImage?.alt || title}
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-        style={{ objectPosition: heroObjectPosition }}
-        placeholder={$data.heroImage?.lqip ? "blur" : "empty"}
-        blurDataURL={$data.heroImage?.lqip || undefined}
-      />
-    ) : (
-      <div className="absolute inset-0" style={{ backgroundColor: BRAND_BLUE }} />
-    )}
+      {/* ============================== Hero ============================== */}
+      <section className="relative w-full">
+        <div className="relative h-[40vh] sm:h-[46vh] md:h-[45vh] lg:h-[60vh] overflow-hidden">
+          {heroUrl ? (
+            <Image
+              key={heroUrl}
+              src={heroUrl}
+              alt={$data.heroImage?.alt || title}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+              style={{ objectPosition: heroObjectPosition }}
+              placeholder={$data.heroImage?.lqip ? "blur" : "empty"}
+              blurDataURL={$data.heroImage?.lqip || undefined}
+            />
+          ) : (
+            <div className="absolute inset-0" style={{ backgroundColor: BRAND_BLUE }} />
+          )}
 
-    {/* 漸層遮罩 */}
-    <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#1C3D5A]/75" />
+          {/* 漸層遮罩 */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#1C3D5A]/75" />
 
-    {/* ✅ Hero 文字：改為絕對定位，避免增加 section 高度 */}
-    <div className="absolute inset-0">
-      <div
-        className={`${CONTAINER_W} ${CONTAINER_X} h-full mx-auto flex items-end justify-center text-center pb-14 md:pb-20`}
-      >
-        <div>
-          <div className="mb-4 flex justify-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/12 border border-white/18 px-4 py-1 text-xs md:text-sm">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/80" />
-              {t.breadcrumb}
+          {/* Hero 文字：絕對定位 */}
+          <div className="absolute inset-0">
+            <div
+              className={`${CONTAINER_W} ${CONTAINER_X} h-full mx-auto flex items-end justify-center text-center pb-14 md:pb-20`}
+            >
+              <div>
+                <div className="mb-4 flex justify-center">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/12 border border-white/18 px-4 py-1 text-xs md:text-sm">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/80" />
+                    {t.breadcrumb}
+                  </div>
+                </div>
+
+                <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
+                  {title}
+                </h1>
+
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                  <LangBadge lang={lang} />
+                  <Link
+                    href={`/contact${lang ? `?lang=${lang}` : ""}`}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-1.5 text-sm font-semibold shadow-sm hover:bg-white transition"
+                    style={{ color: BRAND_BLUE }}
+                  >
+                    <Lucide.Mail className="h-4 w-4" />
+                    {ctaLabel}
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
-            {title}
-          </h1>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-            <LangBadge lang={lang} />
-            <Link
-              href={`/contact${lang ? `?lang=${lang}` : ""}`}
-              className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-1.5 text-sm font-semibold shadow-sm hover:bg-white transition"
-              style={{ color: BRAND_BLUE }}
-            >
-              <Lucide.Mail className="h-4 w-4" />
-              {ctaLabel}
-            </Link>
-          </div>
+          {/* 裝飾光暈 */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1/3 h-24 blur-3xl opacity-70"
+            style={{ backgroundColor: BRAND_BLUE }}
+          />
         </div>
-      </div>
-    </div>
+      </section>
 
-    {/* 裝飾光暈：絕對定位不影響版面高度 */}
-    <div
-      className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1/3 h-24 blur-3xl opacity-70"
-      style={{ backgroundColor: BRAND_BLUE }}
-    />
-  </div>
-</section>
-
-{/* ============================ Hero 下方快速導覽 ============================ */}
-{/* ✅ 貼齊關鍵：-mt-px 吃掉 1px 縫隙，並用 border-t 當分隔線 */}
-<nav className="-mt-px sticky top-0 z-30 bg-[rgba(28,61,90,0.88)] backdrop-blur-md border-t border-white/12">
-  <div className={`${CONTAINER_W} mx-auto ${CONTAINER_X} py-3 flex flex-wrap justify-center gap-3`}>
-    {hasBg && (
-      <a href="#bg" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-        {t.bg}
-      </a>
-    )}
-    {hasChallenges && (
-      <a href="#ch" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-        {t.challenges}
-      </a>
-    )}
-    {hasServices && (
-      <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-        {t.services}
-      </a>
-    )}
-    {hasFlow && (
-      <a href="#fl" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-        {t.flow}
-      </a>
-    )}
-    {hasFees && (
-      <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
-        {t.fees}
-      </a>
-    )}
-  </div>
-</nav>
+      {/* ============================ Hero 下方快速導覽 ============================ */}
+      <nav className="-mt-px sticky top-0 z-30 bg-[rgba(28,61,90,0.88)] backdrop-blur-md border-t border-white/12">
+        <div className={`${CONTAINER_W} mx-auto ${CONTAINER_X} py-3 flex flex-wrap justify-center gap-3`}>
+          {hasBg && (
+            <a href="#bg" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+              {t.bg}
+            </a>
+          )}
+          {hasChallenges && (
+            <a href="#ch" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+              {t.challenges}
+            </a>
+          )}
+          {hasServices && (
+            <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+              {t.services}
+            </a>
+          )}
+          {hasFlow && (
+            <a href="#fl" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+              {t.flow}
+            </a>
+          )}
+          {hasFees && (
+            <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+              {t.fees}
+            </a>
+          )}
+        </div>
+      </nav>
 
       {/* ================================ 內容區 ================================ */}
       <main className={`${CONTAINER_W} mx-auto w-full ${CONTAINER_X} ${SECTION_Y} flex-1`}>
@@ -426,7 +425,7 @@ function Card({
       id={id}
       className={`${ANCHOR_OFFSET} ${CARD_TUNE.radius} bg-white ${CARD_TUNE.shadow} ${CARD_TUNE.border} overflow-hidden transition-shadow`}
     >
-      <div className="flex items-center gap-2 px-5 py-4 text白" style={{ backgroundColor: BRAND_BLUE }}>
+      <div className="flex items-center gap-2 px-5 py-4 text-white" style={{ backgroundColor: BRAND_BLUE }}>
         {icon}
         <h2 className="text-base md:text-lg font-semibold">{title}</h2>
       </div>
@@ -476,7 +475,7 @@ function StepList({ steps }: { steps?: { stepNumber?: string; title?: string; de
       {steps.map((st, i) => (
         <li key={i} className="ms-6">
           <span
-            className="absolute -start-3 flex h-6 w-6 items-center justify中心 rounded-full text-white text-xs font-bold ring-2 ring-white"
+            className="absolute -start-3 flex h-6 w-6 items-center justify-center leading-none rounded-full text-white text-xs font-bold ring-2 ring-white"
             style={{ backgroundColor: BRAND_BLUE }}
           >
             {(st.stepNumber ?? `${i + 1}`).padStart(2, "0")}
@@ -494,7 +493,7 @@ function StepList({ steps }: { steps?: { stepNumber?: string; title?: string; de
 function LangBadge({ lang }: { lang: Lang }) {
   const label = lang === "jp" ? "日本語" : lang === "zh" ? "繁體中文" : "English";
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg白/80 px-2.5 py-1 text-xs font-medium shadow-sm ring-1 ring-black/5 text-slate-900">
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm ring-1 ring-black/5 text-slate-900">
       <Lucide.BadgeCheck className="h-3.5 w-3.5" />
       {label}
     </span>

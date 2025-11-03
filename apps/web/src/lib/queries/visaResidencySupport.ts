@@ -57,6 +57,14 @@ export const visaResidencySupportBySlug = /* groq */ `
     coalesce(services.jp, services.zh, services.en)
   ),
 
+  // Incubation Track：object incubationTrack.{jp, zh, en}，每個是 array<string>
+  "incubationTrack": select(
+    $lang == "jp" => coalesce(incubationTrack.jp, incubationTrack.zh, incubationTrack.en),
+    $lang == "zh" => coalesce(incubationTrack.zh, incubationTrack.jp, incubationTrack.en),
+    $lang == "en" => coalesce(incubationTrack.en, incubationTrack.jp, incubationTrack.zh),
+    coalesce(incubationTrack.jp, incubationTrack.zh, incubationTrack.en)
+  ),
+
   // 服務流程：object serviceFlow.{jp, zh, en}，每個是 array<object>
   "serviceFlow": select(
     $lang == "jp" => coalesce(serviceFlow.jp, serviceFlow.zh, serviceFlow.en),

@@ -31,9 +31,9 @@ const HERO_DIM = {
 
 /** Hero 圖片位移與縮放（px、倍數） */
 const HERO_IMG_CTRL = {
-  offsetX: 0,  // 向右為正
+  offsetX: 0,   // 向右為正
   offsetY: -10, // 向下為正
-  zoom: 1,    // 1=原尺寸，>1 放大
+  zoom: 1,      // 1=原尺寸，>1 放大
 };
 
 /** Hero 文字物件位置與寬度（px 或 %） */
@@ -55,6 +55,11 @@ const SECTION_Y_GAP = "py-12 md:py-16";
 
 /** 錨點偏移（避免被 sticky 快捷列遮住） */
 const ANCHOR_OFFSET = "scroll-mt-[92px] md:scroll-mt-[112px]";
+
+/** 🔸服務內容卡片最小高度（把容器調高 2 倍）*/
+const SERVICE_CARD_BASE_MIN_H = 160;        // 原基準
+const SERVICE_CARD_SCALE = 2;               // 放大 2 倍
+const SERVICE_CARD_MIN_H = SERVICE_CARD_BASE_MIN_H * SERVICE_CARD_SCALE;
 /* ================================================================== */
 
 // 保障 0~100 範圍
@@ -66,7 +71,8 @@ type VisaResidencyItem = {
   title?: string;
   background?: string;
   challenges?: string[];
-  services?: string[];
+  services?: string[];           // 一般簽證與居留支援（已設公司或符合資格）
+  incubationTrack?: string[];    // 育成計畫（尚未設公司）
   serviceFlow?: FlowStep[];
   fees?: string;
   heroImage?: { asset?: { url?: string | null } | null } | null;
@@ -75,6 +81,26 @@ type VisaResidencyItem = {
 
 function t(lang: Lang, dict: Record<Lang | "common", string>) {
   return dict[lang] ?? dict.common;
+}
+
+/* 兩個服務卡片的內建多語標題（不從 Sanity 帶） */
+function getServiceCardTitles(lang: Lang) {
+  const general = {
+    jp: "一般ビザ・居留サポート（会社設立済みまたは条件を満たす方向け）",
+    zh: "一般簽證與居留支援（適用於已設公司或符合資格者）",
+    en: "General Visa & Residency Support (for established companies or qualified applicants)",
+  } as const;
+
+  const incub = {
+    jp: "育成計画（インキュベーション・プラン）— 会社未設立の方向け",
+    zh: "育成計畫（Incubation Track）— 適用於尚未設公司者",
+    en: "Incubation Track — For applicants without an existing company",
+  } as const;
+
+  return {
+    general: general[lang] ?? general.jp,
+    incub: incub[lang] ?? incub.jp,
+  };
 }
 
 /* ============================ 小型元件 ============================ */
@@ -174,6 +200,7 @@ export default async function VisaResidencyStaticPage({
     background,
     challenges = [],
     services = [],
+    incubationTrack = [],
     serviceFlow = [],
     fees,
     heroImage,
@@ -209,6 +236,8 @@ export default async function VisaResidencyStaticPage({
       common: "常見簽證與居留類型",
     }),
   };
+
+  const { general: generalTitle, incub: incubTitle } = getServiceCardTitles(lang);
 
   const visaBadges = [
     t(lang, { jp: "経営管理", zh: "經營管理", en: "Entrepreneur", common: "經營管理" }),
@@ -315,7 +344,7 @@ export default async function VisaResidencyStaticPage({
               {labels.challenges}
             </a>
           )}
-          {services.length > 0 && (
+          {(services.length > 0 || incubationTrack.length > 0) && (
             <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 hover:bg-white/10 transition">
               {labels.services}
             </a>
@@ -339,7 +368,7 @@ export default async function VisaResidencyStaticPage({
           <div className={`${SECTION_Y_GAP} grid gap-10 md:gap-12 lg:grid-cols-[1fr,360px]`}>
             {/* ------------------------------ 主內容 ------------------------------ */}
             <div className="space-y-12">
-              {/* 背景：與「課題」同寬，不再使用 68ch 限制 */}
+              {/* 背景 */}
               <section id="bg" className={ANCHOR_OFFSET}>
                 <SectionHeading lang={lang} jp="背景" zh="背景" en="Background" />
                 {background ? (
@@ -349,35 +378,55 @@ export default async function VisaResidencyStaticPage({
                 ) : null}
               </section>
 
-              {/* 課題 / 挑戰（與背景卡同寬、同風格） */}
-              {challenges.length > 0 && (
-                <section id="ch" className={ANCHOR_OFFSET}>
-                  <SectionHeading lang={lang} jp="課題" zh="挑戰" en="Challenges" />
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-                      <EmojiList items={challenges.slice(0, Math.ceil(challenges.length / 2))} emoji="⚠️" />
-                    </div>
-                    <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-                      <EmojiList items={challenges.slice(Math.ceil(challenges.length / 2))} emoji="🧩" />
-                    </div>
-                  </div>
-                </section>
-              )}
+              {/* 課題 / 挑戰 */}
+{challenges.length > 0 && (
+  <section id="ch" className={ANCHOR_OFFSET}>
+    <SectionHeading lang={lang} jp="課題" zh="挑戰" en="Challenges" />
+    <div className="grid md:grid-cols-2 gap-5">
+      <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+        <EmojiList
+          items={challenges.slice(0, Math.ceil(challenges.length / 2))}
+          emoji="⚠️"
+        />
+      </div>
+      <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+        <EmojiList
+          items={challenges.slice(Math.ceil(challenges.length / 2))}
+          emoji="🧩"
+        />
+      </div>
+    </div>
+  </section>
+)}
 
-              {/* 服務內容 */}
-              {services.length > 0 && (
-                <section id="sv" className={ANCHOR_OFFSET}>
-                  <SectionHeading lang={lang} jp="サービス内容" zh="服務內容" en="Services" />
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-                      <EmojiList items={services.filter((_, i) => i % 2 === 0)} emoji="✅" />
-                    </div>
-                    <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-                      <EmojiList items={services.filter((_, i) => i % 2 === 1)} emoji="🛠️" />
-                    </div>
-                  </div>
-                </section>
-              )}
+
+{/* 服務內容：左＝一般簽證與居留支援；右＝育成計畫 */}
+{(services.length > 0 || incubationTrack.length > 0) && (
+  <section id="sv" className={ANCHOR_OFFSET}>
+    <SectionHeading lang={lang} jp="サービス内容" zh="服務內容" en="Services" />
+    <div className="grid md:grid-cols-2 gap-5">
+      {/* 左卡：一般簽證與居留支援 */}
+      {services.length > 0 && (
+        <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+          <h3 className="text-[16px] md:text-[17px] font-semibold mb-3 opacity-95">
+            {generalTitle}
+          </h3>
+          <EmojiList items={services} emoji="✅" />
+        </div>
+      )}
+
+      {/* 右卡：育成計畫 */}
+      {incubationTrack.length > 0 && (
+        <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+          <h3 className="text-[16px] md:text-[17px] font-semibold mb-3 opacity-95">
+            {incubTitle}
+          </h3>
+          <EmojiList items={incubationTrack} emoji="🛠️" />
+        </div>
+      )}
+    </div>
+  </section>
+)}
 
               {/* 服務流程 */}
               {serviceFlow.length > 0 && (
@@ -468,7 +517,7 @@ export default async function VisaResidencyStaticPage({
           <div className="mt-5 flex items-center justify-center gap-3">
             <a
               href={`/contact?lang=${lang}`}
-              className="inline-block bg白 text-[#1C3D5A] font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition"
+              className="inline-block bg-white text-[#1C3D5A] font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition"
             >
               {labels.contact}
             </a>

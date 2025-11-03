@@ -87,6 +87,20 @@ export default defineType({
       options: { collapsible: true, collapsed: false },
     }),
 
+    /* ===== Incubation Track ===== */
+    defineField({
+      name: "incubationTrack",
+      title: "Incubation Track",
+      type: "object",
+      description: "Incubation track items, following the same format as Challenges and Service Details.",
+      fields: [
+        { name: "jp", title: "Japanese", type: "array", of: [{ type: "string" }] },
+        { name: "zh", title: "Chinese", type: "array", of: [{ type: "string" }] },
+        { name: "en", title: "English", type: "array", of: [{ type: "string" }] },
+      ],
+      options: { collapsible: true, collapsed: false },
+    }),
+
     /* ===== Service Flow ===== */
     defineField({
       name: "serviceFlow",

@@ -9,15 +9,18 @@ import { cnInvestmentLandingQuery } from "@/lib/queries/cnInvestmentLanding";
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import { Noto_Sans_SC } from "next/font/google";
+import * as Lucide from "lucide-react";
 import type { JSX } from "react";
 
 /* ============================ i18n ============================ */
 type Lang = "zh" | "zh-cn" | "jp" | "en";
-const PAGE_LANG: Lang = "zh-cn"; // ✅ 本頁固定顯示簡中
+/** 本頁固定以簡中呈現，但 Nav/Footer 實際 props 傳 zh 以避免語系未對應造成 links undefined */
+const PAGE_LANG: Lang = "zh-cn";
+const NAV_FOOTER_LANG: "jp" | "zh" | "en" = "zh";
 
 /* ============================ Fonts ============================ */
 const notoSC = Noto_Sans_SC({
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "700", "900"],
   subsets: ["latin"],
   display: "swap",
   fallback: [
@@ -41,9 +44,9 @@ export const dynamic = "force-dynamic";
 const BRAND_BLUE = "#1C3D5A";
 const TUNE = {
   contentMaxW: "1200px",
-  heroMinH: "56vh",
+  heroMinH: "60vh",
   heroOverlay:
-    "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.30) 100%)",
+    "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.22) 55%, rgba(0,0,0,0.50) 100%)",
 } as const;
 
 /* ============================ Types ============================ */
@@ -97,9 +100,9 @@ const ptComponents: PortableTextComponents = {
     const style = (value as any)?.style || "normal";
     switch (style) {
       case "h2":
-        return <h2 className="text-2xl md:text-3xl font-semibold mb-3">{children}</h2>;
+        return <h2 className="text-2xl md:text-3xl font-bold mb-4">{children}</h2>;
       case "h3":
-        return <h3 className="text-xl md:text-2xl font-semibold mb-2">{children}</h3>;
+        return <h3 className="text-xl md:text-2xl font-semibold mb-3">{children}</h3>;
       case "blockquote":
         return (
           <blockquote className="border-l-4 border-white/30 pl-4 italic opacity-90">
@@ -155,11 +158,11 @@ function safeHref(item: Topic) {
   if (item?.internal?.slug) {
     const ch = item.internal.channel ?? "news";
     return withLang(`/${ch}/${item.internal.slug}`);
-  }
+    }
   return item?.external ?? "#";
 }
 
-/* ===== 包裝 Server Components，避免使用 @ts-expect-error ===== */
+/* ===== 包裝 Server Components ===== */
 const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 
@@ -203,6 +206,47 @@ const FALLBACK_TOPICS: Topic[] = [
   },
 ];
 
+/* ============================ 小元件 ============================ */
+function Badge({
+  icon: Icon,
+  label,
+}: {
+  icon: Lucide.LucideIcon;
+  label: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium backdrop-blur">
+      <Icon className="h-4 w-4" aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: Lucide.LucideIcon;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-white/30 backdrop-blur-md p-4 shadow-[0_6px_18px_rgba(0,0,0,0.25)] transition-transform hover:scale-[1.02]">
+      <div className="flex items-start gap-3">
+        <div className="rounded-xl bg-white/40 p-2 mt-1">
+          <Icon className="h-5 w-5" aria-hidden />
+        </div>
+        <div className="flex flex-col leading-tight">
+          <div className="text-2xl font-extrabold leading-none">{value}</div>
+          <div className="text-sm opacity-85 mt-1.5">{label}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 /* ============================ Page ============================ */
 export default async function Page(): Promise<JSX.Element> {
   const doc = (await sfetch(cnInvestmentLandingQuery)) as LandingDoc | null;
@@ -214,10 +258,10 @@ export default async function Page(): Promise<JSX.Element> {
       style={{ backgroundColor: BRAND_BLUE }}
       className={`${notoSC.className} min-h-screen text-white`}
     >
-      {/* Nav：固定簡中 */}
-      <Nav lang={PAGE_LANG} />
+      {/* Nav：顯示簡中內容，但語系傳 zh，避免內部 links 取用錯誤 */}
+      <Nav lang={NAV_FOOTER_LANG} />
 
-      {/* Hero */}
+      {/* ============================ Hero 區：大標題 + 徽章 + 數字重點 ============================ */}
       <section className="relative w-full" style={{ minHeight: TUNE.heroMinH }}>
         {doc?.heroImage?.url && (
           <Image
@@ -232,132 +276,238 @@ export default async function Page(): Promise<JSX.Element> {
           />
         )}
         <div className="absolute inset-0" style={{ background: TUNE.heroOverlay }} />
-        <div className="relative mx-auto px-6 py-16" style={{ maxWidth: TUNE.contentMaxW }}>
-          <h1 className="text-3xl md:text-5xl font-semibold leading-tight">
+        <div className="relative mx-auto px-6 py-16 md:py-20" style={{ maxWidth: TUNE.contentMaxW }}>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Badge icon={Lucide.BadgeCheck} label="陆资投资专区" />
+            <Badge icon={Lucide.FileCheck2} label="核准到设立一站式" />
+            <Badge icon={Lucide.ShieldCheck} label="政策与合规" />
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
             {doc?.titleZh || "陆资企业进入台湾市场专区"}
           </h1>
           {!!doc?.taglineEn && (
             <p className="mt-4 text-base md:text-lg opacity-90">{doc.taglineEn}</p>
           )}
+
+          {/* 重要數字重點 */}
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Stat icon={Lucide.Clock} value="5–8 周" label="一般核准周期预估" />
+            <Stat icon={Lucide.Files} value="12+ 项" label="关键申请与佐证文件" />
+            <Stat icon={Lucide.SquareCheck} value="4 阶段" label="从核准到开业全流程" />
+            <Stat icon={Lucide.Users} value="专案制" label="顾问与法遵协作" />
+          </div>
         </div>
       </section>
 
-      {/* Why + Principle */}
-      {(doc?.whyZh?.length || doc?.principleZh) && (
-        <section className="mx-auto px-6 py-10 md:py-14" style={{ maxWidth: TUNE.contentMaxW }}>
-          {!!doc?.whyZh?.length && (
-            <div className="prose prose-invert max-w-none">
-              <PortableText value={doc.whyZh} components={ptComponents} />
-            </div>
-          )}
-          {!!doc?.principleZh && <p className="mt-6 text-lg font-medium">{doc.principleZh}</p>}
-        </section>
-      )}
+{/* ============================ Why + Principle 三欄 Features ============================ */}
+{(doc?.whyZh?.length || doc?.principleZh) && (
+  <section
+    className="mx-auto px-6 py-14 md:py-20 border-t border-white/10"
+    style={{ maxWidth: TUNE.contentMaxW }}
+  >
+    <div className="grid md:grid-cols-3 gap-6">
+      {/* 卡片 1 */}
+      <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-lg bg-white/20 p-2.5">
+            <Lucide.Target className="h-5 w-5" />
+          </div>
+          <p className="text-lg font-semibold">进入台湾的正确路径</p>
+        </div>
+        {!!doc?.whyZh?.length ? (
+          <div className="prose prose-invert max-w-none text-sm leading-relaxed opacity-90">
+            <PortableText value={doc.whyZh} components={ptComponents} />
+          </div>
+        ) : (
+          <p className="text-sm opacity-90 leading-relaxed">
+            台湾市场具有高潜能与法制完善的投资环境。陆资若未依法核准设立，可能导致严重退件或延误。
+            <br />
+            Taiwan Connect 提供合规路径，协助顺利核准、设立、营运。
+          </p>
+        )}
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#4FC3F7] to-[#A7FFEB]" />
+      </div>
 
-      {/* Definition + Authorities */}
+      {/* 卡片 2 */}
+      <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-lg bg-white/20 p-2.5">
+            <Lucide.Scale className="h-5 w-5" />
+          </div>
+          <p className="text-lg font-semibold">合规先行的核心原则</p>
+        </div>
+        <p className="text-sm opacity-90 leading-relaxed whitespace-pre-line">
+          {doc?.principleZh || "让陆资企业合规落地、顺利营运，真正开启台湾市场的大门。"}
+        </p>
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#FFD54F] to-[#FFB300]" />
+      </div>
+
+      {/* 卡片 3 */}
+      <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="rounded-lg bg-white/20 p-2.5">
+            <Lucide.Layers className="h-5 w-5" />
+          </div>
+          <p className="text-lg font-semibold">从核准到营运的衔接</p>
+        </div>
+        <ul className="space-y-2 text-sm opacity-90">
+          <li className="flex items-start gap-2">
+            <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
+            投审会核准
+          </li>
+          <li className="flex items-start gap-2">
+            <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
+            公司设立与开户
+          </li>
+          <li className="flex items-start gap-2">
+            <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
+            税务登记与人事合规
+          </li>
+        </ul>
+        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#64B5F6] to-[#1E88E5]" />
+      </div>
+    </div>
+  </section>
+)}
+
+      {/* ============================ 法规定义與主管机关 ============================ */}
       {(doc?.regulationDefinitionZh?.length || doc?.authorities?.length) && (
         <section
-          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           {!!doc?.regulationDefinitionZh?.length && (
-            <div className="prose prose-invert max-w-none">
-              <h2>陆资的定义与法规依据</h2>
-              <PortableText value={doc.regulationDefinitionZh} components={ptComponents} />
+            <div className="rounded-2xl bg-white/5 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-white/10 p-2">
+                  <Lucide.BookOpenCheck className="h-5 w-5" />
+                </div>
+                <h2 className="text-2xl font-bold">陆资的定义与法规依据</h2>
+              </div>
+              <div className="prose prose-invert max-w-none">
+                <PortableText value={doc.regulationDefinitionZh} components={ptComponents} />
+              </div>
             </div>
           )}
 
           {!!doc?.authorities?.length && (
             <div className="mt-8">
-              <h3 className="text-xl font-semibold mb-3">主管机关</h3>
-              <ul className="space-y-2">
+              <h3 className="text-xl font-semibold mb-4">主管机关</h3>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {doc.authorities.map((a, i) => (
-                  <li key={i} className="opacity-90">
-                    {a.url ? (
-                      <Link
-                        href={a.url}
-                        className="underline underline-offset-4 focus:outline-none focus:ring-2 focus:ring-white/60 rounded"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {a.nameZh || a.nameEn}
-                      </Link>
-                    ) : (
-                      <span>{a.nameZh || a.nameEn}</span>
-                    )}
-                  </li>
+                  <Link
+                    key={i}
+                    href={a.url || "#"}
+                    target={a.url ? "_blank" : "_self"}
+                    rel="noreferrer"
+                    className="group rounded-2xl bg-white/5 p-4 flex items-center justify-between hover:bg-white/10 transition-colors"
+                  >
+                    <span>{a.nameZh || a.nameEn}</span>
+                    <Lucide.ExternalLink className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </section>
       )}
 
-      {/* Review Focus */}
+      {/* ============================ 审查重点：卡片清单 ============================ */}
       {!!doc?.reviewFocus?.length && (
         <section
-          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
-          <h2 className="text-2xl font-semibold mb-4">主要审查重点</h2>
-          <ol className="grid md:grid-cols-2 gap-4">
+          <h2 className="text-2xl font-bold mb-6">主要审查重点</h2>
+          <div className="grid md:grid-cols-2 gap-4">
             {[...doc.reviewFocus]
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
               .map((x, idx) => (
-                <li key={idx} className="rounded-2xl bg-white/5 p-4">
-                  <p className="font-semibold mb-1">{x.titleZh}</p>
-                  {!!x.bodyZh && <p className="opacity-90 whitespace-pre-line">{x.bodyZh}</p>}
-                </li>
+                <div key={idx} className="rounded-2xl bg-white/5 p-5">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="rounded-xl bg-white/10 p-2">
+                      <Lucide.FileSearch className="h-5 w-5" />
+                    </div>
+                    <p className="font-semibold">{x.titleZh}</p>
+                  </div>
+                  {!!x.bodyZh && <p className="opacity-90 text-sm whitespace-pre-line">{x.bodyZh}</p>}
+                </div>
               ))}
-          </ol>
+          </div>
         </section>
       )}
 
-      {/* Doubts + CTA */}
+      {/* ============================ 疑问與 CTA ============================ */}
       {(doc?.doubtsZh?.length || doc?.contactFormHref) && (
         <section
-          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
-          {!!doc?.doubtsZh?.length && (
-            <div className="prose prose-invert max-w-none">
-              <h2>你是否也有以下疑问？</h2>
-              <PortableText value={doc.doubtsZh} components={ptComponents} />
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 rounded-2xl bg-white/5 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-xl bg-white/10 p-2">
+                  <Lucide.HelpCircle className="h-5 w-5" />
+                </div>
+                <h2 className="text-2xl font-bold">你是否也有以下疑问</h2>
+              </div>
+              {!!doc?.doubtsZh?.length && (
+                <div className="prose prose-invert max-w-none">
+                  <PortableText value={doc.doubtsZh} components={ptComponents} />
+                </div>
+              )}
             </div>
-          )}
-          {!!doc?.contactFormHref && (
-            <div className="mt-6">
-              <Link
-                href={withLang(doc.contactFormHref)}
-                className="inline-block rounded-full bg-white text-black px-5 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-white/60"
-              >
-                前往表单
-              </Link>
-            </div>
-          )}
+
+            {!!doc?.contactFormHref && (
+              <div className="rounded-2xl bg-white text-black p-6">
+                <p className="font-semibold">与顾问联系</p>
+                <p className="mt-2 text-sm opacity-80">留下需求，我们将在 1 个工作日内回复。</p>
+                <Link
+                  href={withLang(doc.contactFormHref)}
+                  className="mt-4 inline-flex items-center justify-center rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/50"
+                >
+                  前往表单
+                  <Lucide.ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </div>
+            )}
+          </div>
         </section>
       )}
 
-      {/* Process Steps + Timeline */}
+      {/* ============================ 流程：時間軸 ============================ */}
       {!!doc?.processSteps?.length && (
         <section
-          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
-          <h2 className="text-2xl font-semibold mb-5">陆资投资与公司设立流程</h2>
-          <ol className="space-y-4">
+          <h2 className="text-2xl font-bold mb-6">陆资投资与公司设立流程</h2>
+          <ol className="relative">
             {[...doc.processSteps]
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-              .map((s, i) => (
-                <li key={i} className="rounded-2xl bg-white/5 p-5">
-                  <p className="font-semibold mb-2">{s.titleZh}</p>
-                  {!!s.bodyZh && (
-                    <div className="prose prose-invert max-w-none text-sm">
-                      <PortableText value={s.bodyZh} components={ptComponents} />
+              .map((s, i, arr) => {
+                const last = i === arr.length - 1;
+                return (
+                  <li key={i} className="relative pl-10 pb-6">
+                    {/* 時間軸節點 */}
+                    <span className="absolute left-0 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black text-xs font-bold">
+                      {i + 1}
+                    </span>
+                    {/* 連線 */}
+                    {!last && (
+                      <span className="absolute left-2.5 top-8 h-full w-px bg-white/30" aria-hidden />
+                    )}
+                    <div className="rounded-2xl bg-white/5 p-5">
+                      <p className="font-semibold mb-2">{s.titleZh}</p>
+                      {!!s.bodyZh && (
+                        <div className="prose prose-invert max-w-none text-sm">
+                          <PortableText value={s.bodyZh} components={ptComponents} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
           </ol>
           {!!doc?.timelineZh && (
             <p className="mt-4 text-sm opacity-90">📆 预计时程：{doc.timelineZh}</p>
@@ -365,30 +515,48 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* Advantages + Services + Team */}
+      {/* ============================ 优势 + 服务条列 + 团队图 ============================ */}
       {(doc?.advantagesIntroZh?.length ||
         doc?.serviceBulletsZh?.length ||
         doc?.teamImage?.url) && (
         <section
-          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
-          {!!doc?.advantagesIntroZh?.length && (
-            <div className="prose prose-invert max-w-none">
-              <h2>我们的优势</h2>
-              <PortableText value={doc.advantagesIntroZh} components={ptComponents} />
-            </div>
-          )}
+          <div className="grid md:grid-cols-2 gap-6">
+            {!!doc?.advantagesIntroZh?.length && (
+              <div className="rounded-2xl bg-white/5 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="rounded-xl bg-white/10 p-2">
+                    <Lucide.Star className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-xl font-semibold">我们的优势</h2>
+                </div>
+                <div className="prose prose-invert max-w-none">
+                  <PortableText value={doc.advantagesIntroZh} components={ptComponents} />
+                </div>
+              </div>
+            )}
 
-          {!!doc?.serviceBulletsZh?.length && (
-            <ul className="mt-6 grid md:grid-cols-2 gap-3">
-              {doc.serviceBulletsZh.map((b, i) => (
-                <li key={i} className="rounded-xl bg-white/5 p-3">
-                  {b.textZh}
-                </li>
-              ))}
-            </ul>
-          )}
+            {!!doc?.serviceBulletsZh?.length && (
+              <div className="rounded-2xl bg-white/5 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="rounded-xl bg-white/10 p-2">
+                    <Lucide.ListChecks className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-xl font-semibold">我们能协助的事项</h2>
+                </div>
+                <ul className="grid md:grid-cols-1 gap-2">
+                  {doc.serviceBulletsZh.map((b, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5" />
+                      <span>{b.textZh}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
           {!!doc?.teamImage?.url && (
             <div className="mt-8">
@@ -406,17 +574,20 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* FAQ */}
+      {/* ============================ FAQ 手風琴 ============================ */}
       {!!doc?.faq?.length && (
         <section
-          className="mx-auto px-6 py-10 md:py-14 border-t border-white/10"
+          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
-          <h2 className="text-2xl font-semibold mb-4">常见问题（Q&A）</h2>
+          <h2 className="text-2xl font-bold mb-6">常见问题（Q&A）</h2>
           <div className="space-y-3">
             {doc.faq.map((f, i) => (
-              <details key={i} className="rounded-2xl bg-white/5 p-4">
-                <summary className="cursor-pointer font-semibold">{f.qZh}</summary>
+              <details key={i} className="rounded-2xl bg-white/5 p-4 group">
+                <summary className="cursor-pointer font-semibold list-none flex items-center justify-between">
+                  {f.qZh}
+                  <Lucide.ChevronDown className="h-5 w-5 transition-transform group-open:rotate-180" />
+                </summary>
                 {!!f.aZh && (
                   <div className="prose prose-invert max-w-none mt-2 text-sm">
                     <PortableText value={f.aZh} components={ptComponents} />
@@ -428,12 +599,15 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* Four Topic Links */}
+      {/* ============================ 四張推薦文章卡片 ============================ */}
       <section
         className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
         style={{ maxWidth: TUNE.contentMaxW }}
       >
-        <h2 className="text-2xl md:text-3xl font-semibold mb-6">推荐阅读｜Recommended Articles</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold">推荐阅读</h2>
+          <span className="text-sm opacity-80">Recommended Articles</span>
+        </div>
         <div className="grid md:grid-cols-4 gap-4">
           {finalTopics.map((t, i) => (
             <Link
@@ -454,44 +628,64 @@ export default async function Page(): Promise<JSX.Element> {
                   />
                 </div>
               )}
-              <h3 className="text-base font-semibold mb-1 leading-snug">{t.titleZh}</h3>
-              {!!t.summaryZh && <p className="text-sm opacity-90 line-clamp-3">{t.summaryZh}</p>}
-              <span className="mt-auto pt-3 text-sm font-semibold underline underline-offset-4">
-                {t.ctaLabelZh || "阅读文章 →"}
+              <h3 className="text-base font-semibold mb-1 leading-snug line-clamp-2">{t.titleZh}</h3>
+              {!!t.summaryZh && (
+                <p className="text-sm opacity-90 line-clamp-3">{t.summaryZh}</p>
+              )}
+              <span className="mt-auto pt-3 inline-flex items-center text-sm font-semibold underline underline-offset-4">
+                {t.ctaLabelZh || "阅读文章"}
+                <Lucide.ArrowRight className="h-4 w-4 ml-1" />
               </span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Contact */}
+      {/* ============================ 聯絡卡片 ============================ */}
       {(doc?.contactEmail || doc?.contactLine || doc?.bookingHref) && (
         <section
           className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
           style={{ maxWidth: TUNE.contentMaxW }}
         >
-          <h2 className="text-2xl font-semibold mb-4">联系我们</h2>
+          <h2 className="text-2xl font-bold mb-6">联系我们</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {!!doc?.contactEmail && (
-              <div className="rounded-2xl bg白/5 p-4">
-                <p className="text-sm opacity-80">Email</p>
-                <p className="font-semibold">{doc.contactEmail}</p>
+              <div className="rounded-2xl bg-white/5 p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="rounded-xl bg-white/10 p-2">
+                    <Lucide.Mail className="h-5 w-5" />
+                  </div>
+                  <p className="font-semibold">Email</p>
+                </div>
+                <p className="font-medium">{doc.contactEmail}</p>
               </div>
             )}
             {!!doc?.contactLine && (
-              <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-sm opacity-80">LINE</p>
-                <p className="font-semibold">{doc.contactLine}</p>
+              <div className="rounded-2xl bg-white/5 p-5">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="rounded-xl bg-white/10 p-2">
+                    <Lucide.MessageCircle className="h-5 w-5" />
+                  </div>
+                  <p className="font-semibold">LINE</p>
+                </div>
+                <p className="font-medium">{doc.contactLine}</p>
               </div>
             )}
             {!!doc?.bookingHref && (
-              <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-sm opacity-80 mb-1">预约咨询</p>
+              <div className="rounded-2xl bg-white p-5 text-black">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="rounded-xl bg-black/10 p-2">
+                    <Lucide.CalendarClock className="h-5 w-5" />
+                  </div>
+                  <p className="font-semibold">预约咨询</p>
+                </div>
+                <p className="text-sm opacity-80">选择方便的时间与顾问进行线上咨询。</p>
                 <Link
                   href={withLang(doc.bookingHref)}
-                  className="inline-block rounded-full bg-white text黑 px-5 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-white/60"
+                  className="mt-4 inline-flex items-center justify-center rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/50"
                 >
-                  立即预约 →
+                  立即预约
+                  <Lucide.ArrowRight className="h-4 w-4 ml-2" />
                 </Link>
               </div>
             )}
@@ -499,8 +693,8 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* Footer：固定簡中 */}
-      <Footer lang={PAGE_LANG} />
+      {/* Footer：顯示簡中內容，但語系傳 zh，避免內部 links 取用錯誤 */}
+      <Footer lang={NAV_FOOTER_LANG} />
     </div>
   );
 }
