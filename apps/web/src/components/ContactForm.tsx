@@ -136,6 +136,15 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [err, setErr] = useState<string>("");
 
+  const inputBase =
+    "mt-1 w-full rounded-xl border border-gray-300/70 bg-white px-3 py-3 h-12 text-[15px] leading-none placeholder:text-gray-400 " +
+    "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
+  const textAreaBase =
+    "mt-1 w-full rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] placeholder:text-gray-400 " +
+    "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition min-h-[140px] resize-y";
+  const labelBase = "block text-sm font-medium";
+  const sectionGap = "space-y-4 sm:space-y-5";
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("loading");
@@ -199,82 +208,162 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   }
 
   return (
-    <form onSubmit={onSubmit} encType="multipart/form-data" className="max-w-xl space-y-4">
+    <form
+      onSubmit={onSubmit}
+      encType="multipart/form-data"
+      className={`max-w-xl ${sectionGap}`}
+      // 手機優先：增加邊界與可點擊高度
+      noValidate
+    >
       <input type="hidden" name="lang" value={lang} />
 
       <div>
-        <label className="block text-sm font-medium">{t.label.name}</label>
-        <input name="name" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.name} required />
+        <label className={labelBase}>{t.label.name}</label>
+        <input
+          name="name"
+          className={inputBase}
+          placeholder={t.placeholder.name}
+          required
+          autoComplete="name"
+          inputMode="text"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">{t.label.email}</label>
-          <input type="email" name="email" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.email} required />
+          <label className={labelBase}>{t.label.email}</label>
+          <input
+            type="email"
+            name="email"
+            className={inputBase}
+            placeholder={t.placeholder.email}
+            required
+            autoComplete="email"
+            inputMode="email"
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium">{t.label.phone}</label>
-          <input name="phone" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.phone} />
+          <label className={labelBase}>{t.label.phone}</label>
+          <input
+            name="phone"
+            className={inputBase}
+            placeholder={t.placeholder.phone}
+            autoComplete="tel"
+            inputMode="tel"
+          />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">{t.label.subject}</label>
-        <input name="subject" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.subject} required />
+        <label className={labelBase}>{t.label.subject}</label>
+        <input
+          name="subject"
+          className={inputBase}
+          placeholder={t.placeholder.subject}
+          required
+          autoComplete="off"
+        />
       </div>
 
       <div>
-        <label className="block text-sm font-medium">{t.label.summary}</label>
-        <textarea name="summary" className="mt-1 w-full rounded border px-3 py-2" rows={6} placeholder={t.placeholder.summary} required />
+        <label className={labelBase}>{t.label.summary}</label>
+        <textarea
+          name="summary"
+          className={textAreaBase}
+          rows={6}
+          placeholder={t.placeholder.summary}
+          required
+        />
+        {/* 手機可讀性提示行高稍高 */}
+        <p className="mt-1 text-xs text-gray-500">
+          {/* 保持簡短，不影響原流程 */}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">{t.label.preferredContact}</label>
-          <input name="preferredContact" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.preferredContact} />
+          <label className={labelBase}>{t.label.preferredContact}</label>
+          <input
+            name="preferredContact"
+            className={inputBase}
+            placeholder={t.placeholder.preferredContact}
+            autoComplete="off"
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium">{t.label.preferredTime1}</label>
-          <input type="datetime-local" name="preferredTime1" className="mt-1 w-full rounded border px-3 py-2" />
+          <label className={labelBase}>{t.label.preferredTime1}</label>
+          <input
+            type="datetime-local"
+            name="preferredTime1"
+            className={inputBase}
+            inputMode="numeric"
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">{t.label.preferredTime2}</label>
-          <input type="datetime-local" name="preferredTime2" className="mt-1 w-full rounded border px-3 py-2" />
+          <label className={labelBase}>{t.label.preferredTime2}</label>
+          <input
+            type="datetime-local"
+            name="preferredTime2"
+            className={inputBase}
+            inputMode="numeric"
+          />
         </div>
 
-        {/* ✅ 使用新版 TimezoneSelect */}
+        {/* ✅ 使用新版 TimezoneSelect（保持 variant="light" 不變） */}
         <div>
-          <label className="block text-sm font-medium">{t.label.timezone}</label>
-          <TimezoneSelect name="timezone" variant="light" />
+          <label className={labelBase}>{t.label.timezone}</label>
+          <div className="mt-1">
+            <TimezoneSelect name="timezone" variant="light" />
+          </div>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">{t.label.attachments}</label>
-        <input type="file" name="attachments" multiple className="mt-1 w-full" />
+        <label className={labelBase}>{t.label.attachments}</label>
+        <input
+          type="file"
+          name="attachments"
+          multiple
+          className="mt-1 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1C3D5A] file:px-3 file:py-2 file:text-white"
+        />
       </div>
 
-      <div className="flex items-center gap-2">
-        <input id="consent" type="checkbox" name="consent" value="yes" required />
-        <label htmlFor="consent" className="text-sm">
+      <div className="flex items-start gap-2">
+        <input
+          id="consent"
+          type="checkbox"
+          name="consent"
+          value="yes"
+          required
+          className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1C3D5A] focus:ring-[#1C3D5A]"
+        />
+        <label htmlFor="consent" className="text-sm leading-6">
           {t.label.consent}
         </label>
       </div>
 
-      <button type="submit" disabled={status === "loading"} className="rounded bg-[#1C3D5A] px-4 py-2 text-white">
-        {status === "loading" ? t.label.sending : t.label.send}
-      </button>
+      <div className="pt-1">
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className="h-12 w-full rounded-2xl bg-[#1C3D5A] px-5 font-medium text-white transition hover:opacity-95 disabled:opacity-70 sm:w-auto"
+        >
+          {status === "loading" ? t.label.sending : t.label.send}
+        </button>
+      </div>
 
-      {status === "ok" && <p className="text-green-600">{t.label.success}</p>}
-      {status === "err" && (
-        <p className="text-red-600">
-          {t.label.failPrefix}
-          {err}
-        </p>
-      )}
+      <div aria-live="polite" className="min-h-[1.25rem]">
+        {status === "ok" && <p className="text-sm text-green-600">{t.label.success}</p>}
+        {status === "err" && (
+          <p className="text-sm text-red-600">
+            {t.label.failPrefix}
+            {err}
+          </p>
+        )}
+      </div>
     </form>
   );
 }

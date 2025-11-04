@@ -9,7 +9,7 @@ type Props = {
   className?: string;        // 額外 class，可再疊加
   placeholder?: string;      // 初始提示文字
   showOffsetHint?: boolean;  // 是否顯示下方 UTC 偏移
-  variant?: "brand" | "light"; // ★ 新增：外觀切換
+  variant?: "brand" | "light"; // ★ 外觀切換
 };
 
 const BRAND_BLUE = "#1C3D5A";
@@ -51,7 +51,7 @@ export default function TimezoneSelect({
         timeZoneName: "shortOffset",
         hour: "2-digit",
       }).formatToParts(now);
-      const raw = parts.find(p => p.type === "timeZoneName")?.value || "GMT±00:00";
+      const raw = parts.find((p) => p.type === "timeZoneName")?.value || "GMT±00:00";
       return raw.replace("GMT", "UTC");
     } catch {
       return "UTC±00:00";
@@ -87,14 +87,20 @@ export default function TimezoneSelect({
     : { backgroundColor: "#fff", color: "#111" };
 
   const ring = isBrand ? "ring-white/20 focus:ring-white/40" : "ring-black/10 focus:ring-black/20";
+
+  // 行動裝置優化：提高高度字級、加入 appearance-none，並在需要時給予 z-index 以避免被覆蓋
   const mergedClass = [
     "rounded-xl px-3 py-2 outline-none ring-1 focus:ring-2 transition-shadow",
+    "appearance-none",           // iOS/Android 原生下拉更一致
+    "h-12 sm:h-11 text-[15px]",  // 行動裝置更大的點擊區與字級
+    "bg-no-repeat pr-9",         // 預留右側箭頭空間（若日後加自訂箭頭）
     ring,
     className,
   ].join(" ");
 
   return (
-    <div className="grid gap-1">
+    // 若遇到顯示層級被覆蓋，這個容器提供 stacking context；桌機還原
+    <div className="grid gap-1 relative z-10 md:z-auto">
       <select
         id={id}
         name={name}

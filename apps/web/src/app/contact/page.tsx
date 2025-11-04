@@ -130,9 +130,9 @@ export default async function Page({
       <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
         <NavigationServer lang={lang} />
         <div className="mx-auto w-full" style={{ maxWidth: CONTENT_MAX_W }}>
-          <div className="px-4 py-16 text-white">
-            <h1 className="text-3xl font-semibold">Contact</h1>
-            <p className="mt-3 opacity-90">Content not found.</p>
+          <div className="px-4 py-16 text-white sm:px-6">
+            <h1 className="text-3xl font-semibold sm:text-4xl">Contact</h1>
+            <p className="mt-3 opacity-90 sm:text-lg">Content not found.</p>
             <Link
               href={linkWithLang("/", lang)}
               className="mt-6 inline-block rounded-xl bg-white/10 px-4 py-2 text-white"
@@ -176,28 +176,32 @@ export default async function Page({
               fill
               className="object-cover"
               priority
+              // 手機視窗較小，維持既有定位但加強遮罩避免文字與背景衝突
               style={{ objectPosition: heroObjectPosition() }}
             />
             <div className="absolute inset-0" style={{ background: HERO_OVERLAY }} />
-            <div className="absolute inset-0 bg-black/30 md:bg-black/25" />
+            {/* 手機加強一點對比，md 以上降低 */}
+            <div className="absolute inset-0 bg-black/40 sm:bg-black/35 md:bg-black/25" />
           </>
         )}
 
         <div
-          className="relative mx-auto flex h-full w-full items-center justify-center px-4 py-16 text-white"
+          className="relative mx-auto flex h-full w-full items-center justify-center px-4 py-12 text-white sm:px-6 sm:py-14 md:py-16"
           style={{ maxWidth: CONTENT_MAX_W }}
         >
           <div className="w-full text-center">
-            <h1 className="text-4xl font-bold tracking-tight leading-snug md:text-5xl">
+            <h1 className="text-3xl font-bold tracking-tight leading-snug sm:text-4xl md:text-5xl">
               {hero?.title ?? "Contact"}
             </h1>
 
             {hero?.subtitle ? (
-              <p className="mx-auto mt-4 max-w-3xl text-lg leading-relaxed opacity-95">{hero.subtitle}</p>
+              <p className="mx-auto mt-3 max-w-3xl text-base leading-relaxed opacity-95 sm:mt-4 sm:text-lg">
+                {hero.subtitle}
+              </p>
             ) : null}
 
             {Array.isArray(hero?.ctas) && hero.ctas.length > 0 ? (
-              <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-3">
+              <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-2 sm:mt-8 sm:gap-3">
                 {hero.ctas.map((c, i) => {
                   const href = c?.href || "#";
                   const label = c?.label || "";
@@ -208,8 +212,10 @@ export default async function Page({
                       href={href}
                       lang={lang}
                       className={[
-                        "rounded-2xl px-5 py-2 text-sm font-medium",
-                        isPrimary ? "bg-white text-black shadow-sm" : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/16",
+                        "rounded-2xl px-4 py-2 text-sm font-medium sm:px-5 sm:py-2.5",
+                        isPrimary
+                          ? "bg-white text-black shadow-sm"
+                          : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/16",
                       ].join(" ")}
                     >
                       {label}
@@ -228,26 +234,33 @@ export default async function Page({
       ) : (
         <>
           {hasSubmitted && !isOk ? (
-            <div className="mx-auto w-full px-4 pt-6" style={{ maxWidth: CONTENT_MAX_W }}>
+            <div className="mx-auto w-full px-4 pt-5 sm:px-6" style={{ maxWidth: CONTENT_MAX_W }}>
               <ErrorToast lang={lang} errMsg={errMsg} />
             </div>
           ) : null}
 
-          <main className="mx-auto w-full px-4 py-12 text-white" style={{ maxWidth: CONTENT_MAX_W }}>
-            <section className="grid gap-6 md:grid-cols-3">
+          <main
+            className="mx-auto w-full px-4 py-10 text-white sm:px-6 sm:py-12"
+            style={{ maxWidth: CONTENT_MAX_W }}
+          >
+            {/* 手機單欄優先，md 起三欄 */}
+            <section className="grid gap-4 sm:gap-6 md:grid-cols-3">
               <InfoCard title={labelByLang("Languages", lang)} body={info.languages} />
               <InfoCard title={labelByLang("Service areas", lang)} body={info.serviceAreas} />
               <InfoCard title={labelByLang("Business hours", lang)} body={info.businessHours} />
             </section>
 
             {faqTopics.length > 0 ? (
-              <section className="mt-12">
-                <h2 className="text-2xl font-semibold">
+              <section className="mt-10 sm:mt-12">
+                <h2 className="text-xl font-semibold sm:text-2xl">
                   {labelByLang("Frequently asked topics", lang)}
                 </h2>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
                   {faqTopics.map((t, i) => (
-                    <span key={`${t}-${i}`} className="rounded-full bg-white/10 px-3 py-1 text-sm">
+                    <span
+                      key={`${t}-${i}`}
+                      className="rounded-full bg-white/10 px-3 py-1 text-xs sm:text-sm"
+                    >
                       {t}
                     </span>
                   ))}
@@ -256,24 +269,48 @@ export default async function Page({
             ) : null}
 
             {addresses.length > 0 ? (
-              <section className="mt-12">
-                <h2 className="mb-4 text-2xl font-semibold">{labelByLang("Addresses", lang)}</h2>
-                <div className="grid gap-5 sm:grid-cols-1 md:grid-cols-2">
+              <section className="mt-10 sm:mt-12">
+                <h2 className="mb-3 text-xl font-semibold sm:mb-4 sm:text-2xl">
+                  {labelByLang("Addresses", lang)}
+                </h2>
+                {/* 手機單欄，md 起雙欄 */}
+                <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
                   {addresses.map((a, i) => (
                     <div
                       key={`addr-${i}`}
-                      className="group relative overflow-hidden rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
+                      className="group relative overflow-hidden rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg sm:p-5"
                     >
                       <div className="absolute -left-2 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                          className="h-4 w-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
+                          />
                           <circle cx="12" cy="10" r="3" />
                         </svg>
                       </div>
                       <div className="pl-6">
-                        {a?.label ? <h3 className="mb-2 text-lg font-semibold tracking-tight">{a.label}</h3> : null}
-                        {a?.address ? <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">{a.address}</p> : null}
-                        {a?.note ? <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p> : null}
+                        {a?.label ? (
+                          <h3 className="mb-1 text-base font-semibold tracking-tight sm:mb-2 sm:text-lg">
+                            {a.label}
+                          </h3>
+                        ) : null}
+                        {a?.address ? (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
+                            {a.address}
+                          </p>
+                        ) : null}
+                        {a?.note ? (
+                          <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p>
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -282,10 +319,12 @@ export default async function Page({
             ) : null}
 
             {/* ============ 表單 ============ */}
-            <section className="mt-12">
-              <h2 className="text-2xl font-semibold">{labelByLang("Contact form", lang)}</h2>
+            <section className="mt-10 sm:mt-12">
+              <h2 className="text-xl font-semibold sm:text-2xl">
+                {labelByLang("Contact form", lang)}
+              </h2>
               <form
-                className="mt-6 grid gap-4 rounded-2xl bg-white/5 p-6"
+                className="mt-5 grid gap-4 rounded-2xl bg-white/5 p-4 sm:mt-6 sm:gap-5 sm:p-6"
                 action={"/api/contact"}
                 method="post"
                 encType="multipart/form-data"
@@ -293,6 +332,7 @@ export default async function Page({
                 {/* ✅ 提供 API 讀取語系 */}
                 <input type="hidden" name="lang" value={lang} />
 
+                {/* 手機單欄，md 起雙欄 */}
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label={labelByLang("Your name", lang)} name="name" required />
                   <Field label="Email" name="email" type="email" required />
@@ -302,10 +342,12 @@ export default async function Page({
 
                 {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
                   <div className="grid gap-2">
-                    <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
+                    <label className="text-sm opacity-90">
+                      {labelByLang("Subject", lang)}
+                    </label>
                     <select
                       name="subject"
-                      className="rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
+                      className="h-12 rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
                       required
                     >
                       <option value="" className="bg-white text-black">
@@ -320,13 +362,16 @@ export default async function Page({
                   </div>
                 ) : null}
 
-                {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
+                {Array.isArray(form?.preferredContactOptions) &&
+                form.preferredContactOptions.length > 0 ? (
                   <div className="grid gap-2">
-                    <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
+                    <span className="text-sm opacity-90">
+                      {labelByLang("Preferred contact", lang)}
+                    </span>
                     <div className="flex flex-wrap gap-3">
                       {form.preferredContactOptions.map((op, i) => (
                         <label key={`pref-${i}`} className="flex items-center gap-2">
-                          <input type="radio" name="preferredContact" value={op} />
+                          <input className="h-4 w-4" type="radio" name="preferredContact" value={op} />
                           <span className="text-sm">{op}</span>
                         </label>
                       ))}
@@ -338,7 +383,7 @@ export default async function Page({
                   <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
                   <textarea
                     name="summary"
-                    className="min-h-[120px] rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    className="min-h-[130px] rounded-xl bg-white/10 px-3 py-3 outline-none sm:min-h-[140px]"
                     placeholder={form?.summaryHint ?? ""}
                     required
                   />
@@ -347,12 +392,24 @@ export default async function Page({
                 {/* ===== 新增：第一/第二備選時段 ===== */}
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="grid gap-2">
-                    <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
-                    <input type="datetime-local" name="preferredTime1" className="rounded-xl bg-white/10 px-3 py-2 outline-none" />
+                    <span className="text-sm opacity-90">
+                      {labelByLang("First preferred time", lang)}
+                    </span>
+                    <input
+                      type="datetime-local"
+                      name="preferredTime1"
+                      className="h-12 rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    />
                   </label>
                   <label className="grid gap-2">
-                    <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
-                    <input type="datetime-local" name="preferredTime2" className="rounded-xl bg-white/10 px-3 py-2 outline-none" />
+                    <span className="text-sm opacity-90">
+                      {labelByLang("Second preferred time", lang)}
+                    </span>
+                    <input
+                      type="datetime-local"
+                      name="preferredTime2"
+                      className="h-12 rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    />
                   </label>
                 </div>
 
@@ -371,15 +428,23 @@ export default async function Page({
                     type="file"
                     name="attachments"
                     multiple
-                    className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-sm file:text-black"
+                    className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:text-black"
                   />
-                  {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
+                  {form?.attachmentHint ? (
+                    <p className="text-xs opacity-75">{form.attachmentHint}</p>
+                  ) : null}
                 </div>
 
                 {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
-                  <label className="mt-2 grid gap-2">
+                  <label className="mt-1 grid gap-2 sm:mt-2">
                     <div className="flex items-start gap-2">
-                      <input type="checkbox" name="consent" value="yes" required className="mt-1" />
+                      <input
+                        type="checkbox"
+                        name="consent"
+                        value="yes"
+                        required
+                        className="mt-1 h-4 w-4"
+                      />
                       <div className="text-sm opacity-90">
                         <PortableText value={form.consentText} />
                       </div>
@@ -387,16 +452,22 @@ export default async function Page({
                   </label>
                 ) : null}
 
-                <div className="mt-4">
-                  <button type="submit" className="rounded-2xl bg-white px-5 py-2 font-medium text-black">
+                <div className="mt-2 sm:mt-3">
+                  <button
+                    type="submit"
+                    className="h-11 rounded-2xl bg-white px-5 font-medium text-black sm:h-12"
+                  >
                     {labelByLang("Send", lang)}
                   </button>
                 </div>
               </form>
             </section>
 
-            <section className="mt-12">
-              <Link href={linkWithLang("/services", lang)} className="inline-block rounded-2xl bg-white/10 px-4 py-2">
+            <section className="mt-10 sm:mt-12">
+              <Link
+                href={linkWithLang("/services", lang)}
+                className="inline-block rounded-2xl bg-white/10 px-4 py-2"
+              >
                 {labelByLang("View services", lang)} →
               </Link>
             </section>
@@ -413,7 +484,7 @@ export default async function Page({
 function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
   return (
     <section
-      className="relative mx-auto w-full px-4 pb-16 pt-10 text-white"
+      className="relative mx-auto w-full px-4 pb-14 pt-8 text-white sm:px-6 sm:pb-16 sm:pt-10"
       style={{ maxWidth: "720px" }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -422,11 +493,11 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
       </div>
 
       <div className="relative">
-        <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-2xl bg-emerald-500/18 ring-1 ring-emerald-400/35 backdrop-blur-sm">
-          <CheckIcon className="h-9 w-9 text-emerald-300" />
+        <div className="mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-2xl bg-emerald-500/18 ring-1 ring-emerald-400/35 backdrop-blur-sm sm:h-[72px] sm:w-[72px]">
+          <CheckIcon className="h-8 w-8 text-emerald-300 sm:h-9 sm:w-9" />
         </div>
 
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight leading-snug md:text-4xl">
+        <h2 className="mt-5 text-center text-2xl font-bold tracking-tight leading-snug sm:mt-6 sm:text-3xl md:text-4xl">
           {labelByLang("Your message was sent", lang)}
         </h2>
         <p className="mt-3 text-center text-base leading-relaxed opacity-90 md:text-lg">
@@ -434,38 +505,71 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
         </p>
 
         {Array.isArray(doc?.success?.message) && doc.success?.message?.length > 0 ? (
-          <div className="prose prose-invert mt-6 rounded-2xl bg-white/6 p-5 ring-1 ring-white/12 backdrop-blur-sm" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div
+            className="prose prose-invert mt-5 rounded-2xl bg-white/6 p-4 ring-1 ring-white/12 backdrop-blur-sm sm:mt-6 sm:p-5"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          >
             <PortableText value={doc.success.message} />
           </div>
         ) : (
-          <ul className="mt-6 grid gap-3 rounded-2xl p-5 ring-1 ring-white/12 backdrop-blur-sm" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <ul
+            className="mt-5 grid gap-3 rounded-2xl p-4 ring-1 ring-white/12 backdrop-blur-sm sm:mt-6 sm:p-5"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          >
             <li className="flex items-start gap-3">
               <MailIcon className="mt-[2px] h-5 w-5 opacity-90" />
-              <span className="text-sm opacity-95">{labelByLang("A confirmation email has been sent. If you do not see it, please check your spam folder.", lang)}</span>
+              <span className="text-sm opacity-95">
+                {labelByLang(
+                  "A confirmation email has been sent. If you do not see it, please check your spam folder.",
+                  lang
+                )}
+              </span>
             </li>
             <li className="flex items-start gap-3">
               <CalendarIcon className="mt-[2px] h-5 w-5 opacity-90" />
-              <span className="text-sm opacity-95">{labelByLang("If you proposed a time, our team will confirm availability or suggest alternatives.", lang)}</span>
+              <span className="text-sm opacity-95">
+                {labelByLang(
+                  "If you proposed a time, our team will confirm availability or suggest alternatives.",
+                  lang
+                )}
+              </span>
             </li>
             <li className="flex items-start gap-3">
               <ShieldIcon className="mt-[2px] h-5 w-5 opacity-90" />
-              <span className="text-sm opacity-95">{labelByLang("Your information is kept confidential and used only for this inquiry.", lang)}</span>
+              <span className="text-sm opacity-95">
+                {labelByLang(
+                  "Your information is kept confidential and used only for this inquiry.",
+                  lang
+                )}
+              </span>
             </li>
           </ul>
         )}
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4">
-          <CtaLink href="/" lang={lang} className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white px-5 md:px-6 font-medium text-black shadow-sm">
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-2 sm:mt-8 sm:gap-3 md:gap-4">
+          <CtaLink
+            href="/"
+            lang={lang}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white px-5 font-medium text-black shadow-sm sm:h-11 md:h-12"
+          >
             <HomeIcon className="h-5 w-5" />
             {labelByLang("Back to Home", lang)}
           </CtaLink>
 
-          <CtaLink href="/services" lang={lang} className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16">
+          <CtaLink
+            href="/services"
+            lang={lang}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
+          >
             <ArrowRightIcon className="h-5 w-5" />
             {labelByLang("View services", lang)}
           </CtaLink>
 
-          <CtaLink href="/companyStrengthsAndFAQ" lang={lang} className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16">
+          <CtaLink
+            href="/companyStrengthsAndFAQ"
+            lang={lang}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
+          >
             <HelpIcon className="h-5 w-5" />
             {labelByLang("View FAQ", lang)}
           </CtaLink>
@@ -478,13 +582,19 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
 /* ============================ 失敗提示 ============================ */
 function ErrorToast({ lang, errMsg }: { lang: Lang; errMsg?: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl bg-red-500/15 px-4 py-3 text-sm text-red-100 ring-1 ring-red-500/30" role="alert">
+    <div
+      className="flex items-start gap-3 rounded-2xl bg-red-500/15 px-3 py-2.5 text-sm text-red-100 ring-1 ring-red-500/30 sm:px-4 sm:py-3"
+      role="alert"
+    >
       <ErrorIcon className="mt-[2px] h-5 w-5 shrink-0 text-red-200" />
       <div className="flex-1">
         <div className="font-semibold">{labelByLang("Submission failed.", lang)}</div>
         {errMsg ? <div className="mt-1 opacity-90">({String(errMsg)})</div> : null}
       </div>
-      <Link href="#contact-form" className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20">
+      <Link
+        href="#contact-form"
+        className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
+      >
         {labelByLang("Try again", lang)}
       </Link>
     </div>
@@ -495,9 +605,9 @@ function ErrorToast({ lang, errMsg }: { lang: Lang; errMsg?: string }) {
 function InfoCard({ title, body }: { title: string; body?: string }) {
   if (!title && !body) return null;
   return (
-    <div className="rounded-2xl bg-white/5 p-5">
+    <div className="rounded-2xl bg-white/5 p-4 sm:p-5">
       {title ? <div className="text-base font-semibold">{title}</div> : null}
-      {body ? <p className="mt-2 whitespace-pre-wrap text-sm opacity-90">{body}</p> : null}
+      {body ? <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed opacity-90">{body}</p> : null}
     </div>
   );
 }
@@ -516,7 +626,12 @@ function Field({
   return (
     <label className="grid gap-2" id="contact-form">
       <span className="text-sm opacity-90">{label}</span>
-      <input type={type} name={name} className="rounded-xl bg-white/10 px-3 py-2 outline-none" required={required} />
+      <input
+        type={type}
+        name={name}
+        className="h-12 rounded-xl bg-white/10 px-3 py-2 outline-none"
+        required={required}
+      />
     </label>
   );
 }

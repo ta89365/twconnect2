@@ -142,29 +142,41 @@ export default function ContactSection({
   const lineHref = data.lineId ? `https://line.me/R/ti/p/${encodeURIComponent(data.lineId)}` : undefined;
   const mailHref = data.email ? `mailto:${data.email}` : undefined;
 
+  // 共用樣式：行動裝置輸入與按鈕尺寸
+  const inputBase =
+    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
+  const selectBase =
+    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
+  const textareaBase =
+    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-[15px] leading-relaxed min-h-[140px] " +
+    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
+
   return (
     <section className="bg-[#1C3D5A] text-white">
-      <div className="mx-auto max-w-5xl px-4 py-16">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="text-center">
-          {data.heading && <h2 className="text-3xl md:text-4xl font-semibold">{data.heading}</h2>}
+          {data.heading && (
+            <h2 className="text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">
+              {data.heading}
+            </h2>
+          )}
           {data.body && (
-            <p className="mt-4 text-white/90 leading-relaxed whitespace-pre-line">
+            <p className="mt-3 whitespace-pre-line leading-relaxed text-white/90 sm:mt-4">
               {data.body}
             </p>
           )}
         </div>
 
         {/* CTA Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center sm:gap-4">
           {lineHref && (
             <a
               href={lineHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg px-6 py-3 font-medium text-white transition-colors"
-              style={{ backgroundColor: "#4A90E2" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2")}
+              className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#4A90E2] px-6 font-medium text-white transition hover:bg-[#5AA2F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
             >
               {btnLabel[lang].line}
             </a>
@@ -172,10 +184,7 @@ export default function ContactSection({
           {mailHref && (
             <a
               href={mailHref}
-              className="inline-flex items-center justify-center rounded-lg px-6 py-3 font-medium text-white transition-colors"
-              style={{ backgroundColor: "#4A90E2" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2")}
+              className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#4A90E2] px-6 font-medium text-white transition hover:bg-[#5AA2F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
             >
               {btnLabel[lang].mail}
             </a>
@@ -184,33 +193,42 @@ export default function ContactSection({
 
         {/* QR */}
         {data.qrUrl && (
-          <div className="mt-6 flex justify-center">
-            <Image src={data.qrUrl} alt="LINE QR" width={160} height={160} className="rounded-md shadow" />
+          <div className="mt-5 flex justify-center sm:mt-6">
+            <Image
+              src={data.qrUrl}
+              alt="LINE QR"
+              width={140}
+              height={140}
+              className="rounded-md shadow sm:h-[160px] sm:w-[160px] md:h-[180px] md:w-[180px]"
+            />
           </div>
         )}
 
         {/* Form */}
-        <div className="mt-10 mx-auto max-w-2xl">
+        <div className="mx-auto mt-8 max-w-2xl sm:mt-10">
           {status === "done" ? (
-            <div className="rounded-xl bg-white/10 p-6 text-center">
+            <div className="rounded-2xl bg-white/10 p-5 text-center sm:p-6">
               <p className="text-base">{okMsg[lang]}</p>
             </div>
           ) : (
             <form
               onSubmit={onSubmit}
-              className="rounded-2xl bg-white p-6 shadow text-gray-900 space-y-4"
+              className="space-y-4 rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
               encType="multipart/form-data"
+              noValidate
             >
               {/* 與 /api/contact 對齊的欄位集合 */}
               <input type="hidden" name="lang" value={lang} />
 
-              <input name="name" required placeholder={tForm.name[lang]} className="w-full rounded border p-3" />
-              <input name="email" type="email" required placeholder={tForm.email[lang]} className="w-full rounded border p-3" />
+              <input name="name" required placeholder={tForm.name[lang]} className={inputBase} />
+              <input name="email" type="email" required placeholder={tForm.email[lang]} className={inputBase} />
 
-              <select name="topic" required className="w-full rounded border p-3" defaultValue="">
+              <select name="topic" required className={selectBase} defaultValue="">
                 <option value="">{tForm.topicLabel[lang]}</option>
                 {topicOptions[lang].map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
                 ))}
               </select>
 
@@ -219,22 +237,33 @@ export default function ContactSection({
                 required
                 placeholder={tForm.message[lang]}
                 rows={4}
-                className="w-full rounded border p-3"
+                className={textareaBase}
               />
 
-              <input name="company" placeholder={tForm.company[lang]} className="w-full rounded border p-3" />
-              <input name="phone" placeholder={tForm.phone[lang]} className="w-full rounded border p-3" />
+              <input name="company" placeholder={tForm.company[lang]} className={inputBase} />
+              <input name="phone" placeholder={tForm.phone[lang]} className={inputBase} />
 
               {/* 額外欄位：Preferred Contact + 兩個備選時段 + 時區 */}
-              <input name="preferredContact" placeholder={tForm.preferredContact[lang]} className="w-full rounded border p-3" />
+              <input name="preferredContact" placeholder={tForm.preferredContact[lang]} className={inputBase} />
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <input type="datetime-local" name="preferredTime1" className="w-full rounded border p-3" placeholder={tForm.time1[lang]} />
-                <input type="datetime-local" name="preferredTime2" className="w-full rounded border p-3" placeholder={tForm.time2[lang]} />
+                <input
+                  type="datetime-local"
+                  name="preferredTime1"
+                  className={inputBase}
+                  placeholder={tForm.time1[lang]}
+                />
+                <input
+                  type="datetime-local"
+                  name="preferredTime2"
+                  className={inputBase}
+                  placeholder={tForm.time2[lang]}
+                />
               </div>
 
               {/* ✅ 使用新版 TimezoneSelect */}
               <div>
+                <div className="sr-only" aria-hidden="true">{tForm.timezone[lang]}</div>
                 <TimezoneSelect name="timezone" variant="light" />
               </div>
 
@@ -242,9 +271,16 @@ export default function ContactSection({
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 
               {/* 同意勾選，對齊 /api/contact 的 consent */}
-              <div className="flex items-center gap-2">
-                <input id="consent" type="checkbox" name="consent" value="yes" required />
-                <label htmlFor="consent" className="text-sm">
+              <div className="flex items-start gap-2">
+                <input
+                  id="consent"
+                  type="checkbox"
+                  name="consent"
+                  value="yes"
+                  required
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1C3D5A] focus:ring-[#1C3D5A]"
+                />
+                <label htmlFor="consent" className="text-sm leading-6">
                   {lang === "jp"
                     ? "プライバシーポリシーに同意します"
                     : lang === "zh"
@@ -256,17 +292,16 @@ export default function ContactSection({
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="w-full rounded-lg py-3 font-medium text-white transition-colors"
-                style={{ backgroundColor: "#4A90E2" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#5AA2F0")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.backgroundColor = "#4A90E2")}
+                className="h-12 w-full rounded-2xl bg-[#4A90E2] px-5 font-medium text-white transition hover:bg-[#5AA2F0] disabled:opacity-70 sm:w-auto"
               >
                 {status === "sending" ? btnLabel[lang].sending : btnLabel[lang].submit}
               </button>
 
-              {status === "error" && <p className="text-sm text-red-600">{err}</p>}
+              <div aria-live="polite" className="min-h-[1.25rem]">
+                {status === "error" && <p className="text-sm text-red-600">{err}</p>}
+              </div>
 
-              <p className="pt-2 text-xs text-gray-500">
+              <p className="pt-1 text-xs text-gray-500 sm:pt-2">
                 {lang === "jp" && "※ 相談は無料です。費用が発生する場合は、必ず事前にお見積りをご提示します。"}
                 {lang === "zh" && "※ 諮詢免費，如需收費服務，將先行提供報價並徵得同意。"}
                 {lang === "en" && "Consultation is free. Any fees will be quoted in advance."}
