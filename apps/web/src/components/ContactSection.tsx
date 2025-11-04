@@ -48,9 +48,26 @@ const topicOptions: Record<Lang, string[]> = {
   en: ["Company Setup", "Accounting & Tax", "Visa & HR", "Market Entry", "Others"],
 };
 
+function fmtDT(v: string, lang: Lang) {
+  if (!v) return "";
+  try {
+    const d = new Date(v);
+    return d.toLocaleString(
+      lang === "jp" ? "ja-JP" : lang === "zh" ? "zh-TW" : "en-US",
+      { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }
+    );
+  } catch {
+    return v;
+  }
+}
+
 export default function ContactSection({ data, lang }: { data: ContactData | null; lang: Lang }) {
   const [status, setStatus] = useState<Status>("idle");
   const [err, setErr] = useState<string>("");
+
+  // 顯示於覆蓋層的日期文字
+  const [t1Disp, setT1Disp] = useState("");
+  const [t2Disp, setT2Disp] = useState("");
 
   if (!data) return null;
 
@@ -85,17 +102,17 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
           const url = new URL(loc || "/contact", window.location.origin);
           const submitted = url.searchParams.get("submitted");
           const errMsg = url.searchParams.get("error") || "";
-          if (submitted === "1") { setStatus("done"); form.reset(); return; }
+          if (submitted === "1") { setStatus("done"); form.reset(); setT1Disp(""); setT2Disp(""); return; }
           if (submitted === "0") { setStatus("error"); setErr(errMsg || "MAIL_FAILED"); return; }
-        } catch { setStatus("done"); form.reset(); return; }
+        } catch { setStatus("done"); form.reset(); setT1Disp(""); setT2Disp(""); return; }
       }
       const ct = res.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const data = await res.json();
         if (!res.ok || !data?.ok) throw new Error(data?.error || "SEND_FAILED");
-        setStatus("done"); form.reset(); return;
+        setStatus("done"); form.reset(); setT1Disp(""); setT2Disp(""); return;
       }
-      if (res.ok) { setStatus("done"); form.reset(); return; }
+      if (res.ok) { setStatus("done"); form.reset(); setT1Disp(""); setT2Disp(""); return; }
       throw new Error(`HTTP ${res.status}`);
     } catch (e: any) { setStatus("error"); setErr(e?.message ?? "Failed to submit"); }
   }
@@ -114,10 +131,10 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
     "box-border w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-[15px] leading-relaxed min-h-[140px] " +
     "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
 
-  /* datetime：高度拉高＋下緣留白，並保留 box-border */
+  // datetime：隱藏原生字樣，改由覆蓋層顯示
   const dtInputBase =
-  inputBase.replace("h-12", "h-16") +
-  " pt-2 pb-6 truncate whitespace-nowrap overflow-hidden";
+    inputBase.replace("h-12", "h-16") +
+    " appearance-none text-transparent caret-transparent placeholder:text-transparent pt-2 pb-6";
 
   return (
     <section className="bg-[#1C3D5A] text-white overflow-x-hidden">
@@ -190,7 +207,7 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
 
               <input name="preferredContact" placeholder={tForm.preferredContact[lang]} className={inputBase} />
 
-              {/* ===== 兩個備選時段（第二行提示，防溢出） ===== */}
+              {/* ===== 兩個備選時段（覆蓋層避免溢出） ===== */}
               <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="relative w-full min-w-0 overflow-hidden">
                   <input
@@ -198,18 +215,26 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
                     name="preferredTime1"
                     className={`${dtInputBase} pr-10`}
                     aria-label={tForm.time1[lang]}
+                    onChange={(e) => setT1Disp(fmtDT(e.currentTarget.value, lang))}
                   />
+                  <span className="pointer-events-none absolute left-4 right-10 top-2.5 line-clamp-1 text-[15px] text-gray-900">
+                    {t1Disp}
+                  </span>
                   <span className="pointer-events-none absolute left-4 bottom-1 max-w-[calc(100%-2rem)] truncate text-xs text-gray-500">
                     {tHint[lang]}
                   </span>
                 </div>
-                <div className="relative w-full min-w-0">
+                <div className="relative w-full min-w-0 overflow-hidden">
                   <input
                     type="datetime-local"
                     name="preferredTime2"
                     className={`${dtInputBase} pr-10`}
                     aria-label={tForm.time2[lang]}
+                    onChange={(e) => setT2Disp(fmtDT(e.currentTarget.value, lang))}
                   />
+                  <span className="pointer-events-none absolute left-4 right-10 top-2.5 line-clamp-1 text-[15px] text-gray-900">
+                    {t2Disp}
+                  </span>
                   <span className="pointer-events-none absolute left-4 bottom-1 max-w-[calc(100%-2rem)] truncate text-xs text-gray-500">
                     {tHint[lang]}
                   </span>

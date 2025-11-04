@@ -143,10 +143,27 @@ function useI18n(lang: Lang) {
   return useMemo(() => I18N[lang] ?? I18N.zh, [lang]);
 }
 
+function fmtDT(v: string, lang: Lang) {
+  if (!v) return "";
+  try {
+    const d = new Date(v);
+    return d.toLocaleString(
+      lang === "jp" ? "ja-JP" : lang === "zh" ? "zh-TW" : "en-US",
+      { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }
+    );
+  } catch {
+    return v;
+  }
+}
+
 export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   const t = useI18n(lang);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [err, setErr] = useState<string>("");
+
+  // 顯示於覆蓋層的日期文字
+  const [t1Disp, setT1Disp] = useState("");
+  const [t2Disp, setT2Disp] = useState("");
 
   // 防溢出：加 box-border + min/max width
   const inputBase =
@@ -158,10 +175,15 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   const labelBase = "block text-sm font-medium";
   const sectionGap = "space-y-4 sm:space-y-5";
 
-  // datetime 欄位：加高並於下緣留白供第二行提示使用
+  // datetime 欄位：隱藏原生字樣，改由覆蓋層顯示；提高高度留空給第二行提示
   const dtInputBase =
-  inputBase.replace("h-12", "h-16") +
-  " pt-2 pb-6 truncate whitespace-nowrap overflow-hidden";
+    inputBase.replace("h-12", "h-16") +
+    " appearance-none text-transparent caret-transparent placeholder:text-transparent pt-2 pb-6";
+
+  function resetDisplays() {
+    setT1Disp("");
+    setT2Disp("");
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -188,6 +210,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
           if (submitted === "1") {
             setStatus("ok");
             form.reset();
+            resetDisplays();
             return;
           }
           if (submitted === "0") {
@@ -198,6 +221,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
         } catch {
           setStatus("ok");
           form.reset();
+          resetDisplays();
           return;
         }
       }
@@ -208,12 +232,14 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
         if (!res.ok || !data?.ok) throw new Error(data?.error || "SEND_FAILED");
         setStatus("ok");
         form.reset();
+        resetDisplays();
         return;
       }
 
       if (res.ok) {
         setStatus("ok");
         form.reset();
+        resetDisplays();
         return;
       }
 
@@ -298,7 +324,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
           />
         </div>
 
-        {/* 第一備選時段：內嵌第二行提示 */}
+        {/* 第一備選時段：覆蓋顯示層避免溢出 */}
         <div className="relative w-full min-w-0 overflow-hidden">
           <label className={labelBase}>{t.label.preferredTime1}</label>
           <input
@@ -307,7 +333,11 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
             className={`${dtInputBase} pr-10`}
             aria-label={t.label.preferredTime1}
             inputMode="numeric"
+            onChange={(e) => setT1Disp(fmtDT(e.currentTarget.value, lang))}
           />
+          <span className="pointer-events-none absolute left-3 right-10 top-9 line-clamp-1 text-[15px] text-gray-900">
+            {t1Disp}
+          </span>
           <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs text-gray-500">
             {t.hint.selectDateTime}
           </span>
@@ -315,8 +345,8 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* 第二備選時段：內嵌第二行提示 */}
-        <div className="relative w-full min-w-0">
+        {/* 第二備選時段：覆蓋顯示層避免溢出 */}
+        <div className="relative w-full min-w-0 overflow-hidden">
           <label className={labelBase}>{t.label.preferredTime2}</label>
           <input
             type="datetime-local"
@@ -324,7 +354,11 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
             className={`${dtInputBase} pr-10`}
             aria-label={t.label.preferredTime2}
             inputMode="numeric"
+            onChange={(e) => setT2Disp(fmtDT(e.currentTarget.value, lang))}
           />
+          <span className="pointer-events-none absolute left-3 right-10 top-9 line-clamp-1 text-[15px] text-gray-900">
+            {t2Disp}
+          </span>
           <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs text-gray-500">
             {t.hint.selectDateTime}
           </span>
