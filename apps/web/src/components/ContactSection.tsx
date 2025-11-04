@@ -20,7 +20,7 @@ const btnLabel: Record<Lang, { line: string; mail: string; submit: string; sendi
   en: { line: "Contact via LINE", mail: "Contact via Email", submit: "👉 Send Inquiry", sending: "Sending…" },
 };
 
-/* ===== 表單多語 ===== */
+/* 表單多語 */
 const tForm = {
   name: { jp: "お名前 ★", zh: "姓名 ★", en: "Name ★" },
   email: { jp: "メールアドレス ★", zh: "電子郵件 ★", en: "Email ★" },
@@ -35,7 +35,7 @@ const tForm = {
   timezone: { jp: "タイムゾーン", zh: "時區", en: "Time zone" },
 } as const;
 
-/* ===== 內嵌提示多語 ===== */
+/* 內嵌提示多語（第二行顯示） */
 const tHint: Record<Lang, string> = {
   zh: "請選擇日期與時間",
   jp: "日付と時刻を選択してください",
@@ -47,8 +47,6 @@ const topicOptions: Record<Lang, string[]> = {
   zh: ["公司設立 / Company Setup", "會計與稅務 / Accounting & Tax", "簽證與人力 / Visa & HR", "市場開拓 / Market Entry", "其他 / Others"],
   en: ["Company Setup", "Accounting & Tax", "Visa & HR", "Market Entry", "Others"],
 };
-
-const langOptions: Record<Lang, string[]> = { jp: ["日本語", "中文", "English"], zh: ["中文", "日本語", "English"], en: ["English", "日本語", "中文"] };
 
 export default function ContactSection({ data, lang }: { data: ContactData | null; lang: Lang }) {
   const [status, setStatus] = useState<Status>("idle");
@@ -105,25 +103,26 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
   const lineHref = data.lineId ? `https://line.me/R/ti/p/${encodeURIComponent(data.lineId)}` : undefined;
   const mailHref = data.email ? `mailto:${data.email}` : undefined;
 
+  /* 共用輸入樣式：加上 box-border 防溢出 */
   const inputBase =
-    "w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "box-border w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
     "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
   const selectBase =
-    "w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "box-border w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
     "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
   const textareaBase =
-    "w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-[15px] leading-relaxed min-h-[140px] " +
+    "box-border w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-[15px] leading-relaxed min-h-[140px] " +
     "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
 
-  // 專用：datetime 欄位改成加高＋下緣留白，讓提示能在「第二行」顯示
+  /* datetime：高度拉高＋下緣留白，並保留 box-border */
   const dtInputBase = inputBase.replace("h-12", "h-16") + " pt-2 pb-6";
 
   return (
     <section className="bg-[#1C3D5A] text-white overflow-x-hidden">
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="text-center">
-          {data.heading && <h2 className="text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">{data.heading}</h2>}
-          {data.body && <p className="mt-3 whitespace-pre-line leading-relaxed text-white/90 sm:mt-4">{data.body}</p>}
+          {data?.heading && <h2 className="text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">{data.heading}</h2>}
+          {data?.body && <p className="mt-3 whitespace-pre-line leading-relaxed text-white/90 sm:mt-4">{data.body}</p>}
         </div>
 
         {/* CTA Buttons */}
@@ -149,7 +148,7 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
         </div>
 
         {/* QR */}
-        {data.qrUrl && (
+        {data?.qrUrl && (
           <div className="mt-5 flex justify-center sm:mt-6">
             <Image src={data.qrUrl} alt="LINE QR" width={140} height={140} className="rounded-md shadow sm:h-[160px] sm:w-[160px] md:h-[180px] md:w-[180px]" />
           </div>
@@ -164,7 +163,7 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
           ) : (
             <form
               onSubmit={onSubmit}
-              className="space-y-4 rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6 overflow-x-clip"
+              className="space-y-4 overflow-x-clip rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
               encType="multipart/form-data"
               noValidate
             >
@@ -189,27 +188,27 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
 
               <input name="preferredContact" placeholder={tForm.preferredContact[lang]} className={inputBase} />
 
-              {/* ===== 兩個備選時段（第二行顯示提示） ===== */}
+              {/* ===== 兩個備選時段（第二行提示，防溢出） ===== */}
               <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="relative">
+                <div className="relative w-full min-w-0">
                   <input
                     type="datetime-local"
                     name="preferredTime1"
                     className={`${dtInputBase} pr-10`}
                     aria-label={tForm.time1[lang]}
                   />
-                  <span className="pointer-events-none absolute left-4 bottom-1 text-xs text-gray-500">
+                  <span className="pointer-events-none absolute left-4 bottom-1 max-w-[calc(100%-2rem)] truncate text-xs text-gray-500">
                     {tHint[lang]}
                   </span>
                 </div>
-                <div className="relative">
+                <div className="relative w-full min-w-0">
                   <input
                     type="datetime-local"
                     name="preferredTime2"
                     className={`${dtInputBase} pr-10`}
                     aria-label={tForm.time2[lang]}
                   />
-                  <span className="pointer-events-none absolute left-4 bottom-1 text-xs text-gray-500">
+                  <span className="pointer-events-none absolute left-4 bottom-1 max-w-[calc(100%-2rem)] truncate text-xs text-gray-500">
                     {tHint[lang]}
                   </span>
                 </div>
