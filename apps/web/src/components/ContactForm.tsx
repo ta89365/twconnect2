@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import TimezoneSelect from "@/components/TimezoneSelect";
 
 type Lang = "jp" | "zh" | "en";
 
@@ -15,13 +16,16 @@ const I18N: Record<
       subject: string;
       summary: string;
       preferredContact: string;
-      preferredTime: string;
+      preferredTime1: string;
+      preferredTime2: string;
+      timezone: string;
       attachments: string;
       consent: string;
       send: string;
       sending: string;
       success: string;
       failPrefix: string;
+      pleaseSelect: string;
     };
     placeholder: {
       name?: string;
@@ -30,6 +34,7 @@ const I18N: Record<
       subject?: string;
       summary?: string;
       preferredContact?: string;
+      timezone?: string;
     };
   }
 > = {
@@ -41,13 +46,16 @@ const I18N: Record<
       subject: "主旨",
       summary: "需求摘要",
       preferredContact: "偏好聯絡方式",
-      preferredTime: "偏好聯絡時間",
+      preferredTime1: "第一備選時段",
+      preferredTime2: "第二備選時段",
+      timezone: "時區",
       attachments: "附件",
       consent: "我同意隱私權政策",
       send: "送出",
       sending: "傳送中…",
       success: "已送出，請留意信箱。",
       failPrefix: "送出失敗：",
+      pleaseSelect: "請選擇",
     },
     placeholder: {
       name: "王小明",
@@ -56,6 +64,7 @@ const I18N: Record<
       subject: "我要諮詢的主題",
       summary: "請描述您的需求與背景…",
       preferredContact: "Email / Phone / LINE",
+      timezone: "例如 Asia/Taipei",
     },
   },
   jp: {
@@ -66,13 +75,16 @@ const I18N: Record<
       subject: "件名",
       summary: "ご相談内容",
       preferredContact: "ご希望の連絡方法",
-      preferredTime: "ご希望の連絡時間",
+      preferredTime1: "第1希望日時",
+      preferredTime2: "第2希望日時",
+      timezone: "タイムゾーン",
       attachments: "添付ファイル",
       consent: "プライバシーポリシーに同意します",
       send: "送信",
       sending: "送信中…",
       success: "送信しました。メールをご確認ください。",
       failPrefix: "送信に失敗しました：",
+      pleaseSelect: "選択してください",
     },
     placeholder: {
       name: "山田 太郎",
@@ -81,6 +93,7 @@ const I18N: Record<
       subject: "ご相談の件名",
       summary: "背景とご要望をご記入ください…",
       preferredContact: "Email / Phone / LINE",
+      timezone: "例：Asia/Tokyo",
     },
   },
   en: {
@@ -91,13 +104,16 @@ const I18N: Record<
       subject: "Subject",
       summary: "Summary",
       preferredContact: "Preferred Contact",
-      preferredTime: "Preferred Time",
+      preferredTime1: "First preferred time",
+      preferredTime2: "Second preferred time",
+      timezone: "Time zone",
       attachments: "Attachments",
       consent: "I agree to the privacy policy",
       send: "Send",
       sending: "Sending…",
       success: "Submitted. Please check your inbox.",
       failPrefix: "Failed: ",
+      pleaseSelect: "Please select",
     },
     placeholder: {
       name: "Jane Doe",
@@ -106,6 +122,7 @@ const I18N: Record<
       subject: "What you want to discuss",
       summary: "Describe your needs and background…",
       preferredContact: "Email / Phone / LINE",
+      timezone: "e.g. America/Chicago",
     },
   },
 };
@@ -114,11 +131,7 @@ function useI18n(lang: Lang) {
   return useMemo(() => I18N[lang] ?? I18N.zh, [lang]);
 }
 
-export default function ContactForm({
-  lang = "zh",
-}: {
-  lang?: Lang;
-}) {
+export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   const t = useI18n(lang);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [err, setErr] = useState<string>("");
@@ -131,7 +144,6 @@ export default function ContactForm({
     const form = e.currentTarget;
     const fd = new FormData(form);
     fd.set("lang", lang);
-    fd.set("returnTo", typeof window !== "undefined" ? window.location.pathname : "/");
 
     try {
       const res = await fetch("/api/contact", {
@@ -140,14 +152,32 @@ export default function ContactForm({
         headers: { Accept: "application/json" },
       });
 
-      if (res.type === "opaqueredirect" || res.redirected || res.status === 303) {
-        setStatus("ok");
-        form.reset();
-        return;
+      // 處理 303 redirect（Vercel/Edge）
+      const loc = res.headers.get("Location") || res.headers.get("location") || "";
+      if (res.status === 303 && typeof window !== "undefined") {
+        try {
+          const url = new URL(loc || "/contact", window.location.origin);
+          const submitted = url.searchParams.get("submitted");
+          const errMsg = url.searchParams.get("error") || "";
+          if (submitted === "1") {
+            setStatus("ok");
+            form.reset();
+            return;
+          }
+          if (submitted === "0") {
+            setStatus("err");
+            setErr(errMsg || "MAIL_FAILED");
+            return;
+          }
+        } catch {
+          setStatus("ok");
+          form.reset();
+          return;
+        }
       }
 
-      const contentType = res.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
         const data = await res.json();
         if (!res.ok || !data?.ok) throw new Error(data?.error || "SEND_FAILED");
         setStatus("ok");
@@ -170,70 +200,55 @@ export default function ContactForm({
 
   return (
     <form onSubmit={onSubmit} encType="multipart/form-data" className="max-w-xl space-y-4">
+      <input type="hidden" name="lang" value={lang} />
+
       <div>
         <label className="block text-sm font-medium">{t.label.name}</label>
-        <input
-          name="name"
-          className="mt-1 w-full rounded border px-3 py-2"
-          placeholder={t.placeholder.name}
-          required
-        />
+        <input name="name" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.name} required />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-medium">{t.label.email}</label>
-          <input
-            type="email"
-            name="email"
-            className="mt-1 w-full rounded border px-3 py-2"
-            placeholder={t.placeholder.email}
-            required
-          />
+          <input type="email" name="email" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.email} required />
         </div>
         <div>
           <label className="block text-sm font-medium">{t.label.phone}</label>
-          <input
-            name="phone"
-            className="mt-1 w-full rounded border px-3 py-2"
-            placeholder={t.placeholder.phone}
-          />
+          <input name="phone" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.phone} />
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium">{t.label.subject}</label>
-        <input
-          name="subject"
-          className="mt-1 w-full rounded border px-3 py-2"
-          placeholder={t.placeholder.subject}
-          required
-        />
+        <input name="subject" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.subject} required />
       </div>
 
       <div>
         <label className="block text-sm font-medium">{t.label.summary}</label>
-        <textarea
-          name="summary"
-          className="mt-1 w-full rounded border px-3 py-2"
-          rows={6}
-          placeholder={t.placeholder.summary}
-          required
-        />
+        <textarea name="summary" className="mt-1 w-full rounded border px-3 py-2" rows={6} placeholder={t.placeholder.summary} required />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-medium">{t.label.preferredContact}</label>
-          <input
-            name="preferredContact"
-            className="mt-1 w-full rounded border px-3 py-2"
-            placeholder={t.placeholder.preferredContact}
-          />
+          <input name="preferredContact" className="mt-1 w-full rounded border px-3 py-2" placeholder={t.placeholder.preferredContact} />
         </div>
         <div>
-          <label className="block text-sm font-medium">{t.label.preferredTime}</label>
-          <input type="datetime-local" name="datetime" className="mt-1 w-full rounded border px-3 py-2" />
+          <label className="block text-sm font-medium">{t.label.preferredTime1}</label>
+          <input type="datetime-local" name="preferredTime1" className="mt-1 w-full rounded border px-3 py-2" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium">{t.label.preferredTime2}</label>
+          <input type="datetime-local" name="preferredTime2" className="mt-1 w-full rounded border px-3 py-2" />
+        </div>
+
+        {/* ✅ 使用新版 TimezoneSelect */}
+        <div>
+          <label className="block text-sm font-medium">{t.label.timezone}</label>
+          <TimezoneSelect name="timezone" variant="light" />
         </div>
       </div>
 
@@ -249,11 +264,7 @@ export default function ContactForm({
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="rounded bg-[#1C3D5A] px-4 py-2 text-white"
-      >
+      <button type="submit" disabled={status === "loading"} className="rounded bg-[#1C3D5A] px-4 py-2 text-white">
         {status === "loading" ? t.label.sending : t.label.send}
       </button>
 

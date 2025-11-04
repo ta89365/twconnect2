@@ -9,6 +9,7 @@ import FooterServer from "@/components/FooterServer";
 import { sfetch } from "@/lib/sanity/fetch";
 import { contactPageByLang } from "@/lib/queries/contactus";
 import { PortableText } from "@portabletext/react";
+import TimezoneSelect from "@/components/TimezoneSelect"; // ★ 新增：可偵測的時區下拉
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -256,51 +257,23 @@ export default async function Page({
 
             {addresses.length > 0 ? (
               <section className="mt-12">
-                <h2 className="text-2xl font-semibold mb-4">
-                  {labelByLang("Addresses", lang)}
-                </h2>
+                <h2 className="mb-4 text-2xl font-semibold">{labelByLang("Addresses", lang)}</h2>
                 <div className="grid gap-5 sm:grid-cols-1 md:grid-cols-2">
                   {addresses.map((a, i) => (
                     <div
                       key={`addr-${i}`}
                       className="group relative overflow-hidden rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
                     >
-                      {/* 左側裝飾 icon */}
                       <div className="absolute -left-2 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
-                          />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z" />
                           <circle cx="12" cy="10" r="3" />
                         </svg>
                       </div>
-
-                      {/* 內容區塊 */}
                       <div className="pl-6">
-                        {a?.label ? (
-                          <h3 className="text-lg font-semibold text-white mb-2 tracking-tight">
-                            {a.label}
-                          </h3>
-                        ) : null}
-                        {a?.address ? (
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
-                            {a.address}
-                          </p>
-                        ) : null}
-                        {a?.note ? (
-                          <p className="mt-2 text-xs leading-relaxed opacity-70 italic">
-                            {a.note}
-                          </p>
-                        ) : null}
+                        {a?.label ? <h3 className="mb-2 text-lg font-semibold tracking-tight">{a.label}</h3> : null}
+                        {a?.address ? <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">{a.address}</p> : null}
+                        {a?.note ? <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p> : null}
                       </div>
                     </div>
                   ))}
@@ -308,210 +281,132 @@ export default async function Page({
               </section>
             ) : null}
 
-<section className="mt-12">
-  <h2 className="text-2xl font-semibold">{labelByLang("Contact form", lang)}</h2>
-  <form
-    className="mt-6 grid gap-4 rounded-2xl bg-white/5 p-6"
-    action={"/api/contact"}
-    method="post"
-    encType="multipart/form-data"
-  >
-    {/* ✅ 提供 API 讀取語系 */}
-    <input type="hidden" name="lang" value={lang} />
+            {/* ============ 表單 ============ */}
+            <section className="mt-12">
+              <h2 className="text-2xl font-semibold">{labelByLang("Contact form", lang)}</h2>
+              <form
+                className="mt-6 grid gap-4 rounded-2xl bg-white/5 p-6"
+                action={"/api/contact"}
+                method="post"
+                encType="multipart/form-data"
+              >
+                {/* ✅ 提供 API 讀取語系 */}
+                <input type="hidden" name="lang" value={lang} />
 
-    <div className="grid gap-4 md:grid-cols-2">
-      <Field label={labelByLang("Your name", lang)} name="name" required />
-      <Field label="Email" name="email" type="email" required />
-      <Field label={labelByLang("Phone", lang)} name="phone" />
-      <Field label={labelByLang("Company", lang)} name="company" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label={labelByLang("Your name", lang)} name="name" required />
+                  <Field label="Email" name="email" type="email" required />
+                  <Field label={labelByLang("Phone", lang)} name="phone" />
+                  <Field label={labelByLang("Company", lang)} name="company" />
+                </div>
+
+                {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
+                  <div className="grid gap-2">
+                    <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
+                    <select
+                      name="subject"
+                      className="rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
+                      required
+                    >
+                      <option value="" className="bg-white text-black">
+                        {labelByLang("Please select", lang)}
+                      </option>
+                      {form.subjectOptions.map((s, i) => (
+                        <option key={`sub-${i}`} value={s} className="bg-white text-black">
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+
+                {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
+                  <div className="grid gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
+                    <div className="flex flex-wrap gap-3">
+                      {form.preferredContactOptions.map((op, i) => (
+                        <label key={`pref-${i}`} className="flex items-center gap-2">
+                          <input type="radio" name="preferredContact" value={op} />
+                          <span className="text-sm">{op}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="grid gap-2">
+                  <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
+                  <textarea
+                    name="summary"
+                    className="min-h-[120px] rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    placeholder={form?.summaryHint ?? ""}
+                    required
+                  />
+                </div>
+
+                {/* ===== 新增：第一/第二備選時段 ===== */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="grid gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
+                    <input type="datetime-local" name="preferredTime1" className="rounded-xl bg-white/10 px-3 py-2 outline-none" />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
+                    <input type="datetime-local" name="preferredTime2" className="rounded-xl bg-white/10 px-3 py-2 outline-none" />
+                  </label>
+                </div>
+
+                {/* ===== 時區：Client Component（IANA 下拉 + 自動偵測） ===== */}
+                <div className="grid gap-2">
+                  <label className="text-sm opacity-90" htmlFor="timezone">
+                    {labelByLang("Time zone", lang)}
+                  </label>
+                  <TimezoneSelect id="timezone" name="timezone" />
+                </div>
+                {/* ===== /時區 ===== */}
+
+                <div className="grid gap-2">
+                  <label className="text-sm opacity-90">{labelByLang("Attachment", lang)}</label>
+                  <input
+                    type="file"
+                    name="attachments"
+                    multiple
+                    className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-sm file:text-black"
+                  />
+                  {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
+                </div>
+
+                {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
+                  <label className="mt-2 grid gap-2">
+                    <div className="flex items-start gap-2">
+                      <input type="checkbox" name="consent" value="yes" required className="mt-1" />
+                      <div className="text-sm opacity-90">
+                        <PortableText value={form.consentText} />
+                      </div>
+                    </div>
+                  </label>
+                ) : null}
+
+                <div className="mt-4">
+                  <button type="submit" className="rounded-2xl bg-white px-5 py-2 font-medium text-black">
+                    {labelByLang("Send", lang)}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className="mt-12">
+              <Link href={linkWithLang("/services", lang)} className="inline-block rounded-2xl bg-white/10 px-4 py-2">
+                {labelByLang("View services", lang)} →
+              </Link>
+            </section>
+          </main>
+        </>
+      )}
+
+      <FooterServer lang={lang} />
     </div>
-
-    {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
-      <div className="grid gap-2">
-        <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
-        <select
-          name="subject"
-          className="rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
-          required
-        >
-          <option value="" className="bg-white text-black">
-            {labelByLang("Please select", lang)}
-          </option>
-          {form.subjectOptions.map((s, i) => (
-            <option key={`sub-${i}`} value={s} className="bg-white text-black">
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-    ) : null}
-
-    {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
-      <div className="grid gap-2">
-        <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
-        <div className="flex flex-wrap gap-3">
-          {form.preferredContactOptions.map((op, i) => (
-            <label key={`pref-${i}`} className="flex items-center gap-2">
-              <input type="radio" name="preferredContact" value={op} />
-              <span className="text-sm">{op}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-    ) : null}
-
-    <div className="grid gap-2">
-      <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
-      <textarea
-        name="summary"
-        className="min-h-[120px] rounded-xl bg-white/10 px-3 py-2 outline-none"
-        placeholder={form?.summaryHint ?? ""}
-        required
-      />
-    </div>
-
-    {/* ===== 新增：第一/第二備選時段 ===== */}
-    <div className="grid gap-4 md:grid-cols-2">
-      <label className="grid gap-2">
-        <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
-        <input
-          type="datetime-local"
-          name="preferredTime1"
-          className="rounded-xl bg-white/10 px-3 py-2 outline-none"
-        />
-      </label>
-      <label className="grid gap-2">
-        <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
-        <input
-          type="datetime-local"
-          name="preferredTime2"
-          className="rounded-xl bg-white/10 px-3 py-2 outline-none"
-        />
-      </label>
-    </div>
-
-    {/* ===== 時區：標準 IANA 下拉 + 自動偵測 + 顯示偏移 ===== */}
-    <div className="grid gap-2">
-      <label className="text-sm opacity-90" htmlFor="timezone">
-        {labelByLang("Time zone", lang)}
-      </label>
-
-      <select
-        id="timezone"
-        name="timezone"
-        className="rounded-xl bg-white/10 px-3 py-2 outline-none"
-        defaultValue=""
-      >
-        <option value="" disabled>Detecting your time zone…</option>
-      </select>
-
-      <div id="tzOffset" className="text-xs opacity-75"></div>
-
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-          (function(){
-            try {
-              var select = document.getElementById('timezone');
-              var hint   = document.getElementById('tzOffset');
-
-              // 取得完整 IANA 清單（新瀏覽器）
-              var zones = (typeof Intl.supportedValuesOf === 'function')
-                ? Intl.supportedValuesOf('timeZone')
-                : [];
-
-              // 後備精簡清單（舊瀏覽器）
-              if (!zones || !zones.length) {
-                zones = [
-                  'Asia/Taipei','Asia/Tokyo','Asia/Shanghai','Asia/Hong_Kong',
-                  'America/New_York','America/Chicago','America/Denver','America/Los_Angeles',
-                  'Europe/London','Europe/Paris','Europe/Berlin','UTC'
-                ];
-              }
-
-              // 先清空，再加入選項（顯示 "名稱 (UTC±hh:mm)"）
-              select.innerHTML = '';
-              function offsetString(tz){
-                try{
-                  var now = new Date();
-                  var parts = new Intl.DateTimeFormat('en-US', {
-                    timeZone: tz, timeZoneName: 'shortOffset', hour: '2-digit'
-                  }).formatToParts(now);
-                  var off = (parts.find(p => p.type === 'timeZoneName')||{}).value || 'GMT±00:00';
-                  return off.replace('GMT','UTC');
-                }catch(e){ return 'UTC±00:00'; }
-              }
-              zones.forEach(function(z){
-                var opt = document.createElement('option');
-                opt.value = z;
-                opt.text  = z + ' (' + offsetString(z) + ')';
-                select.appendChild(opt);
-              });
-
-              // 自動選中瀏覽器時區
-              var detected = (Intl.DateTimeFormat().resolvedOptions().timeZone || '');
-              if (detected && zones.indexOf(detected) >= 0) {
-                select.value = detected;
-              } else if (zones.indexOf('UTC') >= 0) {
-                select.value = 'UTC';
-              }
-
-              // 顯示目前偏移
-              function updateHint(){
-                hint.textContent = 'UTC offset: ' + offsetString(select.value);
-              }
-              updateHint();
-              select.addEventListener('change', updateHint);
-            } catch(e){}
-          })();
-          `,
-        }}
-      />
-    </div>
-    {/* ===== /時區 ===== */}
-
-    <div className="grid gap-2">
-      <label className="text-sm opacity-90">{labelByLang("Attachment", lang)}</label>
-      <input
-        type="file"
-        name="attachments"
-        multiple
-        className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-sm file:text-black"
-      />
-      {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
-    </div>
-
-    {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
-      <label className="mt-2 grid gap-2">
-        <div className="flex items-start gap-2">
-          <input type="checkbox" name="consent" value="yes" required className="mt-1" />
-          <div className="text-sm opacity-90">
-            <PortableText value={form.consentText} />
-          </div>
-        </div>
-      </label>
-    ) : null}
-
-    <div className="mt-4">
-      <button type="submit" className="rounded-2xl bg-white px-5 py-2 font-medium text-black">
-        {labelByLang("Send", lang)}
-      </button>
-    </div>
-  </form>
-</section>
-
-<section className="mt-12">
-  <Link href={linkWithLang("/services", lang)} className="inline-block rounded-2xl bg-white/10 px-4 py-2">
-    {labelByLang("View services", lang)} →
-  </Link>
-</section>
-</main>
-</>
-)}
-
-<FooterServer lang={lang} />
-</div>
-);
+  );
 }
 
 /* ============================ 成功頁 ============================ */
@@ -539,85 +434,57 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
         </p>
 
         {Array.isArray(doc?.success?.message) && doc.success?.message?.length > 0 ? (
-          <div className="prose prose-invert mt-6 rounded-2xl bg-white/6 p-5 ring-1 ring-white/12 backdrop-blur-sm"
-               style={{ background: "rgba(255,255,255,0.06)" }}>
+          <div className="prose prose-invert mt-6 rounded-2xl bg-white/6 p-5 ring-1 ring-white/12 backdrop-blur-sm" style={{ background: "rgba(255,255,255,0.06)" }}>
             <PortableText value={doc.success.message} />
           </div>
         ) : (
-          <ul
-            className="mt-6 grid gap-3 rounded-2xl p-5 ring-1 ring-white/12 backdrop-blur-sm"
-            style={{ background: "rgba(255,255,255,0.06)" }}
-          >
+          <ul className="mt-6 grid gap-3 rounded-2xl p-5 ring-1 ring-white/12 backdrop-blur-sm" style={{ background: "rgba(255,255,255,0.06)" }}>
             <li className="flex items-start gap-3">
               <MailIcon className="mt-[2px] h-5 w-5 opacity-90" />
-              <span className="text-sm opacity-95">
-                {labelByLang("A confirmation email has been sent. If you do not see it, please check your spam folder.", lang)}
-              </span>
+              <span className="text-sm opacity-95">{labelByLang("A confirmation email has been sent. If you do not see it, please check your spam folder.", lang)}</span>
             </li>
             <li className="flex items-start gap-3">
               <CalendarIcon className="mt-[2px] h-5 w-5 opacity-90" />
-              <span className="text-sm opacity-95">
-                {labelByLang("If you proposed a time, our team will confirm availability or suggest alternatives.", lang)}
-              </span>
+              <span className="text-sm opacity-95">{labelByLang("If you proposed a time, our team will confirm availability or suggest alternatives.", lang)}</span>
             </li>
             <li className="flex items-start gap-3">
               <ShieldIcon className="mt-[2px] h-5 w-5 opacity-90" />
-              <span className="text-sm opacity-95">
-                {labelByLang("Your information is kept confidential and used only for this inquiry.", lang)}
-              </span>
+              <span className="text-sm opacity-95">{labelByLang("Your information is kept confidential and used only for this inquiry.", lang)}</span>
             </li>
           </ul>
         )}
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4">
-          <CtaLink
-            href="/"
-            lang={lang}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white px-5 md:px-6 font-medium text-black shadow-sm"
-          >
+          <CtaLink href="/" lang={lang} className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white px-5 md:px-6 font-medium text-black shadow-sm">
             <HomeIcon className="h-5 w-5" />
             {labelByLang("Back to Home", lang)}
           </CtaLink>
 
-        <CtaLink
-          href="/services"
-          lang={lang}
-          className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16"
-        >
-          <ArrowRightIcon className="h-5 w-5" />
-          {labelByLang("View services", lang)}
-        </CtaLink>
+          <CtaLink href="/services" lang={lang} className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16">
+            <ArrowRightIcon className="h-5 w-5" />
+            {labelByLang("View services", lang)}
+          </CtaLink>
 
-        <CtaLink
-          href="/companyStrengthsAndFAQ"
-          lang={lang}
-          className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16"
-        >
-          <HelpIcon className="h-5 w-5" />
-          {labelByLang("View FAQ", lang)}
-        </CtaLink>
+          <CtaLink href="/companyStrengthsAndFAQ" lang={lang} className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16">
+            <HelpIcon className="h-5 w-5" />
+            {labelByLang("View FAQ", lang)}
+          </CtaLink>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
 }
 
 /* ============================ 失敗提示 ============================ */
 function ErrorToast({ lang, errMsg }: { lang: Lang; errMsg?: string }) {
   return (
-    <div
-      className="flex items-start gap-3 rounded-2xl bg-red-500/15 px-4 py-3 text-sm text-red-100 ring-1 ring-red-500/30"
-      role="alert"
-    >
+    <div className="flex items-start gap-3 rounded-2xl bg-red-500/15 px-4 py-3 text-sm text-red-100 ring-1 ring-red-500/30" role="alert">
       <ErrorIcon className="mt-[2px] h-5 w-5 shrink-0 text-red-200" />
       <div className="flex-1">
         <div className="font-semibold">{labelByLang("Submission failed.", lang)}</div>
         {errMsg ? <div className="mt-1 opacity-90">({String(errMsg)})</div> : null}
       </div>
-      <Link
-        href="#contact-form"
-        className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
-      >
+      <Link href="#contact-form" className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20">
         {labelByLang("Try again", lang)}
       </Link>
     </div>

@@ -1,8 +1,9 @@
-// apps/web/src/components/ContactSection.tsx
+// File: apps/web/src/components/ContactSection.tsx
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
+import TimezoneSelect from "@/components/TimezoneSelect";
 import type { ContactData, Lang } from "@/lib/types/contact";
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -30,6 +31,10 @@ const tForm = {
   company: { jp: "所属会社 / Company", zh: "所屬公司 / Company", en: "Company" },
   phone: { jp: "電話番号 / Phone", zh: "電話號碼 / Phone", en: "Phone" },
   langLabel: { jp: "希望対応言語 / Preferred Language", zh: "希望對應語言 / Preferred Language", en: "Preferred Language" },
+  preferredContact: { jp: "ご希望の連絡方法", zh: "偏好聯絡方式", en: "Preferred Contact" },
+  time1: { jp: "第1希望日時", zh: "第一備選時段", en: "First preferred time" },
+  time2: { jp: "第2希望日時", zh: "第二備選時段", en: "Second preferred time" },
+  timezone: { jp: "タイムゾーン", zh: "時區", en: "Time zone" },
 } as const;
 
 const topicOptions: Record<Lang, string[]> = {
@@ -61,7 +66,8 @@ export default function ContactSection({
     setStatus("sending");
     setErr("");
 
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
 
     // 蜜罐欄位：如果被填寫就當作 bot
     if ((fd.get("website") as string)?.length > 0) {
@@ -69,17 +75,64 @@ export default function ContactSection({
       return;
     }
 
-    const payload = Object.fromEntries(fd.entries());
+    // 對齊 /api/contact 欄位：topic -> subject、message -> summary
+    const topic = (fd.get("topic") as string) || "";
+    const message = (fd.get("message") as string) || "";
+    fd.set("subject", topic);
+    fd.set("summary", message);
+    fd.delete("topic");
+    fd.delete("message");
+
+    // 語系
+    fd.set("lang", lang);
 
     try {
-      const res = await fetch("/api/send-contact", {
+      const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, lang }),
+        body: fd,
+        headers: { Accept: "application/json" },
       });
-      if (!res.ok) throw new Error(await res.text());
-      setStatus("done");
-      (e.target as HTMLFormElement).reset();
+
+      // 解析 303 redirect 的 Location 以判斷 submitted=1|0
+      const loc = res.headers.get("Location") || res.headers.get("location") || "";
+      if (res.status === 303 && typeof window !== "undefined") {
+        try {
+          const url = new URL(loc || "/contact", window.location.origin);
+          const submitted = url.searchParams.get("submitted");
+          const errMsg = url.searchParams.get("error") || "";
+          if (submitted === "1") {
+            setStatus("done");
+            form.reset();
+            return;
+          }
+          if (submitted === "0") {
+            setStatus("error");
+            setErr(errMsg || "MAIL_FAILED");
+            return;
+          }
+        } catch {
+          setStatus("done");
+          form.reset();
+          return;
+        }
+      }
+
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const data = await res.json();
+        if (!res.ok || !data?.ok) throw new Error(data?.error || "SEND_FAILED");
+        setStatus("done");
+        form.reset();
+        return;
+      }
+
+      if (res.ok) {
+        setStatus("done");
+        form.reset();
+        return;
+      }
+
+      throw new Error(`HTTP ${res.status}`);
     } catch (e: any) {
       setStatus("error");
       setErr(e?.message ?? "Failed to submit");
@@ -132,13 +185,7 @@ export default function ContactSection({
         {/* QR */}
         {data.qrUrl && (
           <div className="mt-6 flex justify-center">
-            <Image
-              src={data.qrUrl}
-              alt="LINE QR"
-              width={160}
-              height={160}
-              className="rounded-md shadow"
-            />
+            <Image src={data.qrUrl} alt="LINE QR" width={160} height={160} className="rounded-md shadow" />
           </div>
         )}
 
@@ -152,8 +199,11 @@ export default function ContactSection({
             <form
               onSubmit={onSubmit}
               className="rounded-2xl bg-white p-6 shadow text-gray-900 space-y-4"
+              encType="multipart/form-data"
             >
-              {/* 依語言切換的 placeholder 與選單項目 */}
+              {/* 與 /api/contact 對齊的欄位集合 */}
+              <input type="hidden" name="lang" value={lang} />
+
               <input name="name" required placeholder={tForm.name[lang]} className="w-full rounded border p-3" />
               <input name="email" type="email" required placeholder={tForm.email[lang]} className="w-full rounded border p-3" />
 
@@ -175,15 +225,33 @@ export default function ContactSection({
               <input name="company" placeholder={tForm.company[lang]} className="w-full rounded border p-3" />
               <input name="phone" placeholder={tForm.phone[lang]} className="w-full rounded border p-3" />
 
-              <select name="language" className="w-full rounded border p-3" defaultValue="">
-                <option value="">{tForm.langLabel[lang]}</option>
-                {langOptions[lang].map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+              {/* 額外欄位：Preferred Contact + 兩個備選時段 + 時區 */}
+              <input name="preferredContact" placeholder={tForm.preferredContact[lang]} className="w-full rounded border p-3" />
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <input type="datetime-local" name="preferredTime1" className="w-full rounded border p-3" placeholder={tForm.time1[lang]} />
+                <input type="datetime-local" name="preferredTime2" className="w-full rounded border p-3" placeholder={tForm.time2[lang]} />
+              </div>
+
+              {/* ✅ 使用新版 TimezoneSelect */}
+              <div>
+                <TimezoneSelect name="timezone" variant="light" />
+              </div>
 
               {/* 蜜罐欄位 */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
+
+              {/* 同意勾選，對齊 /api/contact 的 consent */}
+              <div className="flex items-center gap-2">
+                <input id="consent" type="checkbox" name="consent" value="yes" required />
+                <label htmlFor="consent" className="text-sm">
+                  {lang === "jp"
+                    ? "プライバシーポリシーに同意します"
+                    : lang === "zh"
+                    ? "我同意隱私權政策"
+                    : "I agree to the privacy policy"}
+                </label>
+              </div>
 
               <button
                 type="submit"
