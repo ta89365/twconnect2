@@ -8,21 +8,19 @@ import type { ContactData, Lang } from "@/lib/types/contact";
 
 type Status = "idle" | "sending" | "done" | "error";
 
-/* ===== 成功訊息（依語言） ===== */
 const okMsg: Record<Lang, string> = {
   jp: "送信ありがとうございます。1営業日以内にご連絡いたします。お急ぎの場合は LINE（@030qreji）でもご連絡ください。",
   zh: "感謝您的填寫，我們將在 1 個工作日內回覆。若有急件，請直接透過 LINE（@030qreji）聯繫我們。",
   en: "Thank you for your inquiry. We will respond within 1 business day. For urgent matters, please reach us directly on LINE (@030qreji).",
 };
 
-/* ===== CTA 按鈕文案 ===== */
 const btnLabel: Record<Lang, { line: string; mail: string; submit: string; sending: string }> = {
   jp: { line: "LINEでのお問い合わせ", mail: "メールでのお問い合わせ", submit: "👉 無料相談を送信", sending: "送信中…" },
   zh: { line: "透過 LINE 聯絡", mail: "透過 Email 聯絡", submit: "👉 送出免費諮詢", sending: "傳送中…" },
   en: { line: "Contact via LINE", mail: "Contact via Email", submit: "👉 Send Inquiry", sending: "Sending…" },
 };
 
-/* ===== 表單多語：placeholder 與選單 ===== */
+/* ===== 表單多語 ===== */
 const tForm = {
   name: { jp: "お名前 ★", zh: "姓名 ★", en: "Name ★" },
   email: { jp: "メールアドレス ★", zh: "電子郵件 ★", en: "Email ★" },
@@ -37,25 +35,22 @@ const tForm = {
   timezone: { jp: "タイムゾーン", zh: "時區", en: "Time zone" },
 } as const;
 
+/* ===== 內嵌提示多語 ===== */
+const tHint: Record<Lang, string> = {
+  zh: "請選擇日期與時間",
+  jp: "日付と時刻を選択してください",
+  en: "Select date and time",
+};
+
 const topicOptions: Record<Lang, string[]> = {
   jp: ["会社設立 / Company Setup", "会計・税務 / Accounting & Tax", "ビザ・人材 / Visa & HR", "市場開拓 / Market Entry", "その他 / Others"],
   zh: ["公司設立 / Company Setup", "會計與稅務 / Accounting & Tax", "簽證與人力 / Visa & HR", "市場開拓 / Market Entry", "其他 / Others"],
   en: ["Company Setup", "Accounting & Tax", "Visa & HR", "Market Entry", "Others"],
 };
 
-const langOptions: Record<Lang, string[]> = {
-  jp: ["日本語", "中文", "English"],
-  zh: ["中文", "日本語", "English"],
-  en: ["English", "日本語", "中文"],
-};
+const langOptions: Record<Lang, string[]> = { jp: ["日本語", "中文", "English"], zh: ["中文", "日本語", "English"], en: ["English", "日本語", "中文"] };
 
-export default function ContactSection({
-  data,
-  lang,
-}: {
-  data: ContactData | null;
-  lang: Lang;
-}) {
+export default function ContactSection({ data, lang }: { data: ContactData | null; lang: Lang }) {
   const [status, setStatus] = useState<Status>("idle");
   const [err, setErr] = useState<string>("");
 
@@ -69,104 +64,66 @@ export default function ContactSection({
     const form = e.currentTarget;
     const fd = new FormData(form);
 
-    // 蜜罐欄位：如果被填寫就當作 bot
+    // 蜜罐
     if ((fd.get("website") as string)?.length > 0) {
       setStatus("done");
       return;
     }
 
-    // 對齊 /api/contact 欄位：topic -> subject、message -> summary
+    // 對齊 /api/contact
     const topic = (fd.get("topic") as string) || "";
     const message = (fd.get("message") as string) || "";
     fd.set("subject", topic);
     fd.set("summary", message);
     fd.delete("topic");
     fd.delete("message");
-
-    // 語系
     fd.set("lang", lang);
 
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        body: fd,
-        headers: { Accept: "application/json" },
-      });
-
-      // 解析 303 redirect 的 Location 以判斷 submitted=1|0
+      const res = await fetch("/api/contact", { method: "POST", body: fd, headers: { Accept: "application/json" } });
       const loc = res.headers.get("Location") || res.headers.get("location") || "";
       if (res.status === 303 && typeof window !== "undefined") {
         try {
           const url = new URL(loc || "/contact", window.location.origin);
           const submitted = url.searchParams.get("submitted");
           const errMsg = url.searchParams.get("error") || "";
-          if (submitted === "1") {
-            setStatus("done");
-            form.reset();
-            return;
-          }
-          if (submitted === "0") {
-            setStatus("error");
-            setErr(errMsg || "MAIL_FAILED");
-            return;
-          }
-        } catch {
-          setStatus("done");
-          form.reset();
-          return;
-        }
+          if (submitted === "1") { setStatus("done"); form.reset(); return; }
+          if (submitted === "0") { setStatus("error"); setErr(errMsg || "MAIL_FAILED"); return; }
+        } catch { setStatus("done"); form.reset(); return; }
       }
-
       const ct = res.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const data = await res.json();
         if (!res.ok || !data?.ok) throw new Error(data?.error || "SEND_FAILED");
-        setStatus("done");
-        form.reset();
-        return;
+        setStatus("done"); form.reset(); return;
       }
-
-      if (res.ok) {
-        setStatus("done");
-        form.reset();
-        return;
-      }
-
+      if (res.ok) { setStatus("done"); form.reset(); return; }
       throw new Error(`HTTP ${res.status}`);
-    } catch (e: any) {
-      setStatus("error");
-      setErr(e?.message ?? "Failed to submit");
-    }
+    } catch (e: any) { setStatus("error"); setErr(e?.message ?? "Failed to submit"); }
   }
 
   const lineHref = data.lineId ? `https://line.me/R/ti/p/${encodeURIComponent(data.lineId)}` : undefined;
   const mailHref = data.email ? `mailto:${data.email}` : undefined;
 
-  // 共用樣式：行動裝置輸入與按鈕尺寸
   const inputBase =
-    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
     "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
   const selectBase =
-    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
     "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
   const textareaBase =
-    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-[15px] leading-relaxed min-h-[140px] " +
+    "w-full max-w-full min-w-0 rounded-xl border border-gray-300 bg-white px-3 py-3 text-[15px] leading-relaxed min-h-[140px] " +
     "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
 
+  // 專用：datetime 欄位改成加高＋下緣留白，讓提示能在「第二行」顯示
+  const dtInputBase = inputBase.replace("h-12", "h-16") + " pt-2 pb-6";
+
   return (
-    <section className="bg-[#1C3D5A] text-white">
+    <section className="bg-[#1C3D5A] text-white overflow-x-hidden">
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="text-center">
-          {data.heading && (
-            <h2 className="text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">
-              {data.heading}
-            </h2>
-          )}
-          {data.body && (
-            <p className="mt-3 whitespace-pre-line leading-relaxed text-white/90 sm:mt-4">
-              {data.body}
-            </p>
-          )}
+          {data.heading && <h2 className="text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">{data.heading}</h2>}
+          {data.body && <p className="mt-3 whitespace-pre-line leading-relaxed text-white/90 sm:mt-4">{data.body}</p>}
         </div>
 
         {/* CTA Buttons */}
@@ -194,13 +151,7 @@ export default function ContactSection({
         {/* QR */}
         {data.qrUrl && (
           <div className="mt-5 flex justify-center sm:mt-6">
-            <Image
-              src={data.qrUrl}
-              alt="LINE QR"
-              width={140}
-              height={140}
-              className="rounded-md shadow sm:h-[160px] sm:w-[160px] md:h-[180px] md:w-[180px]"
-            />
+            <Image src={data.qrUrl} alt="LINE QR" width={140} height={140} className="rounded-md shadow sm:h-[160px] sm:w-[160px] md:h-[180px] md:w-[180px]" />
           </div>
         )}
 
@@ -213,11 +164,10 @@ export default function ContactSection({
           ) : (
             <form
               onSubmit={onSubmit}
-              className="space-y-4 rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
+              className="space-y-4 rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6 overflow-x-clip"
               encType="multipart/form-data"
               noValidate
             >
-              {/* 與 /api/contact 對齊的欄位集合 */}
               <input type="hidden" name="lang" value={lang} />
 
               <input name="name" required placeholder={tForm.name[lang]} className={inputBase} />
@@ -232,45 +182,49 @@ export default function ContactSection({
                 ))}
               </select>
 
-              <textarea
-                name="message"
-                required
-                placeholder={tForm.message[lang]}
-                rows={4}
-                className={textareaBase}
-              />
+              <textarea name="message" required placeholder={tForm.message[lang]} rows={4} className={textareaBase} />
 
               <input name="company" placeholder={tForm.company[lang]} className={inputBase} />
               <input name="phone" placeholder={tForm.phone[lang]} className={inputBase} />
 
-              {/* 額外欄位：Preferred Contact + 兩個備選時段 + 時區 */}
               <input name="preferredContact" placeholder={tForm.preferredContact[lang]} className={inputBase} />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <input
-                  type="datetime-local"
-                  name="preferredTime1"
-                  className={inputBase}
-                  placeholder={tForm.time1[lang]}
-                />
-                <input
-                  type="datetime-local"
-                  name="preferredTime2"
-                  className={inputBase}
-                  placeholder={tForm.time2[lang]}
-                />
+              {/* ===== 兩個備選時段（第二行顯示提示） ===== */}
+              <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="relative">
+                  <input
+                    type="datetime-local"
+                    name="preferredTime1"
+                    className={`${dtInputBase} pr-10`}
+                    aria-label={tForm.time1[lang]}
+                  />
+                  <span className="pointer-events-none absolute left-4 bottom-1 text-xs text-gray-500">
+                    {tHint[lang]}
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="datetime-local"
+                    name="preferredTime2"
+                    className={`${dtInputBase} pr-10`}
+                    aria-label={tForm.time2[lang]}
+                  />
+                  <span className="pointer-events-none absolute left-4 bottom-1 text-xs text-gray-500">
+                    {tHint[lang]}
+                  </span>
+                </div>
               </div>
 
-              {/* ✅ 使用新版 TimezoneSelect */}
-              <div>
-                <div className="sr-only" aria-hidden="true">{tForm.timezone[lang]}</div>
+              <div className="min-w-0">
+                <div className="sr-only" aria-hidden="true">
+                  {tForm.timezone[lang]}
+                </div>
                 <TimezoneSelect name="timezone" variant="light" />
               </div>
 
               {/* 蜜罐欄位 */}
               <input type="text" name="website" className="hidden" tabIndex={-1} autoComplete="off" />
 
-              {/* 同意勾選，對齊 /api/contact 的 consent */}
               <div className="flex items-start gap-2">
                 <input
                   id="consent"
@@ -281,11 +235,7 @@ export default function ContactSection({
                   className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1C3D5A] focus:ring-[#1C3D5A]"
                 />
                 <label htmlFor="consent" className="text-sm leading-6">
-                  {lang === "jp"
-                    ? "プライバシーポリシーに同意します"
-                    : lang === "zh"
-                    ? "我同意隱私權政策"
-                    : "I agree to the privacy policy"}
+                  {lang === "jp" ? "プライバシーポリシーに同意します" : lang === "zh" ? "我同意隱私權政策" : "I agree to the privacy policy"}
                 </label>
               </div>
 

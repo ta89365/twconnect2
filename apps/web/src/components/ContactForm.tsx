@@ -36,6 +36,9 @@ const I18N: Record<
       preferredContact?: string;
       timezone?: string;
     };
+    hint: {
+      selectDateTime: string;
+    };
   }
 > = {
   zh: {
@@ -66,6 +69,9 @@ const I18N: Record<
       preferredContact: "Email / Phone / LINE",
       timezone: "例如 Asia/Taipei",
     },
+    hint: {
+      selectDateTime: "請選擇日期與時間",
+    },
   },
   jp: {
     label: {
@@ -94,6 +100,9 @@ const I18N: Record<
       summary: "背景とご要望をご記入ください…",
       preferredContact: "Email / Phone / LINE",
       timezone: "例：Asia/Tokyo",
+    },
+    hint: {
+      selectDateTime: "日付と時刻を選択してください",
     },
   },
   en: {
@@ -124,6 +133,9 @@ const I18N: Record<
       preferredContact: "Email / Phone / LINE",
       timezone: "e.g. America/Chicago",
     },
+    hint: {
+      selectDateTime: "Select date and time",
+    },
   },
 };
 
@@ -143,6 +155,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
     "mt-1 w-full rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] placeholder:text-gray-400 " +
     "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition min-h-[140px] resize-y";
   const labelBase = "block text-sm font-medium";
+  const hintBase = "mt-1 text-xs text-gray-500";
   const sectionGap = "space-y-4 sm:space-y-5";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -161,7 +174,6 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
         headers: { Accept: "application/json" },
       });
 
-      // 處理 303 redirect（Vercel/Edge）
       const loc = res.headers.get("Location") || res.headers.get("location") || "";
       if (res.status === 303 && typeof window !== "undefined") {
         try {
@@ -212,7 +224,6 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
       onSubmit={onSubmit}
       encType="multipart/form-data"
       className={`max-w-xl ${sectionGap}`}
-      // 手機優先：增加邊界與可點擊高度
       noValidate
     >
       <input type="hidden" name="lang" value={lang} />
@@ -274,10 +285,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
           placeholder={t.placeholder.summary}
           required
         />
-        {/* 手機可讀性提示行高稍高 */}
-        <p className="mt-1 text-xs text-gray-500">
-          {/* 保持簡短，不影響原流程 */}
-        </p>
+        <p className={hintBase} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -296,8 +304,10 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
             type="datetime-local"
             name="preferredTime1"
             className={inputBase}
+            aria-label={t.label.preferredTime1}
             inputMode="numeric"
           />
+          <p className={hintBase}>{t.hint.selectDateTime}</p>
         </div>
       </div>
 
@@ -308,8 +318,10 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
             type="datetime-local"
             name="preferredTime2"
             className={inputBase}
+            aria-label={t.label.preferredTime2}
             inputMode="numeric"
           />
+          <p className={hintBase}>{t.hint.selectDateTime}</p>
         </div>
 
         {/* ✅ 使用新版 TimezoneSelect（保持 variant="light" 不變） */}

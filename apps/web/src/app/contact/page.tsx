@@ -9,7 +9,7 @@ import FooterServer from "@/components/FooterServer";
 import { sfetch } from "@/lib/sanity/fetch";
 import { contactPageByLang } from "@/lib/queries/contactus";
 import { PortableText } from "@portabletext/react";
-import TimezoneSelect from "@/components/TimezoneSelect"; // ★ 新增：可偵測的時區下拉
+import TimezoneSelect from "@/components/TimezoneSelect";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -127,12 +127,12 @@ export default async function Page({
 
   if (!doc) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
+      <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
         <NavigationServer lang={lang} />
         <div className="mx-auto w-full" style={{ maxWidth: CONTENT_MAX_W }}>
-          <div className="px-4 py-16 text-white sm:px-6">
-            <h1 className="text-3xl font-semibold sm:text-4xl">Contact</h1>
-            <p className="mt-3 opacity-90 sm:text-lg">Content not found.</p>
+          <div className="px-4 py-16 text-white">
+            <h1 className="text-3xl font-semibold">Contact</h1>
+            <p className="mt-3 opacity-90">Content not found.</p>
             <Link
               href={linkWithLang("/", lang)}
               className="mt-6 inline-block rounded-xl bg-white/10 px-4 py-2 text-white"
@@ -160,12 +160,12 @@ export default async function Page({
   const isOk = submitted === "1";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
+    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
       <NavigationServer lang={lang} />
 
       {/* === Hero === */}
       <section
-        className="relative w-full"
+        className="relative w-full overflow-x-clip"
         style={{ minHeight: HERO_MIN_H, background: heroHasImage ? `#000` : BRAND_BLUE }}
       >
         {heroHasImage && (
@@ -176,20 +176,18 @@ export default async function Page({
               fill
               className="object-cover"
               priority
-              // 手機視窗較小，維持既有定位但加強遮罩避免文字與背景衝突
               style={{ objectPosition: heroObjectPosition() }}
             />
             <div className="absolute inset-0" style={{ background: HERO_OVERLAY }} />
-            {/* 手機加強一點對比，md 以上降低 */}
             <div className="absolute inset-0 bg-black/40 sm:bg-black/35 md:bg-black/25" />
           </>
         )}
 
         <div
-          className="relative mx-auto flex h-full w-full items-center justify-center px-4 py-12 text-white sm:px-6 sm:py-14 md:py-16"
+          className="relative mx-auto flex h-full w-full items-center justify-center px-4 py-12 text-white sm:px-6 md:py-16"
           style={{ maxWidth: CONTENT_MAX_W }}
         >
-          <div className="w-full text-center">
+          <div className="w-full max-w-full text-center">
             <h1 className="text-3xl font-bold tracking-tight leading-snug sm:text-4xl md:text-5xl">
               {hero?.title ?? "Contact"}
             </h1>
@@ -201,7 +199,7 @@ export default async function Page({
             ) : null}
 
             {Array.isArray(hero?.ctas) && hero.ctas.length > 0 ? (
-              <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-2 sm:mt-8 sm:gap-3">
+              <div className="mx-auto mt-6 flex max-w-full flex-wrap items-center justify-center gap-2 sm:mt-8 sm:gap-3">
                 {hero.ctas.map((c, i) => {
                   const href = c?.href || "#";
                   const label = c?.label || "";
@@ -234,24 +232,23 @@ export default async function Page({
       ) : (
         <>
           {hasSubmitted && !isOk ? (
-            <div className="mx-auto w-full px-4 pt-5 sm:px-6" style={{ maxWidth: CONTENT_MAX_W }}>
+            <div className="mx-auto w-full max-w-full px-4 pt-5 sm:px-6" style={{ maxWidth: CONTENT_MAX_W }}>
               <ErrorToast lang={lang} errMsg={errMsg} />
             </div>
           ) : null}
 
           <main
-            className="mx-auto w-full px-4 py-10 text-white sm:px-6 sm:py-12"
+            className="mx-auto w-full max-w-full overflow-x-clip px-4 py-10 text-white sm:px-6 sm:py-12"
             style={{ maxWidth: CONTENT_MAX_W }}
           >
-            {/* 手機單欄優先，md 起三欄 */}
-            <section className="grid gap-4 sm:gap-6 md:grid-cols-3">
+            <section className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
               <InfoCard title={labelByLang("Languages", lang)} body={info.languages} />
               <InfoCard title={labelByLang("Service areas", lang)} body={info.serviceAreas} />
               <InfoCard title={labelByLang("Business hours", lang)} body={info.businessHours} />
             </section>
 
             {faqTopics.length > 0 ? (
-              <section className="mt-10 sm:mt-12">
+              <section className="mt-10 min-w-0 sm:mt-12">
                 <h2 className="text-xl font-semibold sm:text-2xl">
                   {labelByLang("Frequently asked topics", lang)}
                 </h2>
@@ -268,63 +265,70 @@ export default async function Page({
               </section>
             ) : null}
 
-            {addresses.length > 0 ? (
-              <section className="mt-10 sm:mt-12">
-                <h2 className="mb-3 text-xl font-semibold sm:mb-4 sm:text-2xl">
-                  {labelByLang("Addresses", lang)}
-                </h2>
-                {/* 手機單欄，md 起雙欄 */}
-                <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
-                  {addresses.map((a, i) => (
-                    <div
-                      key={`addr-${i}`}
-                      className="group relative overflow-hidden rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg sm:p-5"
-                    >
-                      <div className="absolute -left-2 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
-                          />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                      </div>
-                      <div className="pl-6">
-                        {a?.label ? (
-                          <h3 className="mb-1 text-base font-semibold tracking-tight sm:mb-2 sm:text-lg">
-                            {a.label}
-                          </h3>
-                        ) : null}
-                        {a?.address ? (
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
-                            {a.address}
-                          </p>
-                        ) : null}
-                        {a?.note ? (
-                          <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+{/* 地址 */}
+{addresses.length > 0 ? (
+  <section className="mt-10 min-w-0 sm:mt-12">
+    <h2 className="mb-3 text-xl font-semibold sm:mb-4 sm:text-2xl">
+      {labelByLang("Addresses", lang)}
+    </h2>
+
+    {/* 兩欄且行高同步：items-stretch + auto-rows-fr */}
+    <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 md:auto-rows-fr md:grid-cols-2">
+      {addresses.map((a, i) => (
+        <div
+          key={`addr-${i}`}
+          className="relative h-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
+        >
+          {/* 圖示不再使用負邊距，避免位移與溢出 */}
+          <div className="pointer-events-none absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
+              />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+
+          {/* 內文留出圖示空間：pl-14 */}
+          <div className="h-full min-w-0 p-5 pl-14">
+            {a?.label ? (
+              <h3 className="mb-1 text-base font-semibold tracking-tight sm:mb-2 sm:text-lg">
+                {a.label}
+              </h3>
             ) : null}
 
+            {a?.address ? (
+              <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
+                {a.address}
+              </p>
+            ) : null}
+
+            {a?.note ? (
+              <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+) : null}
+
             {/* ============ 表單 ============ */}
-            <section className="mt-10 sm:mt-12">
+            <section className="mt-10 min-w-0 sm:mt-12">
               <h2 className="text-xl font-semibold sm:text-2xl">
                 {labelByLang("Contact form", lang)}
               </h2>
               <form
-                className="mt-5 grid gap-4 rounded-2xl bg-white/5 p-4 sm:mt-6 sm:gap-5 sm:p-6"
+                className="mt-5 grid min-w-0 max-w-full gap-4 rounded-2xl bg-white/5 p-4 sm:mt-6 sm:gap-5 sm:p-6"
                 action={"/api/contact"}
                 method="post"
                 encType="multipart/form-data"
@@ -332,8 +336,7 @@ export default async function Page({
                 {/* ✅ 提供 API 讀取語系 */}
                 <input type="hidden" name="lang" value={lang} />
 
-                {/* 手機單欄，md 起雙欄 */}
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
                   <Field label={labelByLang("Your name", lang)} name="name" required />
                   <Field label="Email" name="email" type="email" required />
                   <Field label={labelByLang("Phone", lang)} name="phone" />
@@ -341,13 +344,11 @@ export default async function Page({
                 </div>
 
                 {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
-                  <div className="grid gap-2">
-                    <label className="text-sm opacity-90">
-                      {labelByLang("Subject", lang)}
-                    </label>
+                  <div className="grid min-w-0 gap-2">
+                    <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
                     <select
                       name="subject"
-                      className="h-12 rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
+                      className="h-12 w-full min-w-0 max-w-full rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
                       required
                     >
                       <option value="" className="bg-white text-black">
@@ -362,15 +363,12 @@ export default async function Page({
                   </div>
                 ) : null}
 
-                {Array.isArray(form?.preferredContactOptions) &&
-                form.preferredContactOptions.length > 0 ? (
-                  <div className="grid gap-2">
-                    <span className="text-sm opacity-90">
-                      {labelByLang("Preferred contact", lang)}
-                    </span>
-                    <div className="flex flex-wrap gap-3">
+                {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
+                  <div className="grid min-w-0 gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
+                    <div className="flex flex-wrap items-center gap-3">
                       {form.preferredContactOptions.map((op, i) => (
-                        <label key={`pref-${i}`} className="flex items-center gap-2">
+                        <label key={`pref-${i}`} className="flex min-w-0 items-center gap-2">
                           <input className="h-4 w-4" type="radio" name="preferredContact" value={op} />
                           <span className="text-sm">{op}</span>
                         </label>
@@ -379,72 +377,51 @@ export default async function Page({
                   </div>
                 ) : null}
 
-                <div className="grid gap-2">
+                <div className="grid min-w-0 gap-2">
                   <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
                   <textarea
                     name="summary"
-                    className="min-h-[130px] rounded-xl bg-white/10 px-3 py-3 outline-none sm:min-h-[140px]"
+                    className="min-h-[130px] w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-3 outline-none sm:min-h-[140px]"
                     placeholder={form?.summaryHint ?? ""}
                     required
                   />
                 </div>
 
                 {/* ===== 新增：第一/第二備選時段 ===== */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="grid gap-2">
-                    <span className="text-sm opacity-90">
-                      {labelByLang("First preferred time", lang)}
-                    </span>
-                    <input
-                      type="datetime-local"
-                      name="preferredTime1"
-                      className="h-12 rounded-xl bg-white/10 px-3 py-2 outline-none"
-                    />
+                <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+                  <label className="grid min-w-0 gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
+                    <input type="datetime-local" name="preferredTime1" className="h-12 w-full min-w-0 rounded-xl bg-white/10 px-3 py-2 outline-none" />
                   </label>
-                  <label className="grid gap-2">
-                    <span className="text-sm opacity-90">
-                      {labelByLang("Second preferred time", lang)}
-                    </span>
-                    <input
-                      type="datetime-local"
-                      name="preferredTime2"
-                      className="h-12 rounded-xl bg-white/10 px-3 py-2 outline-none"
-                    />
+                  <label className="grid min-w-0 gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
+                    <input type="datetime-local" name="preferredTime2" className="h-12 w-full min-w-0 rounded-xl bg-white/10 px-3 py-2 outline-none" />
                   </label>
                 </div>
 
                 {/* ===== 時區：Client Component（IANA 下拉 + 自動偵測） ===== */}
-                <div className="grid gap-2">
+                <div className="grid min-w-0 gap-2">
                   <label className="text-sm opacity-90" htmlFor="timezone">
                     {labelByLang("Time zone", lang)}
                   </label>
                   <TimezoneSelect id="timezone" name="timezone" />
                 </div>
-                {/* ===== /時區 ===== */}
 
-                <div className="grid gap-2">
+                <div className="grid min-w-0 gap-2">
                   <label className="text-sm opacity-90">{labelByLang("Attachment", lang)}</label>
                   <input
                     type="file"
                     name="attachments"
                     multiple
-                    className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:text-black"
+                    className="w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:text-black"
                   />
-                  {form?.attachmentHint ? (
-                    <p className="text-xs opacity-75">{form.attachmentHint}</p>
-                  ) : null}
+                  {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
                 </div>
 
                 {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
-                  <label className="mt-1 grid gap-2 sm:mt-2">
+                  <label className="mt-1 grid min-w-0 gap-2 sm:mt-2">
                     <div className="flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        name="consent"
-                        value="yes"
-                        required
-                        className="mt-1 h-4 w-4"
-                      />
+                      <input type="checkbox" name="consent" value="yes" required className="mt-1 h-4 w-4" />
                       <div className="text-sm opacity-90">
                         <PortableText value={form.consentText} />
                       </div>
@@ -453,21 +430,15 @@ export default async function Page({
                 ) : null}
 
                 <div className="mt-2 sm:mt-3">
-                  <button
-                    type="submit"
-                    className="h-11 rounded-2xl bg-white px-5 font-medium text-black sm:h-12"
-                  >
+                  <button type="submit" className="h-12 w-full rounded-2xl bg-white px-5 font-medium text-black sm:w-auto">
                     {labelByLang("Send", lang)}
                   </button>
                 </div>
               </form>
             </section>
 
-            <section className="mt-10 sm:mt-12">
-              <Link
-                href={linkWithLang("/services", lang)}
-                className="inline-block rounded-2xl bg-white/10 px-4 py-2"
-              >
+            <section className="mt-10 min-w-0 sm:mt-12">
+              <Link href={linkWithLang("/services", lang)} className="inline-block rounded-2xl bg-white/10 px-4 py-2">
                 {labelByLang("View services", lang)} →
               </Link>
             </section>
@@ -484,7 +455,7 @@ export default async function Page({
 function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
   return (
     <section
-      className="relative mx-auto w-full px-4 pb-14 pt-8 text-white sm:px-6 sm:pb-16 sm:pt-10"
+      className="relative mx-auto w-full max-w-full overflow-x-clip px-4 pb-14 pt-8 text-white sm:px-6 sm:pb-16 sm:pt-10"
       style={{ maxWidth: "720px" }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -624,12 +595,12 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="grid gap-2" id="contact-form">
+    <label className="grid min-w-0 max-w-full gap-2" id="contact-form">
       <span className="text-sm opacity-90">{label}</span>
       <input
         type={type}
         name={name}
-        className="h-12 rounded-xl bg-white/10 px-3 py-2 outline-none"
+        className="h-12 w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-2 outline-none"
         required={required}
       />
     </label>
