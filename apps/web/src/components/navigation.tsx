@@ -1,4 +1,4 @@
-// apps/web/src/components/navigation.tsx
+// File: apps/web/src/components/navigation.tsx
 "use client";
 
 import Image from "next/image";
@@ -70,9 +70,7 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
 
   return (
     <header className="w-full" style={{ backgroundColor: BRAND_BLUE }}>
-      {/* 主列：Logo 區間與選單更平衡 */}
       <div className="mx-auto max-w-[1200px] px-6 py-3 flex items-center justify-between gap-10">
-        {/* Logo + 公司名稱 */}
         <Link href={normalizeHref("/")} className="flex items-center gap-5 flex-shrink-0">
           <div className="h-9 w-9 rounded-lg bg-white/10 ring-1 ring-white/20 overflow-hidden flex items-center justify-center">
             <Image src={logoSrc} alt={brandNameForLang} width={36} height={36} className="h-7 w-7 object-contain" />
@@ -80,7 +78,7 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
           <span className="text-white font-semibold text-base">{brandNameForLang}</span>
         </Link>
 
-        {/* 桌機主選單：略緊湊 */}
+        {/* 桌機主選單 */}
         <nav aria-label="Main" className="hidden md:block">
           <ul className="flex items-center gap-8 whitespace-nowrap">
             {augmented.map((it, i) => {
@@ -113,13 +111,13 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
                   {hasChildren && openIdx === i && (
                     <ul
                       role="menu"
-                      className="absolute left-0 top-full bg-white shadow-lg rounded-b-lg py-2 px-3 min-w-[14rem] w-auto z-50 ring-1 ring-black/5 border-t border-slate-100"
+                      className="absolute left-0 top-full bg-white shadow-lg rounded-b-lg py-1.5 px-2 w-max max-w-[70vw] whitespace-nowrap z-50 ring-1 ring-black/5 border-t border-slate-100"
                     >
                       {it.children!.map((child, cidx) => (
                         <li key={`${child.href}-${cidx}`}>
                           <Link
                             href={normalizeHref(child.href)}
-                            className="block px-2 py-2 text-sm text-slate-800 hover:bg-slate-50 hover:text-sky-700"
+                            className="block px-2.5 py-1.5 text-sm text-slate-800 hover:bg-slate-50 hover:text-sky-700"
                           >
                             {child.label}
                           </Link>
@@ -153,12 +151,10 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
           mobileOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
       >
-        {/* 遮罩 */}
         <div
           className={`absolute inset-0 bg-black/40 transition-opacity ${mobileOpen ? "opacity-100" : "opacity-0"}`}
           onClick={() => setMobileOpen(false)}
         />
-        {/* 抽屜本體 */}
         <div
           className={`absolute right-0 top-0 h-full w-[82%] max-w-[380px] transition-transform ${
             mobileOpen ? "translate-x-0" : "translate-x-full"

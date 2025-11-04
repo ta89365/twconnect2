@@ -126,7 +126,7 @@ export default async function Page({
 
   if (!doc) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }}>
+      <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
         <NavigationServer lang={lang} />
         <div className="mx-auto w-full" style={{ maxWidth: CONTENT_MAX_W }}>
           <div className="px-4 py-16 text-white">
@@ -159,30 +159,8 @@ export default async function Page({
   const isOk = submitted === "1";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }}>
+    <div className="min-h-screen" style={{ backgroundColor: BRAND_BLUE }} data-lang={lang}>
       <NavigationServer lang={lang} />
-
-      {/* 頁面訊息條 */}
-      {hasSubmitted && (
-        <div className={["mx-auto w-full px-4 pt-4", "transition-all duration-200"].join(" ")} style={{ maxWidth: CONTENT_MAX_W }}>
-          <div
-            className={[
-              "rounded-2xl px-4 py-3 text-sm",
-              isOk ? "bg-emerald-500/15 text-emerald-100 ring-1 ring-emerald-500/30"
-                   : "bg-red-500/15 text-red-100 ring-1 ring-red-500/30",
-            ].join(" ")}
-          >
-            {isOk ? (
-              <span>{labelByLang("Submitted successfully. Please check your mailbox.", lang)}</span>
-            ) : (
-              <span>
-                {labelByLang("Submission failed.", lang)}{" "}
-                {errMsg && <em className="opacity-80">({String(errMsg)})</em>}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* === Hero === */}
       <section
@@ -209,12 +187,12 @@ export default async function Page({
           style={{ maxWidth: CONTENT_MAX_W }}
         >
           <div className="w-full text-center">
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="text-4xl font-bold tracking-tight leading-snug md:text-5xl">
               {hero?.title ?? "Contact"}
             </h1>
 
             {hero?.subtitle ? (
-              <p className="mx-auto mt-4 max-w-3xl text-lg opacity-95">{hero.subtitle}</p>
+              <p className="mx-auto mt-4 max-w-3xl text-lg leading-relaxed opacity-95">{hero.subtitle}</p>
             ) : null}
 
             {Array.isArray(hero?.ctas) && hero.ctas.length > 0 ? (
@@ -230,7 +208,7 @@ export default async function Page({
                       lang={lang}
                       className={[
                         "rounded-2xl px-5 py-2 text-sm font-medium",
-                        isPrimary ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20",
+                        isPrimary ? "bg-white text-black shadow-sm" : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/16",
                       ].join(" ")}
                     >
                       {label}
@@ -243,160 +221,375 @@ export default async function Page({
         </div>
       </section>
 
-      <main className="mx-auto w-full px-4 py-12 text-white" style={{ maxWidth: CONTENT_MAX_W }}>
-        <section className="grid gap-6 md:grid-cols-3">
-          <InfoCard title={labelByLang("Languages", lang)} body={info.languages} />
-          <InfoCard title={labelByLang("Service areas", lang)} body={info.serviceAreas} />
-          <InfoCard title={labelByLang("Business hours", lang)} body={info.businessHours} />
-        </section>
-
-        {faqTopics.length > 0 ? (
-          <section className="mt-12">
-            <h2 className="text-2xl font-semibold">
-              {labelByLang("Frequently asked topics", lang)}
-            </h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {faqTopics.map((t, i) => (
-                <span key={`${t}-${i}`} className="rounded-full bg-white/10 px-3 py-1 text-sm">
-                  {t}
-                </span>
-              ))}
+      {/* ===== 送出成功：顯示成功頁；失敗：顯示錯誤提示後保留原頁內容 ===== */}
+      {hasSubmitted && isOk ? (
+        <SuccessView lang={lang} doc={doc} />
+      ) : (
+        <>
+          {hasSubmitted && !isOk ? (
+            <div className="mx-auto w-full px-4 pt-6" style={{ maxWidth: CONTENT_MAX_W }}>
+              <ErrorToast lang={lang} errMsg={errMsg} />
             </div>
-          </section>
-        ) : null}
+          ) : null}
 
-        {addresses.length > 0 ? (
-          <section className="mt-12">
-            <h2 className="text-2xl font-semibold">{labelByLang("Addresses", lang)}</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {addresses.map((a, i) => (
-                <div key={`addr-${i}`} className="rounded-2xl bg-white/5 p-4">
-                  {a?.label ? <div className="text-base font-semibold">{a.label}</div> : null}
-                  {a?.address ? (
-                    <p className="mt-2 whitespace-pre-wrap text-sm opacity-90">{a.address}</p>
-                  ) : null}
-                  {a?.note ? <p className="mt-2 text-sm opacity-80">{a.note}</p> : null}
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+          <main className="mx-auto w-full px-4 py-12 text-white" style={{ maxWidth: CONTENT_MAX_W }}>
+            <section className="grid gap-6 md:grid-cols-3">
+              <InfoCard title={labelByLang("Languages", lang)} body={info.languages} />
+              <InfoCard title={labelByLang("Service areas", lang)} body={info.serviceAreas} />
+              <InfoCard title={labelByLang("Business hours", lang)} body={info.businessHours} />
+            </section>
 
-        <section className="mt-12">
-          <h2 className="text-2xl font-semibold">{labelByLang("Contact form", lang)}</h2>
-          <form
-            className="mt-6 grid gap-4 rounded-2xl bg-white/5 p-6"
-            action={"/api/contact"}
-            method="post"
-            encType="multipart/form-data"
-          >
-            {/* ✅ 提供 API 讀取語系 */}
-            <input type="hidden" name="lang" value={lang} />
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label={labelByLang("Your name", lang)} name="name" required />
-              <Field label="Email" name="email" type="email" required />
-              <Field label={labelByLang("Phone", lang)} name="phone" />
-              <Field label={labelByLang("Company", lang)} name="company" />
-            </div>
-
-            {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
-              <div className="grid gap-2">
-                <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
-                {/* 白底黑字避免受父層 text-white 影響 */}
-                <select
-                  name="subject"
-                  className="rounded-xl bg-white/90 px-3 py-2 outline-none text-black"
-                  required
-                >
-                  <option value="" className="text-black bg-white">
-                    {labelByLang("Please select", lang)}
-                  </option>
-                  {form.subjectOptions.map((s, i) => (
-                    <option key={`sub-${i}`} value={s} className="text-black bg-white">
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-
-            {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
-              <div className="grid gap-2">
-                <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
-                <div className="flex flex-wrap gap-3">
-                  {form.preferredContactOptions.map((op, i) => (
-                    <label key={`pref-${i}`} className="flex items-center gap-2">
-                      <input type="radio" name="preferredContact" value={op} />
-                      <span className="text-sm">{op}</span>
-                    </label>
+            {faqTopics.length > 0 ? (
+              <section className="mt-12">
+                <h2 className="text-2xl font-semibold">
+                  {labelByLang("Frequently asked topics", lang)}
+                </h2>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {faqTopics.map((t, i) => (
+                    <span key={`${t}-${i}`} className="rounded-full bg-white/10 px-3 py-1 text-sm">
+                      {t}
+                    </span>
                   ))}
                 </div>
-              </div>
+              </section>
             ) : null}
 
-            <div className="grid gap-2">
-              <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
-              <textarea
-                name="summary"
-                className="min-h-[120px] rounded-xl bg-white/10 px-3 py-2 outline-none"
-                placeholder={form?.summaryHint ?? ""}
-                required
-              />
-            </div>
+            {addresses.length > 0 ? (
+              <section className="mt-12">
+                <h2 className="text-2xl font-semibold mb-4">
+                  {labelByLang("Addresses", lang)}
+                </h2>
+                <div className="grid gap-5 sm:grid-cols-1 md:grid-cols-2">
+                  {addresses.map((a, i) => (
+                    <div
+                      key={`addr-${i}`}
+                      className="group relative overflow-hidden rounded-2xl bg-white/5 p-5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
+                    >
+                      {/* 左側裝飾 icon */}
+                      <div className="absolute -left-2 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-110">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                          className="h-4 w-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
+                          />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </div>
 
-            <div className="grid gap-2">
-              <label className="text-sm opacity-90">{labelByLang("Preferred date and time", lang)}</label>
-              <input
-                type="datetime-local"
-                name="datetime"
-                className="rounded-xl bg-white/10 px-3 py-2 outline-none"
-              />
-              {form?.datetimeHint ? <p className="text-xs opacity-75">{form.datetimeHint}</p> : null}
-            </div>
+                      {/* 內容區塊 */}
+                      <div className="pl-6">
+                        {a?.label ? (
+                          <h3 className="text-lg font-semibold text-white mb-2 tracking-tight">
+                            {a.label}
+                          </h3>
+                        ) : null}
+                        {a?.address ? (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
+                            {a.address}
+                          </p>
+                        ) : null}
+                        {a?.note ? (
+                          <p className="mt-2 text-xs leading-relaxed opacity-70 italic">
+                            {a.note}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-            <div className="grid gap-2">
-              <label className="text-sm opacity-90">{labelByLang("Attachment", lang)}</label>
-              <input
-                type="file"
-                name="attachments"
-                multiple
-                className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-sm file:text-black"
-              />
-              {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
-            </div>
+            <section className="mt-12">
+              <h2 className="text-2xl font-semibold">{labelByLang("Contact form", lang)}</h2>
+              <form
+                className="mt-6 grid gap-4 rounded-2xl bg-white/5 p-6"
+                action={"/api/contact"}
+                method="post"
+                encType="multipart/form-data"
+              >
+                {/* ✅ 提供 API 讀取語系 */}
+                <input type="hidden" name="lang" value={lang} />
 
-            {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
-              <label className="mt-2 grid gap-2">
-                <div className="flex items-start gap-2">
-                  <input type="checkbox" name="consent" value="yes" required className="mt-1" />
-                  <div className="text-sm opacity-90">
-                    <PortableText value={form.consentText} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label={labelByLang("Your name", lang)} name="name" required />
+                  <Field label="Email" name="email" type="email" required />
+                  <Field label={labelByLang("Phone", lang)} name="phone" />
+                  <Field label={labelByLang("Company", lang)} name="company" />
+                </div>
+
+                {Array.isArray(form?.subjectOptions) && form.subjectOptions.length > 0 ? (
+                  <div className="grid gap-2">
+                    <label className="text-sm opacity-90">{labelByLang("Subject", lang)}</label>
+                    <select
+                      name="subject"
+                      className="rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
+                      required
+                    >
+                      <option value="" className="bg-white text-black">
+                        {labelByLang("Please select", lang)}
+                      </option>
+                      {form.subjectOptions.map((s, i) => (
+                        <option key={`sub-${i}`} value={s} className="bg-white text-black">
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                ) : null}
+
+                {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
+                  <div className="grid gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
+                    <div className="flex flex-wrap gap-3">
+                      {form.preferredContactOptions.map((op, i) => (
+                        <label key={`pref-${i}`} className="flex items-center gap-2">
+                          <input type="radio" name="preferredContact" value={op} />
+                          <span className="text-sm">{op}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="grid gap-2">
+                  <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
+                  <textarea
+                    name="summary"
+                    className="min-h-[120px] rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    placeholder={form?.summaryHint ?? ""}
+                    required
+                  />
                 </div>
-              </label>
-            ) : null}
 
-            <div className="mt-4">
-              <button type="submit" className="rounded-2xl bg-white px-5 py-2 font-medium text-black">
-                {labelByLang("Send", lang)}
-              </button>
-            </div>
-          </form>
-        </section>
+                {/* ===== 新增：第一/第二備選時段與時區 ===== */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="grid gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
+                    <input
+                      type="datetime-local"
+                      name="preferredTime1"
+                      className="rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
+                    <input
+                      type="datetime-local"
+                      name="preferredTime2"
+                      className="rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    />
+                  </label>
+                </div>
 
-        <section className="mt-12">
-          <Link href={linkWithLang("/services", lang)} className="inline-block rounded-2xl bg-white/10 px-4 py-2">
-            {labelByLang("View services", lang)} →
-          </Link>
-        </section>
-      </main>
+                {/* 時區：改為可選/可填，提供 datalist 並自動帶入瀏覽器預設 */}
+                <div className="grid gap-2">
+                  <label className="text-sm opacity-90" htmlFor="timezone">
+                    {labelByLang("Time zone", lang)}
+                  </label>
+
+                  <input
+                    id="timezone"
+                    name="timezone"
+                    type="text"
+                    list="tz-list"
+                    placeholder="e.g. Asia/Taipei"
+                    className="rounded-xl bg-white/10 px-3 py-2 outline-none"
+                    defaultValue="" /* 由下方 script 自動填入 */
+                  />
+
+                  <datalist id="tz-list">
+                    <option value="Asia/Taipei" />
+                    <option value="Asia/Tokyo" />
+                    <option value="Asia/Shanghai" />
+                    <option value="Asia/Hong_Kong" />
+                    <option value="America/New_York" />
+                    <option value="America/Chicago" />
+                    <option value="America/Denver" />
+                    <option value="America/Los_Angeles" />
+                    <option value="Europe/London" />
+                    <option value="Europe/Paris" />
+                    <option value="Europe/Berlin" />
+                    <option value="UTC" />
+                  </datalist>
+
+                  <script
+                    dangerouslySetInnerHTML={{
+                      __html: `
+                        try {
+                          var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+                          var input = document.getElementById('timezone');
+                          if (input && !input.value) input.value = tz;
+                        } catch(_) {}
+                      `,
+                    }}
+                  />
+                </div>
+                {/* ===== /新增 ===== */}
+
+                <div className="grid gap-2">
+                  <label className="text-sm opacity-90">{labelByLang("Attachment", lang)}</label>
+                  <input
+                    type="file"
+                    name="attachments"
+                    multiple
+                    className="rounded-xl bg-white/10 px-3 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1 file:text-sm file:text-black"
+                  />
+                  {form?.attachmentHint ? <p className="text-xs opacity-75">{form.attachmentHint}</p> : null}
+                </div>
+
+                {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
+                  <label className="mt-2 grid gap-2">
+                    <div className="flex items-start gap-2">
+                      <input type="checkbox" name="consent" value="yes" required className="mt-1" />
+                      <div className="text-sm opacity-90">
+                        <PortableText value={form.consentText} />
+                      </div>
+                    </div>
+                  </label>
+                ) : null}
+
+                <div className="mt-4">
+                  <button type="submit" className="rounded-2xl bg-white px-5 py-2 font-medium text-black">
+                    {labelByLang("Send", lang)}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className="mt-12">
+              <Link href={linkWithLang("/services", lang)} className="inline-block rounded-2xl bg-white/10 px-4 py-2">
+                {labelByLang("View services", lang)} →
+              </Link>
+            </section>
+          </main>
+        </>
+      )}
 
       <FooterServer lang={lang} />
     </div>
   );
 }
 
+/* ============================ 成功頁 ============================ */
+function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
+  return (
+    <section
+      className="relative mx-auto w-full px-4 pb-16 pt-10 text-white"
+      style={{ maxWidth: "720px" }}
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-10 -left-10 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute bottom-0 -right-10 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
+      </div>
+
+      <div className="relative">
+        <div className="mx-auto flex h-[72px] w-[72px] items-center justify-center rounded-2xl bg-emerald-500/18 ring-1 ring-emerald-400/35 backdrop-blur-sm">
+          <CheckIcon className="h-9 w-9 text-emerald-300" />
+        </div>
+
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight leading-snug md:text-4xl">
+          {labelByLang("Your message was sent", lang)}
+        </h2>
+        <p className="mt-3 text-center text-base leading-relaxed opacity-90 md:text-lg">
+          {labelByLang("We will get back to you within 1–2 business days.", lang)}
+        </p>
+
+        {Array.isArray(doc?.success?.message) && doc.success?.message?.length > 0 ? (
+          <div className="prose prose-invert mt-6 rounded-2xl bg-white/6 p-5 ring-1 ring-white/12 backdrop-blur-sm"
+               style={{ background: "rgba(255,255,255,0.06)" }}>
+            <PortableText value={doc.success.message} />
+          </div>
+        ) : (
+          <ul
+            className="mt-6 grid gap-3 rounded-2xl p-5 ring-1 ring-white/12 backdrop-blur-sm"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          >
+            <li className="flex items-start gap-3">
+              <MailIcon className="mt-[2px] h-5 w-5 opacity-90" />
+              <span className="text-sm opacity-95">
+                {labelByLang("A confirmation email has been sent. If you do not see it, please check your spam folder.", lang)}
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CalendarIcon className="mt-[2px] h-5 w-5 opacity-90" />
+              <span className="text-sm opacity-95">
+                {labelByLang("If you proposed a time, our team will confirm availability or suggest alternatives.", lang)}
+              </span>
+            </li>
+            <li className="flex items-start gap-3">
+              <ShieldIcon className="mt-[2px] h-5 w-5 opacity-90" />
+              <span className="text-sm opacity-95">
+                {labelByLang("Your information is kept confidential and used only for this inquiry.", lang)}
+              </span>
+            </li>
+          </ul>
+        )}
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4">
+          <CtaLink
+            href="/"
+            lang={lang}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white px-5 md:px-6 font-medium text-black shadow-sm"
+          >
+            <HomeIcon className="h-5 w-5" />
+            {labelByLang("Back to Home", lang)}
+          </CtaLink>
+
+          <CtaLink
+            href="/services"
+            lang={lang}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16"
+          >
+            <ArrowRightIcon className="h-5 w-5" />
+            {labelByLang("View services", lang)}
+          </CtaLink>
+
+          <CtaLink
+            href="/companyStrengthsAndFAQ"
+            lang={lang}
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 md:px-6 font-medium text-white ring-1 ring-white/15 hover:bg-white/16"
+          >
+            <HelpIcon className="h-5 w-5" />
+            {labelByLang("View FAQ", lang)}
+          </CtaLink>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================ 失敗提示 ============================ */
+function ErrorToast({ lang, errMsg }: { lang: Lang; errMsg?: string }) {
+  return (
+    <div
+      className="flex items-start gap-3 rounded-2xl bg-red-500/15 px-4 py-3 text-sm text-red-100 ring-1 ring-red-500/30"
+      role="alert"
+    >
+      <ErrorIcon className="mt-[2px] h-5 w-5 shrink-0 text-red-200" />
+      <div className="flex-1">
+        <div className="font-semibold">{labelByLang("Submission failed.", lang)}</div>
+        {errMsg ? <div className="mt-1 opacity-90">({String(errMsg)})</div> : null}
+      </div>
+      <Link
+        href="#contact-form"
+        className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
+      >
+        {labelByLang("Try again", lang)}
+      </Link>
+    </div>
+  );
+}
+
+/* ============================ 小元件 ============================ */
 function InfoCard({ title, body }: { title: string; body?: string }) {
   if (!title && !body) return null;
   return (
@@ -419,13 +612,79 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="grid gap-2">
+    <label className="grid gap-2" id="contact-form">
       <span className="text-sm opacity-90">{label}</span>
       <input type={type} name={name} className="rounded-xl bg-white/10 px-3 py-2 outline-none" required={required} />
     </label>
   );
 }
 
+/* ============================ Icons（inline） ============================ */
+function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+function MailIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path strokeWidth="2" d="M4 6h16v12H4z" />
+      <path strokeWidth="2" d="M22 6l-10 7L2 6" />
+    </svg>
+  );
+}
+function CalendarIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  );
+}
+function ShieldIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z" />
+    </svg>
+  );
+}
+function ArrowRightIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path d="M5 12h14M13 5l7 7-7 7" />
+    </svg>
+  );
+}
+function HomeIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path d="M3 11l9-8 9 8" />
+      <path d="M9 22V12h6v10" />
+    </svg>
+  );
+}
+function HelpIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+function ErrorIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 8v5" />
+      <path d="M12 16h.01" />
+    </svg>
+  );
+}
+
+/* ============================ i18n ============================ */
 function labelByLang(key: string, lang: Lang): string {
   const dict: Record<string, { zh: string; jp: string; en: string }> = {
     Languages: { zh: "服務語言", jp: "対応言語", en: "Languages" },
@@ -442,16 +701,31 @@ function labelByLang(key: string, lang: Lang): string {
     "Preferred contact": { zh: "偏好聯絡方式", jp: "希望連絡方法", en: "Preferred Contact" },
     Summary: { zh: "需求摘要", jp: "概要", en: "Summary" },
     "Preferred date and time": { zh: "可洽談時間", jp: "希望日時", en: "Preferred Date and Time" },
+    "First preferred time": { zh: "第一備選時段", jp: "第1希望日時", en: "First preferred time" },
+    "Second preferred time": { zh: "第二備選時段", jp: "第2希望日時", en: "Second preferred time" },
+    "Time zone": { zh: "時區", jp: "タイムゾーン", en: "Time zone" },
     Attachment: { zh: "附件", jp: "添付ファイル", en: "Attachment" },
     Send: { zh: "送出", jp: "送信", en: "Send" },
     "View services": { zh: "查看服務", jp: "サービスを見る", en: "View Services" },
-    // 新增提示字串
-    "Submitted successfully. Please check your mailbox.": {
-      zh: "已成功送出，請留意您的信箱。",
-      jp: "送信しました。メールをご確認ください。",
-      en: "Submitted successfully. Please check your mailbox.",
+
+    // 成功頁
+    "Your message was sent": { zh: "已收到您的訊息", jp: "メッセージを受信しました", en: "Your message was sent" },
+    "We will get back to you within 1–2 business days.": {
+      zh: "我們將在 1–2 個工作日內回覆您。",
+      jp: "通常 1〜2 営業日以内にご返信いたします。",
+      en: "We will get back to you within 1–2 business days.",
     },
+    "A confirmation email has been sent. If you do not see it, please check your spam folder.": {
+      zh: "確認信已寄出，如未看到請檢查垃圾郵件匣。",
+      jp: "確認メールを送信しました。見当たらない場合は迷惑メールをご確認ください。",
+      en: "A confirmation email has been sent. If you do not see it, please check your spam folder.",
+    },
+    "Back to Home": { zh: "回到首頁", jp: "ホームへ戻る", en: "Back to Home" },
+    "View FAQ": { zh: "查看常見問題", jp: "よくある質問を見る", en: "View FAQ" },
+
+    // 失敗
     "Submission failed.": { zh: "送出失敗。", jp: "送信に失敗しました。", en: "Submission failed." },
+    "Try again": { zh: "再試一次", jp: "もう一度", en: "Try again" },
   };
   const found = dict[key];
   if (!found) return key;
