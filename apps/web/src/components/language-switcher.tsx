@@ -48,7 +48,6 @@ export default function LanguageSwitcher({
   const items = useMemo(
     () => [
       { key: "zh" as Lang, label: "繁體中文" },
-      { key: "zh-cn" as Lang, label: "简体中文" },
       { key: "jp" as Lang, label: "日本語" },
       { key: "en" as Lang, label: "English" },
     ],
