@@ -148,15 +148,18 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [err, setErr] = useState<string>("");
 
+  // 防溢出：加 box-border + min/max width
   const inputBase =
-    "mt-1 w-full rounded-xl border border-gray-300/70 bg-white px-3 py-3 h-12 text-[15px] leading-none placeholder:text-gray-400 " +
-    "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
+    "box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
+    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
   const textAreaBase =
-    "mt-1 w-full rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] placeholder:text-gray-400 " +
-    "focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition min-h-[140px] resize-y";
+    "box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] " +
+    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition min-h-[140px] resize-y";
   const labelBase = "block text-sm font-medium";
-  const hintBase = "mt-1 text-xs text-gray-500";
   const sectionGap = "space-y-4 sm:space-y-5";
+
+  // datetime 欄位：加高並於下緣留白供第二行提示使用
+  const dtInputBase = inputBase.replace("h-12", "h-16") + " pt-2 pb-6";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -220,12 +223,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      encType="multipart/form-data"
-      className={`max-w-xl ${sectionGap}`}
-      noValidate
-    >
+    <form onSubmit={onSubmit} encType="multipart/form-data" className={`max-w-xl ${sectionGap}`} noValidate>
       <input type="hidden" name="lang" value={lang} />
 
       <div>
@@ -285,7 +283,6 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
           placeholder={t.placeholder.summary}
           required
         />
-        <p className={hintBase} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -298,33 +295,40 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
             autoComplete="off"
           />
         </div>
-        <div>
+
+        {/* 第一備選時段：內嵌第二行提示 */}
+        <div className="relative w-full min-w-0">
           <label className={labelBase}>{t.label.preferredTime1}</label>
           <input
             type="datetime-local"
             name="preferredTime1"
-            className={inputBase}
+            className={`${dtInputBase} pr-10`}
             aria-label={t.label.preferredTime1}
             inputMode="numeric"
           />
-          <p className={hintBase}>{t.hint.selectDateTime}</p>
+          <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs text-gray-500">
+            {t.hint.selectDateTime}
+          </span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
+        {/* 第二備選時段：內嵌第二行提示 */}
+        <div className="relative w-full min-w-0">
           <label className={labelBase}>{t.label.preferredTime2}</label>
           <input
             type="datetime-local"
             name="preferredTime2"
-            className={inputBase}
+            className={`${dtInputBase} pr-10`}
             aria-label={t.label.preferredTime2}
             inputMode="numeric"
           />
-          <p className={hintBase}>{t.hint.selectDateTime}</p>
+          <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs text-gray-500">
+            {t.hint.selectDateTime}
+          </span>
         </div>
 
-        {/* ✅ 使用新版 TimezoneSelect（保持 variant="light" 不變） */}
+        {/* ✅ TimezoneSelect 保持 light 外觀 */}
         <div>
           <label className={labelBase}>{t.label.timezone}</label>
           <div className="mt-1">
