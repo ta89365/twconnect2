@@ -258,39 +258,39 @@ export default async function Home({
       {/* Hero：字級與位移已針對手機優化 */}
       <HeroBanner data={hero} navHeight={NAV_HEIGHT} tune={TUNE} />
 
-      {/* 五大痛點：手機內距更緊湊 */}
-      <div className="px-3 sm:px-4">
+      {/* 五大痛點：移除外層水平 padding，避免左右留白 */}
+      <div>
         {await ChallengesSection({ lang: contentLang })}
       </div>
 
-      {/* 服務：手機時區塊上下距縮小 */}
-      <div className="px-3 sm:px-4">
+      {/* 服務：移除外層水平 padding */}
+      <div>
         <ServiceSection items={services || []} />
       </div>
 
-      {/* CrossBorder：採用更保守的位移，避免手機溢出 */}
-      <div className="px-3 sm:px-4">
+      {/* CrossBorder：移除外層水平 padding */}
+      <div>
         <CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} />
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      {/* About 區塊：手機縮小 padding 與字距 */}
-      <div className="px-3 sm:px-4">
+      {/* About 區塊：移除外層水平 padding */}
+      <div>
         <AboutSection data={about ?? null} />
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      {/* 混合 News + Column 區塊：手機字級與間距優化 */}
-      <div className="px-2 sm:px-4">
+      {/* 混合 News + Column 區塊：本身已有滿版色底，維持不變 */}
+      <div>
         <NewsSection lang={contentLang} items={homeNewsItems} />
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      {/* Contact：手機縮小外邊距，避免過度留白 */}
-      <div className="px-3 sm:px-4">
+      {/* Contact：移除外層水平 padding */}
+      <div>
         <ContactSection data={contact ?? null} lang={contentLang} />
       </div>
 

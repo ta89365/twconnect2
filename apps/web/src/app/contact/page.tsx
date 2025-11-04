@@ -55,26 +55,28 @@ function linkWithLang(href: string, lang: Lang): string {
   return `${href}?lang=${lang}`;
 }
 
+/* ===== CTA Link（增加 style 屬性避免 TS2322） ===== */
 type CtaLinkProps = {
   href: string;
   lang: Lang;
   children?: ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 };
 
-function CtaLink({ href, lang, children, className }: CtaLinkProps) {
+function CtaLink({ href, lang, children, className, style }: CtaLinkProps) {
   const finalHref = linkWithLang(href, lang);
   const isExternal =
     /^(https?:)?\/\//.test(href) || href.startsWith("mailto:") || href.startsWith("tel:");
   if (isExternal) {
     return (
-      <a href={finalHref} className={className} target="_blank" rel="noopener noreferrer">
+      <a href={finalHref} className={className} target="_blank" rel="noopener noreferrer" style={style}>
         {children}
       </a>
     );
   }
   return (
-    <Link href={finalHref} className={className}>
+    <Link href={finalHref} className={className} style={style}>
       {children as any}
     </Link>
   );
@@ -84,18 +86,10 @@ type ContactDoc = {
   hero?: {
     title?: string;
     subtitle?: string;
-    image?: {
-      url?: string;
-      alt?: string;
-      lqip?: string;
-    };
+    image?: { url?: string; alt?: string; lqip?: string };
     ctas?: { label?: string; kind?: string; href?: string | null; recommended?: boolean }[];
   };
-  info?: {
-    languages?: string;
-    businessHours?: string;
-    serviceAreas?: string;
-  };
+  info?: { languages?: string; businessHours?: string; serviceAreas?: string };
   faqTopics?: string[];
   form?: {
     subjectOptions?: string[];
@@ -105,10 +99,7 @@ type ContactDoc = {
     attachmentHint?: string;
     consentText?: any[];
   };
-  success?: {
-    message?: any[];
-    email?: { subject?: string; body?: any[] };
-  };
+  success?: { message?: any[]; email?: { subject?: string; body?: any[] } };
   addresses?: { label?: string; address?: string; note?: string }[];
 };
 
@@ -254,10 +245,7 @@ export default async function Page({
                 </h2>
                 <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
                   {faqTopics.map((t, i) => (
-                    <span
-                      key={`${t}-${i}`}
-                      className="rounded-full bg-white/10 px-3 py-1 text-xs sm:text-sm"
-                    >
+                    <span key={`${t}-${i}`} className="rounded-full bg-white/10 px-3 py-1 text-xs sm:text-sm">
                       {t}
                     </span>
                   ))}
@@ -265,62 +253,62 @@ export default async function Page({
               </section>
             ) : null}
 
-{/* 地址 */}
-{addresses.length > 0 ? (
-  <section className="mt-10 min-w-0 sm:mt-12">
-    <h2 className="mb-3 text-xl font-semibold sm:mb-4 sm:text-2xl">
-      {labelByLang("Addresses", lang)}
-    </h2>
+            {/* 地址 */}
+            {addresses.length > 0 ? (
+              <section className="mt-10 min-w-0 sm:mt-12">
+                <h2 className="mb-3 text-xl font-semibold sm:mb-4 sm:text-2xl">
+                  {labelByLang("Addresses", lang)}
+                </h2>
 
-    {/* 兩欄且行高同步：items-stretch + auto-rows-fr */}
-    <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 md:auto-rows-fr md:grid-cols-2">
-      {addresses.map((a, i) => (
-        <div
-          key={`addr-${i}`}
-          className="relative h-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
-        >
-          {/* 圖示不再使用負邊距，避免位移與溢出 */}
-          <div className="pointer-events-none absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="h-4 w-4"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
-              />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-          </div>
+                {/* 兩欄且行高同步：items-stretch + auto-rows-fr */}
+                <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 md:auto-rows-fr md:grid-cols-2">
+                  {addresses.map((a, i) => (
+                    <div
+                      key={`addr-${i}`}
+                      className="relative h-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
+                    >
+                      {/* 圖示不再使用負邊距，避免位移與溢出 */}
+                      <div className="pointer-events-none absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                          className="h-4 w-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
+                          />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                      </div>
 
-          {/* 內文留出圖示空間：pl-14 */}
-          <div className="h-full min-w-0 p-5 pl-14">
-            {a?.label ? (
-              <h3 className="mb-1 text-base font-semibold tracking-tight sm:mb-2 sm:text-lg">
-                {a.label}
-              </h3>
+                      {/* 內文留出圖示空間：pl-14 */}
+                      <div className="h-full min-w-0 p-5 pl-14">
+                        {a?.label ? (
+                          <h3 className="mb-1 text-base font-semibold tracking-tight sm:mb-2 sm:text-lg">
+                            {a.label}
+                          </h3>
+                        ) : null}
+
+                        {a?.address ? (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
+                            {a.address}
+                          </p>
+                        ) : null}
+
+                        {a?.note ? (
+                          <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             ) : null}
-
-            {a?.address ? (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
-                {a.address}
-              </p>
-            ) : null}
-
-            {a?.note ? (
-              <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p>
-            ) : null}
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-) : null}
 
             {/* ============ 表單 ============ */}
             <section className="mt-10 min-w-0 sm:mt-12">
@@ -387,15 +375,41 @@ export default async function Page({
                   />
                 </div>
 
-                {/* ===== 新增：第一/第二備選時段 ===== */}
+                {/* ===== 第一/第二備選時段：CSS 純樣式防溢出 ===== */}
                 <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-                  <label className="grid min-w-0 gap-2">
+                  <label className="relative grid min-w-0 gap-2 overflow-hidden">
                     <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
-                    <input type="datetime-local" name="preferredTime1" className="h-12 w-full min-w-0 rounded-xl bg-white/10 px-3 py-2 outline-none" />
+                    <input
+                      type="datetime-local"
+                      name="preferredTime1"
+                      className={[
+                        "h-16 w-full min-w-0 rounded-xl bg-white/10 px-3 outline-none",
+                        // 隱藏原生文字避免撐寬，仍保留原生選擇器
+                        "appearance-none text-transparent caret-transparent placeholder:text-transparent",
+                        // 下緣空間給提示
+                        "pt-2 pb-6",
+                      ].join(" ")}
+                    />
+                    {/* 底部提示行（仍可見） */}
+                    <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs opacity-80">
+                      {form?.datetimeHint ?? labelByLang("Preferred date and time", lang)}
+                    </span>
                   </label>
-                  <label className="grid min-w-0 gap-2">
+
+                  <label className="relative grid min-w-0 gap-2 overflow-hidden">
                     <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
-                    <input type="datetime-local" name="preferredTime2" className="h-12 w-full min-w-0 rounded-xl bg-white/10 px-3 py-2 outline-none" />
+                    <input
+                      type="datetime-local"
+                      name="preferredTime2"
+                      className={[
+                        "h-16 w-full min-w-0 rounded-xl bg-white/10 px-3 outline-none",
+                        "appearance-none text-transparent caret-transparent placeholder:text-transparent",
+                        "pt-2 pb-6",
+                      ].join(" ")}
+                    />
+                    <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs opacity-80">
+                      {form?.datetimeHint ?? labelByLang("Preferred date and time", lang)}
+                    </span>
                   </label>
                 </div>
 
@@ -562,10 +576,7 @@ function ErrorToast({ lang, errMsg }: { lang: Lang; errMsg?: string }) {
         <div className="font-semibold">{labelByLang("Submission failed.", lang)}</div>
         {errMsg ? <div className="mt-1 opacity-90">({String(errMsg)})</div> : null}
       </div>
-      <Link
-        href="#contact-form"
-        className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
-      >
+      <Link href="#contact-form" className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20">
         {labelByLang("Try again", lang)}
       </Link>
     </div>

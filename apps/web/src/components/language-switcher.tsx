@@ -16,9 +16,9 @@ function normalizeLang(input?: string | null): Lang {
 }
 
 type Props = {
-  current?: Lang;     // 父層可傳目前內容語言，但僅在 URL 無 lang 時才使用
-  offsetY?: number;   // rem
-  offsetRight?: number; // rem
+  current?: Lang;     
+  offsetY?: number;   
+  offsetRight?: number; 
 };
 
 export default function LanguageSwitcher({
@@ -30,7 +30,6 @@ export default function LanguageSwitcher({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // ===== 可調透明度參數 =====
   const BRAND_BLUE_RGB = "28,61,90"; // #1C3D5A
   const OP = {
     bg: 0.14,
@@ -41,13 +40,13 @@ export default function LanguageSwitcher({
     dot: 0.95,
   };
 
-  // ✅ 以「URL 的 lang」為最高優先，只有沒有時才用 props.current
   const rawUrlLang = searchParams?.get("lang");
   const activeLang = normalizeLang(rawUrlLang ?? current);
 
+  // ✅ 更新：繁體中文 → 中文
   const items = useMemo(
     () => [
-      { key: "zh" as Lang, label: "繁體中文" },
+      { key: "zh" as Lang, label: "中文" },
       { key: "jp" as Lang, label: "日本語" },
       { key: "en" as Lang, label: "English" },
     ],
@@ -56,7 +55,7 @@ export default function LanguageSwitcher({
 
   const setLang = (lang: Lang) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
-    params.set("lang", lang); // 只改 URL 的 lang，停留在當前頁
+    params.set("lang", lang);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -81,7 +80,7 @@ export default function LanguageSwitcher({
             type="button"
             onClick={() => setLang(it.key)}
             aria-pressed={active}
-            className="relative flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap outline-none"
+            className="relative flex items-center justify-between px-2.5 py-1.5 text-[13px] whitespace-nowrap outline-none min-w-[70px]" // ✅ 調整寬度
             style={{
               backgroundColor: active ? `rgba(255,255,255,${OP.active})` : undefined,
             }}
