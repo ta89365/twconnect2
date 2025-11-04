@@ -159,7 +159,9 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
   const sectionGap = "space-y-4 sm:space-y-5";
 
   // datetime 欄位：加高並於下緣留白供第二行提示使用
-  const dtInputBase = inputBase.replace("h-12", "h-16") + " pt-2 pb-6";
+  const dtInputBase =
+  inputBase.replace("h-12", "h-16") +
+  " pt-2 pb-6 truncate whitespace-nowrap overflow-hidden";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -297,7 +299,7 @@ export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
         </div>
 
         {/* 第一備選時段：內嵌第二行提示 */}
-        <div className="relative w-full min-w-0">
+        <div className="relative w-full min-w-0 overflow-hidden">
           <label className={labelBase}>{t.label.preferredTime1}</label>
           <input
             type="datetime-local"

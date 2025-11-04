@@ -115,7 +115,9 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
     "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
 
   /* datetime：高度拉高＋下緣留白，並保留 box-border */
-  const dtInputBase = inputBase.replace("h-12", "h-16") + " pt-2 pb-6";
+  const dtInputBase =
+  inputBase.replace("h-12", "h-16") +
+  " pt-2 pb-6 truncate whitespace-nowrap overflow-hidden";
 
   return (
     <section className="bg-[#1C3D5A] text-white overflow-x-hidden">
@@ -190,7 +192,7 @@ export default function ContactSection({ data, lang }: { data: ContactData | nul
 
               {/* ===== 兩個備選時段（第二行提示，防溢出） ===== */}
               <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="relative w-full min-w-0">
+                <div className="relative w-full min-w-0 overflow-hidden">
                   <input
                     type="datetime-local"
                     name="preferredTime1"
