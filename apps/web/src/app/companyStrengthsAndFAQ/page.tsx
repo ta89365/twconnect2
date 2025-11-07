@@ -4,6 +4,7 @@ import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link"; // ✅ 新增：因為改用 Link CTA
 import { notFound } from "next/navigation";
 import { sfetch } from "@/lib/sanity/fetch";
 import {
@@ -14,7 +15,6 @@ import {
 import * as Lucide from "lucide-react";
 
 export const revalidate = 60;
-// ✅ 讓 ?lang=jp|zh|en 逐請求生效
 export const dynamic = "force-dynamic";
 
 /** 語言解析（?lang=jp|zh|en） */
@@ -113,10 +113,8 @@ function objectPositionFrom(h?: { x?: number; y?: number } | null): string {
 export default async function CompanyStrengthsAndFAQPage({
   searchParams,
 }: {
-  // ✅ 允許 Promise 型別，避免同步 API 錯誤
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
-  // ✅ 先把 searchParams 攤平成同步物件
   const spRaw =
     searchParams && typeof (searchParams as any).then === "function"
       ? await searchParams
@@ -133,14 +131,18 @@ export default async function CompanyStrengthsAndFAQPage({
     contactUs: lang === "zh" ? "聯絡我們" : lang === "en" ? "Contact us" : "お問い合わせ",
   };
 
-  const pageIntro =
-    lang === "zh"
-      ? "以台灣為中心的跨境顧問服務與常見問題彙整"
-      : lang === "en"
-      ? "Cross border advisory centered on Taiwan and a concise FAQ"
-      : "台湾を起点としたクロスボーダー支援とFAQのご案内";
+  /** HERO 第二行與第三行（先前已依語系固定） */
+  const heroTitle =
+    lang === "zh" ? "Our Strengths｜我們的優勢" : lang === "en" ? "Our Strengths" : "Our Strengths｜私たちの強み";
 
-  const crumb = lang === "zh" ? "公司介紹" : lang === "en" ? "Company" : "会社情報";
+  const heroSubtitle =
+    lang === "zh"
+      ? "穩健支援，安心邁向國際舞台"
+      : lang === "en"
+      ? "Steady support for your global journey"
+      : "安心して世界へ、一歩ずつ確実に";
+
+  const crumb = lang === "zh" ? "Why Taiwan Connect" : lang === "en" ? "Why Taiwan Connect" : "会社情報";
   const ctaText = labels.contactUs;
 
   const heroUrl = data.heroImage?.url ?? null;
@@ -154,7 +156,7 @@ export default async function CompanyStrengthsAndFAQPage({
       {/* ✅ 導覽列吃到正確語系 */}
       <NavigationServer lang={lang} />
 
-      {/* HERO 區塊：導覽列下，品牌藍為底，疊 Sanity 圖片 */}
+      {/* HERO 區塊 */}
       <header className="relative w-full" style={{ height: `${HERO_TUNE.height}px`, background: BRAND_BLUE }}>
         {heroUrl && (
           <Image
@@ -169,13 +171,11 @@ export default async function CompanyStrengthsAndFAQPage({
           />
         )}
 
-        {/* 深藍覆蓋層：確保與全站品牌一致 */}
         <div
           className="absolute inset-0"
           style={{ background: `linear-gradient(0deg, rgba(28,61,90,${HERO_TUNE.overlayOpacity}), rgba(28,61,90,${HERO_TUNE.overlayOpacity}))` }}
         />
 
-        {/* 額外光暈層次 */}
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
@@ -185,7 +185,7 @@ export default async function CompanyStrengthsAndFAQPage({
           }}
         />
 
-        {/* 文字 + 透明遮罩（品牌藍字） */}
+        {/* 文字 + 透明遮罩 */}
         <div
           className="relative h-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center"
           style={{
@@ -198,15 +198,14 @@ export default async function CompanyStrengthsAndFAQPage({
               {crumb}
             </p>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: BRAND_BLUE }}>
-              {data.title ?? "Our Strengths"}
+              {heroTitle}
             </h1>
             <p className="mt-3 text-base sm:text-lg leading-relaxed" style={{ color: `${BRAND_BLUE}CC` }}>
-              {pageIntro}
+              {heroSubtitle}
             </p>
           </div>
         </div>
 
-        {/* 分隔線 */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-white/15" />
       </header>
 
@@ -248,53 +247,71 @@ export default async function CompanyStrengthsAndFAQPage({
         {/* Divider */}
         <div className="my-12 h-px w-full bg-white/10" />
 
-        {/* FAQ */}
-        <section aria-labelledby="faq-heading">
-          <h2 id="faq-heading" className="text-2xl font-semibold text白">{data.faqTitle ?? labels.faq}</h2>
-          {data.faqIntro && <p className="mt-2 max-w-3xl text-slate-100/85">{data.faqIntro}</p>}
+{/* FAQ */}
+<section aria-labelledby="faq-heading">
+  <h2 id="faq-heading" className="text-2xl font-semibold text-white">{data.faqTitle ?? labels.faq}</h2>
+  {data.faqIntro && <p className="mt-2 max-w-3xl text-slate-100/85">{data.faqIntro}</p>}
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/15 bg白/5 backdrop-blur-sm divide-y divide-white/10">
-            {(data.faqItems ?? []).map((f, i) => (
-              <details key={`faq-${i}-${f.question}`} className="group px-5 py-4 open:bg白/7.5 transition">
-                <summary className="cursor-pointer list-none outline-none">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-8 w-8 shrink-0 rounded-full bg白/15 border border-white/20 flex items-center justify-center">
-                        <Lucide.HelpCircle className="h-4 w-4 text白" />
-                      </div>
-                      <span className="text-base font-medium text白">{f.question}</span>
-                    </div>
-                    <div className="mt-0.5 h-7 w-7 rounded-full bg白/10 border border-white/20 flex items-center justify-center transition group-open:rotate-180">
-                      <Lucide.ChevronDown className="h-4 w-4 text白" />
-                    </div>
-                  </div>
-                </summary>
-                {f.answer && <div className="mt-3 pl-11 text-slate-100/90">{f.answer}</div>}
-              </details>
-            ))}
-          </div>
-
-          {/* ================= CTA 區塊：只調整這裡的視覺 ================= */}
-          <div className="mt-10">
-            <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur-sm">
-              <a
-                href={`/contact?from=companyStrengthsAndFAQ${lang ? `&lang=${lang}` : ""}`}
-                className="group inline-flex items-center gap-2 rounded-full border border-white/35 px-5 py-2.5 text-white transition hover:border-white/60 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-              >
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/30 bg-white/10">
-                  <Lucide.MessageCircle className="h-3.5 w-3.5" />
-                </span>
-                <span className="font-medium tracking-wide">{ctaText}</span>
-              </a>
-
-              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-slate-100/95">
-                {lang === "zh" ? "首次諮詢免費" : lang === "en" ? "First consultation is free" : "初回相談は無料です"}
-              </span>
+  <div
+    className="mt-6 overflow-hidden rounded-2xl border border-white/30 bg-white/10 backdrop-blur-md divide-y divide-white/20 shadow-[0_0_20px_rgba(0,0,0,0.25)]"
+  >
+    {(data.faqItems ?? []).map((f, i) => (
+      <details
+        key={`faq-${i}-${f.question}`}
+        className="group px-6 py-5 open:bg-white/15 transition-colors"
+      >
+        <summary className="cursor-pointer list-none outline-none">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 h-9 w-9 shrink-0 rounded-full bg-white/15 border border-white/30 flex items-center justify-center">
+                <Lucide.HelpCircle className="h-4.5 w-4.5 text-white" />
+              </div>
+              <span className="text-base font-medium text-white">{f.question}</span>
+            </div>
+            <div className="mt-0.5 h-7 w-7 rounded-full bg-white/10 border border-white/25 flex items-center justify-center transition-transform group-open:rotate-180">
+              <Lucide.ChevronDown className="h-4 w-4 text-white" />
             </div>
           </div>
-          {/* ================= CTA 視覺調整結束 ================= */}
-        </section>
+        </summary>
+        {f.answer && <div className="mt-3 pl-12 text-slate-100/90">{f.answer}</div>}
+      </details>
+    ))}
+  </div>
+</section>
+
       </main>
+
+      {/* ===== ✅ 新 Pre-Footer CTA（與 finance-advisory 同版型） ===== */}
+      <section className="border-y" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="py-10 md:py-14 text-center">
+            <h3 className="text-white text-xl md:text-2xl font-semibold tracking-tight">
+              {heroSubtitle}
+            </h3>
+
+            <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
+              <Link
+                href={`/contact?lang=${lang}`}
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
+                style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
+              >
+                {labels.contactUs}
+              </Link>
+
+              <a
+                href="mailto:info@twconnects.com"
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                }}
+              >
+                info@twconnects.com
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ✅ 頁尾也吃到正確語系 */}
       <FooterServer lang={lang} />

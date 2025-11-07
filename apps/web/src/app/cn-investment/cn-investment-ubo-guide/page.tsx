@@ -18,9 +18,9 @@ import { Noto_Sans_SC } from "next/font/google";
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
-const PAGE_LANG = "zh-cn" as const; // ✅ 本頁固定顯示簡中
+const PAGE_LANG = "zh-cn" as const;
 const BRAND_BLUE = "#1C3D5A";
-const CONTENT_MAX_W = 1100; // 視覺更大器
+const CONTENT_MAX_W = 1100;
 
 const notoSC = Noto_Sans_SC({
   subsets: ["latin"],
@@ -29,37 +29,15 @@ const notoSC = Noto_Sans_SC({
 
 /* ============================ Types ============================ */
 type PT = TypedObject[];
-
-interface UboExample {
-  titleZhCn?: string | null;
-  scenarioZhCn?: PT | null;
-  conclusionZhCn?: PT | null;
-}
-
-interface UboAdvice {
-  labelZhCn?: string | null;
-  bodyZhCn?: PT | null;
-}
-
-interface UboContact {
-  email?: string | null;
-  lineId?: string | null;
-  contactNoteZhCn?: PT | null;
-}
-
+interface UboExample { titleZhCn?: string | null; scenarioZhCn?: PT | null; conclusionZhCn?: PT | null; }
+interface UboAdvice { labelZhCn?: string | null; bodyZhCn?: PT | null; }
+interface UboContact { email?: string | null; lineId?: string | null; contactNoteZhCn?: PT | null; }
 interface UboHeroImage {
-  assetId?: string | null;
-  url?: string | null;
-  alt?: string | null;
-  hotspot?: unknown;
-  crop?: unknown;
-  dimensions?: { width: number; height: number; aspectRatio: number } | null;
-  lqip?: string | null;
+  assetId?: string | null; url?: string | null; alt?: string | null; hotspot?: unknown; crop?: unknown;
+  dimensions?: { width: number; height: number; aspectRatio: number } | null; lqip?: string | null;
 }
-
 interface UboGuideDoc {
-  _id: string;
-  slug?: string | null;
+  _id: string; slug?: string | null;
 
   heroTitleZhCn?: string | null;
   heroSubtitleZhCn?: string | null;
@@ -81,41 +59,50 @@ interface UboGuideDoc {
   lastUpdatedAt?: string | null;
   meta?: { isDraft?: boolean; seoDescription?: string | null } | null;
 }
-
-// 兼容你原註解：但本頁仍採 notFound，資料源不改
 type QueryResult = { doc: UboGuideDoc | null } | UboGuideDoc | null;
 
-/* 用型別斷言包裝 async Server Component，避免 TS2786 提示 */
 const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 
-/* ============================ 視覺元件 ============================ */
-const CARD_BG = "bg-white/10";
-const CARD_BORDER = "border border-white/15";
+/* ============================ UI tokens ============================ */
+const CARD_BG = "bg-white/12 backdrop-blur-sm";
+const CARD_BORDER = "border border-white/25";
 const TEXT_SOFT = "text-white/90";
+
+/** YYYY.M.D（不補零） */
+function fmtDateDot(iso?: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+}
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 border border-white/15 text-white/90">
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 border border-white/20 text-white/90">
       {children}
     </span>
   );
 }
 
-function StatCard(props: { icon: JSX.Element; label: string; value: string }) {
+/** 單行卡片（值｜標籤）— 不換行，最小寬度 320px，避免被擠壓 */
+function StatCardOneLine(props: { icon: JSX.Element; text: string }) {
   return (
-    <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-5 flex gap-4 items-start`}>
-      <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white">{props.icon}</div>
-      <div>
-        <div className="text-3xl font-semibold text-white tracking-tight">{props.value}</div>
-        <div className={`mt-1 ${TEXT_SOFT}`}>{props.label}</div>
+    <div
+      className={`${CARD_BG} ${CARD_BORDER} rounded-2xl px-5 py-4 flex items-center gap-3 shadow-md ring-1 ring-white/15 min-w-[320px]`}
+    >
+      <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-white shrink-0">
+        {props.icon}
+      </div>
+      <div className="text-lg md:text-xl font-semibold text-white tracking-tight whitespace-nowrap">
+        {props.text}
       </div>
     </div>
   );
 }
 
 function Card(props: { children: React.ReactNode; className?: string }) {
-  return <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-6 ${props.className ?? ""}`}>{props.children}</div>;
+  return <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-6 shadow-md ${props.className ?? ""}`}>{props.children}</div>;
 }
 
 function SectionTitle(props: { icon: JSX.Element; title: string; subtitle?: string }) {
@@ -132,7 +119,7 @@ function SectionTitle(props: { icon: JSX.Element; title: string; subtitle?: stri
 
 function ExampleDisclosure({ ex, idx }: { ex: UboExample; idx: number }) {
   return (
-    <details className={`${CARD_BG} ${CARD_BORDER} rounded-xl p-5 group`}>
+    <details className={`${CARD_BG} ${CARD_BORDER} rounded-xl p-5 group shadow`}>
       <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 text-white grid place-items-center text-sm">{idx}</div>
@@ -169,7 +156,7 @@ function SideTOC() {
   return (
     <aside className="hidden lg:block lg:w-64 shrink-0">
       <div className="sticky top-24 space-y-3">
-        <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-4`}>
+        <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-4 shadow`}>
           <div className="text-white font-semibold mb-2 flex items-center gap-2">
             <Lucide.ListTree className="size-4" /> 内容索引
           </div>
@@ -181,7 +168,7 @@ function SideTOC() {
             ))}
           </nav>
         </div>
-        <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-4`}>
+        <div className={`${CARD_BG} ${CARD_BORDER} rounded-2xl p-4 shadow`}>
           <div className="text-white font-semibold mb-2 flex items-center gap-2">
             <Lucide.Info className="size-4" /> 小提醒
           </div>
@@ -194,8 +181,7 @@ function SideTOC() {
   );
 }
 
-/* ============================ PortableText 渲染器 ============================ */
-/** 更友善的白色系樣式，並兼容未知 style 避免錯誤 */
+/* ============================ PT ============================ */
 const ptComponents = {
   block: ({ children }: any) => <p className="mb-3 leading-relaxed text-white/90">{children}</p>,
   list: {
@@ -217,17 +203,15 @@ const ptComponents = {
 /* ============================ Page ============================ */
 export default async function Page() {
   const raw = (await sfetch(cnInvestmentUboGuideQuery)) as QueryResult;
-
-  // 兼容兩種回傳：直接 doc 或 { doc }
   const doc: UboGuideDoc | null =
     raw && typeof raw === "object" && "doc" in raw ? (raw as { doc: UboGuideDoc | null }).doc : (raw as UboGuideDoc | null);
 
   if (!doc) notFound();
-
   const hero = doc.heroImage;
 
   return (
-    <div className={`min-h-screen flex flex-col ${notoSC.className}`} style={{ backgroundColor: BRAND_BLUE }}>
+    // 整體底色更淡：從深藍過度到品牌藍（低不透明度）
+    <div className={`min-h-screen flex flex-col ${notoSC.className} bg-gradient-to-b from-[#0E1B27] to-[#1C3D5A]/70`}>
       <Nav lang={PAGE_LANG} />
 
       {/* ============================ Hero ============================ */}
@@ -240,34 +224,32 @@ export default async function Page() {
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-30"
+              className="object-cover opacity-90"
             />
-            {/* 漸層遮罩，讓標題可讀性更好 */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1C3D5A]/40 to-[#1C3D5A]" />
+            {/* 遮罩很淺：僅在底部加 25%，中段只 5% */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1C3D5A]/5 to-[#1C3D5A]/25" />
           </>
         ) : null}
 
-        <div className="relative z-10 max-w-4xl">
+        {/* Hero 內容容器放大，避免撐不下 */}
+        <div className="relative z-10 w-full max-w-[1200px] mx-auto">
           <div className="inline-flex items-center gap-2 mb-4">
-            <Badge>
-              <Lucide.ShieldCheck className="size-3.5" />
-              陆资判定与 UBO
-            </Badge>
-            <Badge>
-              <Lucide.Scale className="size-3.5" />
-              法规要点
-            </Badge>
+            <Badge><Lucide.ShieldCheck className="size-3.5" />陆资判定与 UBO</Badge>
+            <Badge><Lucide.Scale className="size-3.5" />法规要点</Badge>
           </div>
+
           <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
             {doc.heroTitleZhCn || "实质受益人（UBO）判定指南"}
           </h1>
-          {doc.heroSubtitleZhCn ? <p className="mt-3 md:mt-4 text-base md:text-lg text-white/90">{doc.heroSubtitleZhCn}</p> : null}
+          {doc.heroSubtitleZhCn ? (
+            <p className="mt-3 md:mt-4 text-base md:text-lg text-white/90">{doc.heroSubtitleZhCn}</p>
+          ) : null}
 
-          {/* 三個節奏卡（靜態標示，不動資料源） */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <StatCard icon={<Lucide.BookCheck className="size-5" />} label="核心规范与要点" value="3+ 条" />
-            <StatCard icon={<Lucide.Network className="size-5" />} label="跨层持股判定维度" value="多层回溯" />
-            <StatCard icon={<Lucide.Clock className="size-5" />} label="更新时间" value={doc.lastUpdatedAt ? new Date(doc.lastUpdatedAt).toLocaleDateString() : "—"} />
+          {/* 自適應網格：auto-fit + minmax(320px, 1fr)，每張卡至少 320px 且單行不換行 */}
+          <div className="mt-8 grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+            <StatCardOneLine icon={<Lucide.BookCheck className="size-5" />} text="3+ 条｜核心规范与要点" />
+            <StatCardOneLine icon={<Lucide.Network className="size-5" />} text="多层回溯｜跨层股权判定逻辑" />
+            <StatCardOneLine icon={<Lucide.Clock className="size-5" />} text={`${fmtDateDot(doc.lastUpdatedAt) ?? "—"}｜最新更新`} />
           </div>
         </div>
       </section>

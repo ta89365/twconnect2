@@ -45,6 +45,23 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
 
+    /* ===== Hero Image ===== */
+    defineField({
+      name: "heroImage",
+      title: "Hero Image",
+      type: "image",
+      description: "Optional hero image displayed at the top of the page.",
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Alternative text for accessibility and SEO.",
+        }),
+      ],
+    }),
+
     /* ===== Background ===== */
     defineField({
       name: "background",
@@ -171,6 +188,84 @@ export default defineType({
       options: { collapsible: true, collapsed: false },
     }),
 
+    /* ===== NEW: Visa Categories ===== */
+    defineField({
+      name: "visaCategories",
+      title: "Visa Categories",
+      type: "object",
+      description:
+        "Multilingual table of Taiwan long-term visa & residency categories. Each item is one row in the table.",
+      options: { collapsible: true, collapsed: false },
+      fields: [
+        defineField({
+          name: "sectionTitle",
+          title: "Section Title",
+          type: "object",
+          description: "Optional localized heading for the categories section.",
+          fields: [
+            { name: "jp", title: "Japanese", type: "string", initialValue: "台湾の主な長期ビザ・居留タイプ" },
+            { name: "zh", title: "Chinese", type: "string", initialValue: "台灣主要長期簽證與居留類型" },
+            { name: "en", title: "English", type: "string", initialValue: "Taiwan Long-term Visa & Residency Categories" },
+          ],
+        }),
+        defineField({
+          name: "items",
+          title: "Items",
+          type: "array",
+          of: [
+            defineField({
+              name: "visaCategoryItem",
+              title: "Visa Category Item",
+              type: "object",
+              fields: [
+                defineField({
+                  name: "order",
+                  title: "Order",
+                  type: "number",
+                  validation: (Rule) => Rule.required().integer().min(1),
+                }),
+                defineField({
+                  name: "key",
+                  title: "Internal Key",
+                  type: "slug",
+                  description:
+                    "Optional internal key for stable references, e.g. business-manager, investor, work, gold-card, entrepreneur, dependent.",
+                  options: { maxLength: 64 },
+                }),
+                defineField({
+                  name: "name",
+                  title: "Visa Name",
+                  type: "object",
+                  fields: [
+                    { name: "jp", title: "Japanese", type: "string" },
+                    { name: "zh", title: "Chinese", type: "string" },
+                    { name: "en", title: "English", type: "string" },
+                  ],
+                }),
+                defineField({
+                  name: "desc",
+                  title: "Description",
+                  type: "object",
+                  fields: [
+                    { name: "jp", title: "Japanese", type: "text" },
+                    { name: "zh", title: "Chinese", type: "text" },
+                    { name: "en", title: "English", type: "text" },
+                  ],
+                }),
+              ],
+              preview: {
+                select: { order: "order", zh: "name.zh", en: "name.en", jp: "name.jp" },
+                prepare({ order, zh, en, jp }) {
+                  const title = zh || en || jp || "Untitled";
+                  return { title: `${order ?? "-"} · ${title}`, subtitle: "Visa Category" };
+                },
+              },
+            }),
+          ],
+        }),
+      ],
+    }),
+
     /* ===== CTA ===== */
     defineField({
       name: "ctaLabel",
@@ -184,21 +279,12 @@ export default defineType({
       ],
     }),
 
-    /* ===== Hero Image ===== */
+    /* ===== Optional: Last Updated ===== */
     defineField({
-      name: "heroImage",
-      title: "Hero Image",
-      type: "image",
-      description: "Optional hero image displayed at the top of the page.",
-      options: { hotspot: true },
-      fields: [
-        defineField({
-          name: "alt",
-          title: "Alt Text",
-          type: "string",
-          description: "Alternative text for accessibility and SEO.",
-        }),
-      ],
+      name: "lastUpdated",
+      title: "Last Updated",
+      type: "datetime",
+      description: "For internal tracking of when this content was last reviewed.",
     }),
   ],
 });

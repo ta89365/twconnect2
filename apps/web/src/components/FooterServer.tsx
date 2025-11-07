@@ -17,7 +17,6 @@ type SiteSettingsQuery = {
     } | null;
     contact?: {
       email?: string | null;
-      lineId?: string | null;
       addressJp?: string | null;
       addressTw?: string | null;
     } | null;
@@ -32,12 +31,10 @@ type SiteSettingsQuery = {
     github?: string | null;
     medium?: string | null;
     note?: string | null;
-    line?: string | null;
   } | null;
 };
 
 export default async function FooterServer({ lang = "jp" as Lang }) {
-  // 直接把 lang 傳給 GROQ（你的 query 已處理 zh-cn 分支）
   const data = await sfetch<SiteSettingsQuery>(siteSettingsByLang, { lang });
 
   const companyName =

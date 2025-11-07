@@ -72,35 +72,31 @@ function ChallengeIcon({ item }: { item: ChallengeItem }) {
   );
 }
 
-/** 內建多語字串（不走 Sanity） */
 function resolveCopy(lang: Lang) {
-  // ✅ 若為 zh-cn 視為 zh（繁體中文）
   const key: "jp" | "zh" | "en" = lang === "zh-cn" ? "zh" : (lang as any);
-
   const dict = {
     jp: {
       heading: "台湾進出で、こんな課題はありませんか？",
       sub: "解決策を提示する前に、まずよくある本当の課題を整理しましょう。",
       ribbonTitle: "Taiwan Connect が解決します",
       ribbonSub: "グローバル展開を、もっとスムーズに。",
-      cta: "お問い合わせ",
+      cta: "詳細を見る",
     },
     zh: {
-      heading: "常見的五大挑戰",
+      heading: "在拓展台灣市場時，是否也遇到這些挑戰？",
       sub: "在提出解決方案之前，我們先整理企業最常面臨的真實問題。",
       ribbonTitle: "Taiwan Connect 為你解決",
       ribbonSub: "讓跨境布局，更順暢。",
-      cta: "看我們怎麼解決",
+      cta: "立即了解",
     },
     en: {
-      heading: "Five Common Challenges",
+      heading: "Facing these challenges when expanding to Taiwan?",
       sub: "Before proposing solutions, let's first organize the real challenges businesses often face.",
       ribbonTitle: "Taiwan Connect Solves It",
       ribbonSub: "Make global expansion smoother.",
-      cta: "See How We Solve It",
+      cta: "Learn More",
     },
   } as const;
-
   return dict[key];
 }
 
@@ -133,6 +129,7 @@ export default async function ChallengesSection({
           </p>
         </header>
 
+        {/* 頭三張卡：維持原來的格線位置 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {head.map((it) => (
             <article
@@ -141,11 +138,7 @@ export default async function ChallengesSection({
             >
               <div className="mb-4 flex items-center gap-3">
                 <ChallengeIcon item={it} />
-                {typeof it.order === "number" && (
-                  <span className="text-xs font-medium text-slate-400">
-                    #{String(it.order).padStart(2, "0")}
-                  </span>
-                )}
+                {/* 數字移除，其他不變 */}
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
               <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
@@ -154,6 +147,7 @@ export default async function ChallengesSection({
             </article>
           ))}
 
+          {/* 後兩張在小螢幕單獨顯示，維持原來邏輯 */}
           {tail.map((it) => (
             <article
               key={it._id}
@@ -161,11 +155,7 @@ export default async function ChallengesSection({
             >
               <div className="mb-4 flex items-center gap-3">
                 <ChallengeIcon item={it} />
-                {typeof it.order === "number" && (
-                  <span className="text-xs font-medium text-slate-400">
-                    #{String(it.order).padStart(2, "0")}
-                  </span>
-                )}
+                {/* 數字移除，其他不變 */}
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
               <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
@@ -174,6 +164,7 @@ export default async function ChallengesSection({
             </article>
           ))}
 
+          {/* lg 版：後兩張置中兩欄，維持原本 w-[380px] 與居中容器 */}
           <div className="hidden lg:block lg:col-span-3">
             <div className="grid grid-cols-[auto_auto] gap-5 w-fit mx-auto">
               {tail.map((it) => (
@@ -183,11 +174,7 @@ export default async function ChallengesSection({
                 >
                   <div className="mb-4 flex items-center gap-3">
                     <ChallengeIcon item={it} />
-                    {typeof it.order === "number" && (
-                      <span className="text-xs font-medium text-slate-400">
-                        #{String(it.order).padStart(2, "0")}
-                      </span>
-                    )}
+                    {/* 數字移除，其他不變 */}
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
                   <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
@@ -199,7 +186,7 @@ export default async function ChallengesSection({
           </div>
         </div>
 
-        {/* CTA ribbon（改為品牌藍按鈕樣式） */}
+        {/* CTA Ribbon */}
         <div className="mt-8 sm:mt-10 md:mt-14">
           <div className="w-fit mx-auto flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 text-white backdrop-blur sm:flex-row sm:px-8 sm:py-5">
             <div className="text-center sm:text-left">
@@ -207,18 +194,12 @@ export default async function ChallengesSection({
               <div className="text-slate-200 whitespace-nowrap">{copy.ribbonSub}</div>
             </div>
 
-            {/* ✅ 改成指定底色 + Hover 效果 */}
-<a
-  href={`/client-challenges?lang=${lang}`}
-  className="
-    inline-flex items-center justify-center rounded-full
-    px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200
-    text-white bg-[#4A90E2] hover:bg-[#5AA2F0] whitespace-nowrap
-  "
->
-  {copy.cta}
-</a>
-
+            <a
+              href={`/client-challenges?lang=${lang}`}
+              className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200 text-white bg-[#4A90E2] hover:bg-[#5AA2F0] whitespace-nowrap"
+            >
+              {copy.cta}
+            </a>
           </div>
         </div>
       </div>

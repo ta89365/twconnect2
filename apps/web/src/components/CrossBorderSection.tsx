@@ -25,12 +25,37 @@ export type CrossBorderTune = {
   };
 };
 
+type Lang = "jp" | "zh" | "en";
+
+/** 不應附掛語言參數的連結 */
+function isBypassLink(href?: string | null): boolean {
+  const s = String(href ?? "").trim().toLowerCase();
+  if (!s) return true;
+  return (
+    s.startsWith("http://") ||
+    s.startsWith("https://") ||
+    s.startsWith("mailto:") ||
+    s.startsWith("tel:") ||
+    s.startsWith("#")
+  );
+}
+
+/** 對站內相對路徑附掛 ?lang=xx；若已帶 lang 則不重複附掛 */
+function addLangQuery(href: string, lang: Lang): string {
+  if (!href.startsWith("/")) return href;
+  if (/[?&]lang=/.test(href)) return href;
+  const joiner = href.includes("?") ? "&" : "?";
+  return `${href}${joiner}lang=${lang}`;
+}
+
 export default function CrossBorderSection({
   data,
   tune,
+  lang, // ✅ 新增：用於附掛語言參數
 }: {
   data: CrossBorderData | null;
   tune?: CrossBorderTune;
+  lang: Lang;
 }) {
   const bg = data?.bgUrl ? urlFor(data.bgUrl) : null;
 
@@ -48,6 +73,12 @@ export default function CrossBorderSection({
     const y = tune?.blockOffsets?.[key]?.yRem ?? 0;
     return { transform: `translate(${x}rem, ${y}rem)` };
   };
+
+  // ✅ 計算 CTA 最終 href
+  const ctaHrefFinal =
+    data?.ctaHref && !isBypassLink(data.ctaHref)
+      ? addLangQuery(data.ctaHref, lang)
+      : data?.ctaHref ?? "#";
 
   return (
     <section
@@ -168,11 +199,11 @@ export default function CrossBorderSection({
           </p>
         )}
 
-        {/* ===== CTA 按鈕（更新顏色） ===== */}
+        {/* ===== CTA 按鈕（語言參數已處理） ===== */}
         {data?.ctaText && data?.ctaHref && (
           <div className="mt-10" style={posStyle("cta")}>
             <Link
-              href={data.ctaHref}
+              href={ctaHrefFinal}
               className="inline-block rounded-xl px-6 py-3 font-semibold text-white shadow-md
                          bg-[#4A90E2] hover:bg-[#5AA2F0]
                          focus:outline-none focus:ring-4 focus:ring-[#5AA2F0]/40 transition-colors duration-200"
@@ -181,11 +212,6 @@ export default function CrossBorderSection({
             </Link>
           </div>
         )}
-      </div>
-
-      {/* ===== 右下角品牌標語 ===== */}
-      <div className="absolute bottom-12 right-12 text-white/70 text-base md:text-lg tracking-wider select-none pointer-events-none drop-shadow-sm">
-        台湾・日本・アメリカをつなぐ専門ネットワーク
       </div>
     </section>
   );

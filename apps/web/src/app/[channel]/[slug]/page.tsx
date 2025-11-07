@@ -81,34 +81,33 @@ function ptComponentsFactory(lang: Lang) {
         <ol className="mt-5 list-decimal pl-6 text-slate-800 space-y-1">{children}</ol>
       ),
     },
-marks: {
-  link: ({
-    value,
-    children,
-  }: {
-    value: { href?: string };
-    // 用 any 避免 React 18/19 ReactNode 衝突
-    children?: any;
-  }) => {
-    const hrefRaw = value?.href ?? "#";
-    const href = hrefRaw.startsWith("/") ? withLang(hrefRaw, lang) : hrefRaw;
-    const isInternal = hrefRaw.startsWith("/");
-    return isInternal ? (
-      <Link href={href} className="underline underline-offset-2 hover:opacity-90">
-        {children as any}
-      </Link>
-    ) : (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="underline underline-offset-2 hover:opacity-90"
-      >
-        {children as any}
-      </a>
-    );
-  },
-},
+    marks: {
+      link: ({
+        value,
+        children,
+      }: {
+        value: { href?: string };
+        children?: any;
+      }) => {
+        const hrefRaw = value?.href ?? "#";
+        const href = hrefRaw.startsWith("/") ? withLang(hrefRaw, lang) : hrefRaw;
+        const isInternal = hrefRaw.startsWith("/");
+        return isInternal ? (
+          <Link href={href} className="underline underline-offset-2 hover:opacity-90">
+            {children as any}
+          </Link>
+        ) : (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:opacity-90"
+          >
+            {children as any}
+          </a>
+        );
+      },
+    },
 
     types: {
       image: ({ value }: { value?: any }) => {
@@ -133,7 +132,6 @@ marks: {
       },
     },
   };
-  // PortableText 的 components 型別較寬，直接 as any 避免冗長定義
   return C as any;
 }
 
@@ -180,6 +178,16 @@ export default async function ChannelPostPage({
 
   // 麵包屑標題
   const crumbLabel = channel === "news" ? "News" : "Column";
+
+  // Pre-Footer CTA 語系字串
+  const ctaHeading =
+    lang === "jp"
+      ? "安心して世界へ、一歩ずつ確実に"
+      : lang === "zh"
+      ? "穩健支援，安心邁向國際舞台"
+      : "Steady support for your global journey";
+  const ctaPrimary =
+    lang === "jp" ? "お問い合わせはこちら" : lang === "zh" ? "Contact Us 聯絡我們" : "Contact Us";
 
   return (
     <div style={{ backgroundColor: BRAND_BLUE }} className="min-h-screen text-white">
@@ -307,6 +315,38 @@ export default async function ChannelPostPage({
           </Link>
         </div>
       </article>
+
+      {/* ===== Pre-Footer CTA（沿用 finance-advisory 樣式） ===== */}
+      <section className="border-y" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
+        <div className="mx-auto px-6 lg:px-10" style={{ maxWidth: CONTENT_MAX_W }}>
+          <div className="py-10 md:py-14 text-center">
+            <h3 className="text-white text-xl md:text-2xl font-semibold tracking-tight">
+              {ctaHeading}
+            </h3>
+
+            <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
+              <Link
+                href={withLang("/contact", lang)}
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
+                style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
+              >
+                {ctaPrimary}
+              </Link>
+
+              <a
+                href="mailto:info@twconnects.com"
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                }}
+              >
+                info@twconnects.com
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <FooterServer lang={lang} />
     </div>

@@ -16,8 +16,7 @@ import {
 export const revalidate = 60;
 export const dynamicParams = false;
 
-/* ============================ 視覺調整區 ============================
-   只需修改此區即可完成視覺微調（Hero 高度、圖片與文字位置、容器寬度等） */
+/* ============================ 視覺調整區 ============================ */
 const BRAND_BLUE = "#1C3D5A";
 
 /** Hero 圖片焦點（0~100），影響 object-position */
@@ -25,29 +24,29 @@ const HERO_FOCAL = { x: 62, y: 42 };
 
 /** Hero 高度（更矮一些） */
 const HERO_DIM = {
-  hSm: 380,  // px @base
-  hMd: 480,  // px @md+
+  hSm: 380, // px @base
+  hMd: 480, // px @md+
 };
 
 /** Hero 圖片位移與縮放（px、倍數） */
 const HERO_IMG_CTRL = {
-  offsetX: 0,   // 向右為正
-  offsetY: -10, // 向下為正
-  zoom: 1,      // 1=原尺寸，>1 放大
+  offsetX: 0,
+  offsetY: -10,
+  zoom: 1,
 };
 
 /** Hero 文字物件位置與寬度（px 或 %） */
 const HERO_TEXT_TUNE = {
-  top: "46%",        // 文字框頂端
-  left: "50%",       // 文字框左側（下方有 translateX(-50%) 置中）
-  maxWidth: "760px", // 文字框最大寬
+  top: "46%",
+  left: "50%",
+  maxWidth: "760px",
   align: "center" as "left" | "center" | "right",
   titleSizeBase: "34px",
   titleSizeMd: "44px",
 };
 
-/** 內文容器寬度與左右 padding：整體再向左右延伸一些 */
-const CONTAINER_W = "max-w-7xl";           // 7xl ≈ 1280px
+/** 內文容器寬度與左右 padding */
+const CONTAINER_W = "max-w-7xl";
 const CONTAINER_X = "px-5 sm:px-6 lg:px-10";
 
 /** 段落上下間距節奏 */
@@ -55,11 +54,6 @@ const SECTION_Y_GAP = "py-12 md:py-16";
 
 /** 錨點偏移（避免被 sticky 快捷列遮住） */
 const ANCHOR_OFFSET = "scroll-mt-[92px] md:scroll-mt-[112px]";
-
-/** 🔸服務內容卡片最小高度（把容器調高 2 倍）*/
-const SERVICE_CARD_BASE_MIN_H = 160;        // 原基準
-const SERVICE_CARD_SCALE = 2;               // 放大 2 倍
-const SERVICE_CARD_MIN_H = SERVICE_CARD_BASE_MIN_H * SERVICE_CARD_SCALE;
 /* ================================================================== */
 
 // 保障 0~100 範圍
@@ -67,16 +61,18 @@ const clamp01 = (n: number) => Math.max(0, Math.min(100, n));
 const heroObjectPosition = `${clamp01(HERO_FOCAL.x)}% ${clamp01(HERO_FOCAL.y)}%`;
 
 type FlowStep = { order?: string; title?: string; desc?: string };
+type VisaCategoryRow = { order?: number; key?: string | null; name?: string; desc?: string };
 type VisaResidencyItem = {
   title?: string;
   background?: string;
   challenges?: string[];
-  services?: string[];           // 一般簽證與居留支援（已設公司或符合資格）
-  incubationTrack?: string[];    // 育成計畫（尚未設公司）
+  services?: string[];
+  incubationTrack?: string[];
   serviceFlow?: FlowStep[];
   fees?: string;
   heroImage?: { asset?: { url?: string | null } | null } | null;
   ctaLabel?: string;
+  visaCategories?: { sectionTitle?: string; items?: VisaCategoryRow[] };
 };
 
 function t(lang: Lang, dict: Record<Lang | "common", string>) {
@@ -143,7 +139,9 @@ function EmojiList({
     <ul className={`space-y-3 ${className}`}>
       {items.map((txt, i) => (
         <li key={i} className="leading-relaxed flex gap-3">
-          <span aria-hidden className="shrink-0">{emoji}</span>
+          <span aria-hidden className="shrink-0">
+            {emoji}
+          </span>
           <span className="opacity-95">{txt}</span>
         </li>
       ))}
@@ -170,6 +168,69 @@ function Timeline({ steps }: { steps?: FlowStep[] }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+/** Visa Categories 表格：手機卡片、桌機表格 */
+function VisaCategories({
+  title,
+  items,
+  lang,
+}: {
+  title?: string;
+  items?: VisaCategoryRow[];
+  lang: Lang;
+}) {
+  if (!items || items.length === 0) return null;
+
+  const colCat = t(lang, { jp: "カテゴリー", zh: "類別", en: "Category", common: "類別" });
+  const colType = t(lang, { jp: "ビザの種類", zh: "簽證名稱", en: "Visa Type", common: "簽證名稱" });
+  const colDesc = t(lang, { jp: "説明", zh: "說明", en: "Description", common: "說明" });
+
+  return (
+    <section id="vc" className={ANCHOR_OFFSET}>
+      <SectionHeading lang={lang} jp={title ?? "長期ビザ・居留タイプ"} zh={title ?? "主要長期簽證與居留類型"} en={title ?? "Long-term Visa & Residency Categories"} />
+      {/* 桌機表格 */}
+      <div className="hidden md:block overflow-hidden rounded-2xl border border-white/15 bg-white/6">
+        <table className="w-full text-left text-[15px]">
+          <thead className="bg-white/10">
+            <tr>
+              <th className="py-3.5 pl-5 pr-3 font-semibold">{colCat}</th>
+              <th className="py-3.5 px-3 font-semibold">{colType}</th>
+              <th className="py-3.5 pl-3 pr-5 font-semibold">{colDesc}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((r, i) => (
+              <tr key={i} className="border-t border-white/12 hover:bg-white/6">
+                <td className="py-4 pl-5 pr-3 align-top whitespace-nowrap">
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-white/15 px-2 text-sm font-semibold">
+                    {r.order ?? i + 1}
+                  </span>
+                </td>
+                <td className="py-4 px-3 align-top font-semibold">{r.name}</td>
+                <td className="py-4 pl-3 pr-5 align-top opacity-95">{r.desc}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 手機卡片 */}
+      <div className="md:hidden space-y-4">
+        {items.map((r, i) => (
+          <div key={i} className="rounded-2xl border border-white/15 bg-white/8 p-4">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-white/15 px-2 text-sm font-semibold">
+                {r.order ?? i + 1}
+              </span>
+              <div className="font-semibold">{r.name}</div>
+            </div>
+            {r.desc ? <p className="mt-2 text-sm leading-relaxed opacity-95">{r.desc}</p> : null}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -205,6 +266,7 @@ export default async function VisaResidencyStaticPage({
     fees,
     heroImage,
     ctaLabel,
+    visaCategories,
   } = item;
 
   const heroUrl = heroImage?.asset?.url ?? null;
@@ -221,6 +283,14 @@ export default async function VisaResidencyStaticPage({
     services: t(lang, { jp: "サービス内容", zh: "服務內容", en: "Services", common: "服務內容" }),
     flow: t(lang, { jp: "サービスの流れ", zh: "服務流程", en: "Service Flow", common: "服務流程" }),
     fees: t(lang, { jp: "料金（参考）", zh: "費用參考", en: "Fees (Reference)", common: "費用參考" }),
+    categories: visaCategories?.sectionTitle
+      ? visaCategories.sectionTitle
+      : t(lang, {
+          jp: "長期ビザ・居留タイプ",
+          zh: "主要長期簽證與居留類型",
+          en: "Visa & Residency Categories",
+          common: "主要長期簽證與居留類型",
+        }),
     contact:
       ctaLabel ?? t(lang, { jp: "お問い合わせ", zh: "聯絡我們", en: "Contact Us", common: "聯絡我們" }),
     ctaSub: t(lang, {
@@ -228,12 +298,6 @@ export default async function VisaResidencyStaticPage({
       zh: "將依據您的條件提供最合適的申請方案",
       en: "We tailor the right plan to your case",
       common: "將依據您的條件提供最合適的申請方案",
-    }),
-    quickInfo: t(lang, {
-      jp: "対応可能な在留・ビザの一例",
-      zh: "常見簽證與居留類型",
-      en: "Typical visa and residency categories",
-      common: "常見簽證與居留類型",
     }),
   };
 
@@ -283,10 +347,10 @@ export default async function VisaResidencyStaticPage({
             <div className="absolute inset-0" style={{ backgroundColor: BRAND_BLUE }} />
           )}
 
-          {/* 疊加漸層：頂部深壓、中央透明、底部品牌藍過渡 */}
+          {/* 疊加漸層 */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-[#0f2334]/25 to-[rgba(28,61,90,0.92)]" />
 
-          {/* 文字區（可自由定位） */}
+          {/* 文字區 */}
           <div
             className="absolute z-10"
             style={{
@@ -326,7 +390,7 @@ export default async function VisaResidencyStaticPage({
           </div>
         </div>
 
-        {/* Hero 底部柔光帶，與主體連接更自然 */}
+        {/* Hero 底部柔光帶 */}
         <div
           className="absolute inset-x-0 bottom-0 translate-y-1/3 h-24 blur-3xl opacity-70"
           style={{ backgroundColor: BRAND_BLUE }}
@@ -335,7 +399,9 @@ export default async function VisaResidencyStaticPage({
 
       {/* ============================ 快速導覽（吸頂） ============================ */}
       <nav className="sticky top-0 z-30 bg-[rgba(28,61,90,0.88)] backdrop-blur-md border-b border-white/12">
-        <div className={`${CONTAINER_W} mx-auto ${CONTAINER_X} py-3 flex flex-wrap gap-2 justify-center text-sm md:text-base`}>
+        <div
+          className={`${CONTAINER_W} mx-auto ${CONTAINER_X} py-3 flex flex-wrap gap-2 justify-center text-sm md:text-base`}
+        >
           <a href="#bg" className="px-4 py-2 rounded-full border border-white/18 hover:bg-white/10 transition">
             {labels.background}
           </a>
@@ -359,13 +425,18 @@ export default async function VisaResidencyStaticPage({
               {labels.fees}
             </a>
           )}
+          {visaCategories?.items && visaCategories.items.length > 0 && (
+            <a href="#vc" className="px-4 py-2 rounded-full border border-white/18 hover:bg-white/10 transition">
+              {labels.categories}
+            </a>
+          )}
         </div>
       </nav>
 
       {/* =============================== 內容區 =============================== */}
       <main className="relative z-10">
         <div className={`${CONTAINER_W} mx-auto w-full ${CONTAINER_X} text-[17px] md:text-[18px]`}>
-          <div className={`${SECTION_Y_GAP} grid gap-10 md:gap-12 lg:grid-cols-[1fr,360px]`}>
+          <div className={`${SECTION_Y_GAP} grid gap-10 md:gap-12`}>
             {/* ------------------------------ 主內容 ------------------------------ */}
             <div className="space-y-12">
               {/* 背景 */}
@@ -379,54 +450,53 @@ export default async function VisaResidencyStaticPage({
               </section>
 
               {/* 課題 / 挑戰 */}
-{challenges.length > 0 && (
-  <section id="ch" className={ANCHOR_OFFSET}>
-    <SectionHeading lang={lang} jp="課題" zh="挑戰" en="Challenges" />
-    <div className="grid md:grid-cols-2 gap-5">
-      <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-        <EmojiList
-          items={challenges.slice(0, Math.ceil(challenges.length / 2))}
-          emoji="⚠️"
-        />
-      </div>
-      <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-        <EmojiList
-          items={challenges.slice(Math.ceil(challenges.length / 2))}
-          emoji="🧩"
-        />
-      </div>
-    </div>
-  </section>
-)}
+              {challenges.length > 0 && (
+                <section id="ch" className={ANCHOR_OFFSET}>
+                  <SectionHeading lang={lang} jp="課題" zh="挑戰" en="Challenges" />
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+                      <EmojiList
+                        items={challenges.slice(0, Math.ceil(challenges.length / 2))}
+                        emoji="⚠️"
+                      />
+                    </div>
+                    <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+                      <EmojiList
+                        items={challenges.slice(Math.ceil(challenges.length / 2))}
+                        emoji="🧩"
+                      />
+                    </div>
+                  </div>
+                </section>
+              )}
 
+              {/* 服務內容：左＝一般簽證與居留支援；右＝育成計畫 */}
+              {(services.length > 0 || incubationTrack.length > 0) && (
+                <section id="sv" className={ANCHOR_OFFSET}>
+                  <SectionHeading lang={lang} jp="サービス内容" zh="服務內容" en="Services" />
+                  <div className="grid md:grid-cols-2 gap-5">
+                    {/* 左卡：一般簽證與居留支援 */}
+                    {services.length > 0 && (
+                      <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+                        <h3 className="text-[16px] md:text-[17px] font-semibold mb-3 opacity-95">
+                          {getServiceCardTitles(lang).general}
+                        </h3>
+                        <EmojiList items={services} emoji="✅" />
+                      </div>
+                    )}
 
-{/* 服務內容：左＝一般簽證與居留支援；右＝育成計畫 */}
-{(services.length > 0 || incubationTrack.length > 0) && (
-  <section id="sv" className={ANCHOR_OFFSET}>
-    <SectionHeading lang={lang} jp="サービス内容" zh="服務內容" en="Services" />
-    <div className="grid md:grid-cols-2 gap-5">
-      {/* 左卡：一般簽證與居留支援 */}
-      {services.length > 0 && (
-        <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-          <h3 className="text-[16px] md:text-[17px] font-semibold mb-3 opacity-95">
-            {generalTitle}
-          </h3>
-          <EmojiList items={services} emoji="✅" />
-        </div>
-      )}
-
-      {/* 右卡：育成計畫 */}
-      {incubationTrack.length > 0 && (
-        <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
-          <h3 className="text-[16px] md:text-[17px] font-semibold mb-3 opacity-95">
-            {incubTitle}
-          </h3>
-          <EmojiList items={incubationTrack} emoji="🛠️" />
-        </div>
-      )}
-    </div>
-  </section>
-)}
+                    {/* 右卡：育成計畫 */}
+                    {incubationTrack.length > 0 && (
+                      <div className="bg-white/8 border border-white/15 rounded-2xl p-6 md:p-7">
+                        <h3 className="text-[16px] md:text-[17px] font-semibold mb-3 opacity-95">
+                          {getServiceCardTitles(lang).incub}
+                        </h3>
+                        <EmojiList items={incubationTrack} emoji="🛠️" />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* 服務流程 */}
               {serviceFlow.length > 0 && (
@@ -445,60 +515,16 @@ export default async function VisaResidencyStaticPage({
                   </div>
                 </section>
               )}
+
+              {/* ====== 新增：Visa Categories 表格（置於 CTA 上方） ====== */}
+              {visaCategories?.items && visaCategories.items.length > 0 && (
+                <VisaCategories
+                  lang={lang}
+                  title={visaCategories.sectionTitle}
+                  items={visaCategories.items}
+                />
+              )}
             </div>
-
-            {/* ------------------------------ 右側欄 ------------------------------ */}
-            <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
-              {/* 快速說明卡 */}
-              <div className="bg-white/8 border border-white/15 rounded-2xl p-6 text-center">
-                <div className="text-xs uppercase tracking-wide opacity-85">
-                  {labels.quickInfo}
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  {visaBadges.map((b, i) => (
-                    <div
-                      key={i}
-                      className={`rounded-lg bg-white/10 border border-white/15 px-3 py-2 text-sm text-center ${
-                        i === visaBadges.length - 1 ? "col-span-2" : ""
-                      }`}
-                    >
-                      {b}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* CTA 卡 */}
-              <div
-                className="border border-white/15 rounded-2xl p-6 text-center"
-                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06))" }}
-              >
-                <div className="text-lg font-semibold">{labels.contact}</div>
-                <p className="mt-2 text-sm opacity-90">{labels.ctaSub}</p>
-                <div className="mt-5 flex gap-3 justify-center">
-                  <a
-                    href={`/contact?lang=${lang}`}
-                    className="inline-flex items-center justify-center rounded-lg bg-white text-[#1C3D5A] font-semibold px-4 py-2 hover:bg-gray-100 transition"
-                  >
-                    {t(lang, { jp: "問い合わせ", zh: "聯絡我們", en: "Get in touch", common: "聯絡我們" })}
-                  </a>
-                  <a
-                    href="https://line.me/R/ti/p/@030qreji"
-                    className="inline-flex items-center justify-center rounded-lg bg-white/10 border border-white/20 px-4 py-2 hover:bg-white/15 transition"
-                  >
-                    LINE
-                  </a>
-                </div>
-                <div className="mt-4 text-xs opacity-75">
-                  {t(lang, {
-                    jp: "※ 事案や条件により費用と期間が異なります。まずはお気軽にご相談ください。",
-                    zh: "※ 依案件與條件不同，費用與時程會有所差異，歡迎先與我們討論。",
-                    en: "Note: Fees and timelines vary by case. Contact us for a tailored assessment.",
-                    common: "※ 依案件與條件不同，費用與時程會有所差異，歡迎先與我們討論。",
-                  })}
-                </div>
-              </div>
-            </aside>
           </div>
         </div>
       </main>
@@ -519,7 +545,8 @@ export default async function VisaResidencyStaticPage({
               href={`/contact?lang=${lang}`}
               className="inline-block bg-white text-[#1C3D5A] font-semibold px-6 py-3 rounded-lg hover:bg-gray-100 transition"
             >
-              {labels.contact}
+              {ctaLabel ??
+                t(lang, { jp: "お問い合わせ", zh: "聯絡我們", en: "Contact Us", common: "聯絡我們" })}
             </a>
             <a
               href="mailto:info@twconnects.com"

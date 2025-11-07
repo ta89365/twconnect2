@@ -9,7 +9,6 @@ import FooterServer from "@/components/FooterServer";
 import { sfetch } from "@/lib/sanity/fetch";
 import { contactPageByLang } from "@/lib/queries/contactus";
 import { PortableText } from "@portabletext/react";
-import TimezoneSelect from "@/components/TimezoneSelect";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -55,7 +54,7 @@ function linkWithLang(href: string, lang: Lang): string {
   return `${href}?lang=${lang}`;
 }
 
-/* ===== CTA Link（增加 style 屬性避免 TS2322） ===== */
+/* ===== CTA Link ===== */
 type CtaLinkProps = {
   href: string;
   lang: Lang;
@@ -100,7 +99,6 @@ type ContactDoc = {
     consentText?: any[];
   };
   success?: { message?: any[]; email?: { subject?: string; body?: any[] } };
-  addresses?: { label?: string; address?: string; note?: string }[];
 };
 
 type ContactQueryResult = { doc?: ContactDoc };
@@ -140,7 +138,6 @@ export default async function Page({
   const hero = doc.hero ?? {};
   const info = doc.info ?? {};
   const form = doc.form ?? {};
-  const addresses = Array.isArray(doc.addresses) ? doc.addresses : [];
   const faqTopics = Array.isArray(doc.faqTopics) ? doc.faqTopics : [];
   const heroHasImage = !!hero?.image?.url;
 
@@ -232,10 +229,15 @@ export default async function Page({
             className="mx-auto w-full max-w-full overflow-x-clip px-4 py-10 text-white sm:px-6 sm:py-12"
             style={{ maxWidth: CONTENT_MAX_W }}
           >
+            {/* 三張 Info 卡片：僅在有值時顯示 */}
             <section className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
-              <InfoCard title={labelByLang("Languages", lang)} body={info.languages} />
-              <InfoCard title={labelByLang("Service areas", lang)} body={info.serviceAreas} />
-              <InfoCard title={labelByLang("Business hours", lang)} body={info.businessHours} />
+              {info.languages ? <InfoCard title={labelByLang("Languages", lang)} body={info.languages} /> : null}
+              {info.serviceAreas ? (
+                <InfoCard title={labelByLang("Service areas", lang)} body={info.serviceAreas} />
+              ) : null}
+              {info.businessHours ? (
+                <InfoCard title={labelByLang("Business hours", lang)} body={info.businessHours} />
+              ) : null}
             </section>
 
             {faqTopics.length > 0 ? (
@@ -253,64 +255,7 @@ export default async function Page({
               </section>
             ) : null}
 
-            {/* 地址 */}
-            {addresses.length > 0 ? (
-              <section className="mt-10 min-w-0 sm:mt-12">
-                <h2 className="mb-3 text-xl font-semibold sm:mb-4 sm:text-2xl">
-                  {labelByLang("Addresses", lang)}
-                </h2>
-
-                {/* 兩欄且行高同步：items-stretch + auto-rows-fr */}
-                <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 md:auto-rows-fr md:grid-cols-2">
-                  {addresses.map((a, i) => (
-                    <div
-                      key={`addr-${i}`}
-                      className="relative h-full overflow-hidden rounded-2xl bg-white/5 ring-1 ring-white/10 transition-all duration-300 hover:bg-white/10 hover:shadow-lg"
-                    >
-                      {/* 圖示不再使用負邊距，避免位移與溢出 */}
-                      <div className="pointer-events-none absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 21c-4.97-4.97-8-8.03-8-11a8 8 0 1116 0c0 2.97-3.03 6.03-8 11z"
-                          />
-                          <circle cx="12" cy="10" r="3" />
-                        </svg>
-                      </div>
-
-                      {/* 內文留出圖示空間：pl-14 */}
-                      <div className="h-full min-w-0 p-5 pl-14">
-                        {a?.label ? (
-                          <h3 className="mb-1 text-base font-semibold tracking-tight sm:mb-2 sm:text-lg">
-                            {a.label}
-                          </h3>
-                        ) : null}
-
-                        {a?.address ? (
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90">
-                            {a.address}
-                          </p>
-                        ) : null}
-
-                        {a?.note ? (
-                          <p className="mt-2 text-xs leading-relaxed italic opacity-70">{a.note}</p>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            {/* ============ 表單 ============ */}
+            {/* ===== 表單 ===== */}
             <section className="mt-10 min-w-0 sm:mt-12">
               <h2 className="text-xl font-semibold sm:text-2xl">
                 {labelByLang("Contact form", lang)}
@@ -321,8 +266,9 @@ export default async function Page({
                 method="post"
                 encType="multipart/form-data"
               >
-                {/* ✅ 提供 API 讀取語系 */}
+                {/* 語系與固定時區提交 */}
                 <input type="hidden" name="lang" value={lang} />
+                <input type="hidden" name="timezone" value="America/Chicago" />
 
                 <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
                   <Field label={labelByLang("Your name", lang)} name="name" required />
@@ -351,13 +297,34 @@ export default async function Page({
                   </div>
                 ) : null}
 
+                {/* 希望語言 */}
+                <div className="grid min-w-0 gap-2">
+                  <label className="text-sm opacity-90">{labelByLang("Preferred language", lang)}</label>
+                  <select
+                    name="preferredLanguage"
+                    className="h-12 w-full min-w-0 max-w-full rounded-xl bg-white/90 px-3 py-2 text-black outline-none"
+                    defaultValue={lang}
+                    required
+                  >
+                    <option value="zh" className="bg-white text-black">
+                      {labelByLang("Chinese", lang)}
+                    </option>
+                    <option value="jp" className="bg-white text-black">
+                      {labelByLang("Japanese", lang)}
+                    </option>
+                    <option value="en" className="bg-white text-black">
+                      {labelByLang("English", lang)}
+                    </option>
+                  </select>
+                </div>
+
                 {Array.isArray(form?.preferredContactOptions) && form.preferredContactOptions.length > 0 ? (
                   <div className="grid min-w-0 gap-2">
                     <span className="text-sm opacity-90">{labelByLang("Preferred contact", lang)}</span>
                     <div className="flex flex-wrap items-center gap-3">
                       {form.preferredContactOptions.map((op, i) => (
                         <label key={`pref-${i}`} className="flex min-w-0 items-center gap-2">
-                          <input className="h-4 w-4" type="radio" name="preferredContact" value={op} />
+                          <input className="h-4 w-4 accent-white" type="radio" name="preferredContact" value={op} />
                           <span className="text-sm">{op}</span>
                         </label>
                       ))}
@@ -369,56 +336,41 @@ export default async function Page({
                   <label className="text-sm opacity-90">{labelByLang("Summary", lang)}</label>
                   <textarea
                     name="summary"
-                    className="min-h-[130px] w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-3 outline-none sm:min-h-[140px]"
+                    className="min-h-[130px] w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-3 text-white placeholder-white/60 outline-none sm:min-h-[140px]"
                     placeholder={form?.summaryHint ?? ""}
                     required
                   />
                 </div>
 
-                {/* ===== 第一/第二備選時段：CSS 純樣式防溢出 ===== */}
-                <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-                  <label className="relative grid min-w-0 gap-2 overflow-hidden">
+                {/* 第1/第2希望日時：保留於程式碼，停用且隱藏 */}
+                <div className="hidden">
+                  <label className="relative grid min-w-0 gap-2" aria-hidden="true">
                     <span className="text-sm opacity-90">{labelByLang("First preferred time", lang)}</span>
                     <input
                       type="datetime-local"
                       name="preferredTime1"
-                      className={[
-                        "h-16 w-full min-w-0 rounded-xl bg-white/10 px-3 outline-none",
-                        // 隱藏原生文字避免撐寬，仍保留原生選擇器
-                        "appearance-none text-transparent caret-transparent placeholder:text-transparent",
-                        // 下緣空間給提示
-                        "pt-2 pb-6",
-                      ].join(" ")}
+                      className="h-16 w-full min-w-0 rounded-xl bg-white/10 px-3 text-white/50 outline-none"
+                      placeholder="mm/dd/yyyy --:--"
+                      disabled
                     />
-                    {/* 底部提示行（仍可見） */}
-                    <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs opacity-80">
+                    <span className="mt-1 text-xs opacity-70">
                       {form?.datetimeHint ?? labelByLang("Preferred date and time", lang)}
                     </span>
                   </label>
 
-                  <label className="relative grid min-w-0 gap-2 overflow-hidden">
+                  <label className="relative grid min-w-0 gap-2" aria-hidden="true">
                     <span className="text-sm opacity-90">{labelByLang("Second preferred time", lang)}</span>
                     <input
                       type="datetime-local"
                       name="preferredTime2"
-                      className={[
-                        "h-16 w-full min-w-0 rounded-xl bg-white/10 px-3 outline-none",
-                        "appearance-none text-transparent caret-transparent placeholder:text-transparent",
-                        "pt-2 pb-6",
-                      ].join(" ")}
+                      className="h-16 w-full min-w-0 rounded-xl bg-white/10 px-3 text-white/50 outline-none"
+                      placeholder="mm/dd/yyyy --:--"
+                      disabled
                     />
-                    <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs opacity-80">
+                    <span className="mt-1 text-xs opacity-70">
                       {form?.datetimeHint ?? labelByLang("Preferred date and time", lang)}
                     </span>
                   </label>
-                </div>
-
-                {/* ===== 時區：Client Component（IANA 下拉 + 自動偵測） ===== */}
-                <div className="grid min-w-0 gap-2">
-                  <label className="text-sm opacity-90" htmlFor="timezone">
-                    {labelByLang("Time zone", lang)}
-                  </label>
-                  <TimezoneSelect id="timezone" name="timezone" />
                 </div>
 
                 <div className="grid min-w-0 gap-2">
@@ -435,7 +387,7 @@ export default async function Page({
                 {Array.isArray(form?.consentText) && form.consentText.length > 0 ? (
                   <label className="mt-1 grid min-w-0 gap-2 sm:mt-2">
                     <div className="flex items-start gap-2">
-                      <input type="checkbox" name="consent" value="yes" required className="mt-1 h-4 w-4" />
+                      <input type="checkbox" name="consent" value="yes" required className="mt-1 h-4 w-4 accent-white" />
                       <div className="text-sm opacity-90">
                         <PortableText value={form.consentText} />
                       </div>
@@ -444,7 +396,10 @@ export default async function Page({
                 ) : null}
 
                 <div className="mt-2 sm:mt-3">
-                  <button type="submit" className="h-12 w-full rounded-2xl bg-white px-5 font-medium text-black sm:w-auto">
+                  <button
+                    type="submit"
+                    className="h-12 w-full rounded-2xl bg-white px-5 font-medium text-black sm:w-auto"
+                  >
                     {labelByLang("Send", lang)}
                   </button>
                 </div>
@@ -585,11 +540,11 @@ function ErrorToast({ lang, errMsg }: { lang: Lang; errMsg?: string }) {
 
 /* ============================ 小元件 ============================ */
 function InfoCard({ title, body }: { title: string; body?: string }) {
-  if (!title && !body) return null;
+  if (!body) return null;
   return (
     <div className="rounded-2xl bg-white/5 p-4 sm:p-5">
       {title ? <div className="text-base font-semibold">{title}</div> : null}
-      {body ? <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed opacity-90">{body}</p> : null}
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed opacity-90">{body}</p>
     </div>
   );
 }
@@ -611,8 +566,9 @@ function Field({
       <input
         type={type}
         name={name}
-        className="h-12 w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-2 outline-none"
+        className="h-12 w-full min-w-0 max-w-full rounded-xl bg-white/10 px-3 py-2 text-white placeholder-white/70 outline-none"
         required={required}
+        placeholder=""
       />
     </label>
   );
@@ -690,7 +646,6 @@ function labelByLang(key: string, lang: Lang): string {
     "Service areas": { zh: "服務範圍", jp: "サービス対象地域", en: "Service Areas" },
     "Business hours": { zh: "營業時間", jp: "営業時間", en: "Business Hours" },
     "Frequently asked topics": { zh: "常見主題", jp: "よくあるトピック", en: "Frequently Asked Topics" },
-    Addresses: { zh: "地址", jp: "住所", en: "Addresses" },
     "Contact form": { zh: "線上聯絡表單", jp: "お問い合わせフォーム", en: "Contact Form" },
     "Your name": { zh: "您的姓名", jp: "お名前", en: "Your Name" },
     Phone: { zh: "聯絡電話", jp: "電話番号", en: "Phone" },
@@ -725,6 +680,12 @@ function labelByLang(key: string, lang: Lang): string {
     // 失敗
     "Submission failed.": { zh: "送出失敗。", jp: "送信に失敗しました。", en: "Submission failed." },
     "Try again": { zh: "再試一次", jp: "もう一度", en: "Try again" },
+
+    // 新增：希望語言
+    "Preferred language": { zh: "希望語言", jp: "希望言語", en: "Preferred language" },
+    Chinese: { zh: "中文", jp: "中国語", en: "Chinese" },
+    Japanese: { zh: "日文", jp: "日本語", en: "Japanese" },
+    English: { zh: "英文", jp: "英語", en: "English" },
   };
   const found = dict[key];
   if (!found) return key;

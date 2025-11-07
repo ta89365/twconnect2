@@ -160,6 +160,7 @@ export default defineType({
     }),
 
     /* ===== Footer: Company Information ===== */
+    /*
     defineField({
       name: "addresses",
       title: "Office Addresses",
@@ -169,9 +170,11 @@ export default defineType({
       description: "List of company office addresses displayed at the bottom of the contact page.",
       validation: (Rule) => Rule.min(1),
     }),
+    */
   ],
 
   preview: {
     prepare: () => ({ title: "Contact Form Settings" }),
   },
 })
+

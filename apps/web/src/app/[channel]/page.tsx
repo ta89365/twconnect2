@@ -141,7 +141,7 @@ export default async function ChannelEntrancePage({
   const t = dict(channel, lang);
   const basePath = `/${channel}` as "/news" | "/column";
 
-  // 根據 channel 選用固定查詢，避免 $channel 參數遺漏
+  // 根據 channel 選用固定查詢
   const query = channel === "news" ? newsEntranceByLang : columnEntranceByLang;
   const data = await sfetch<EntranceData>(query, { lang, limit: 24 });
 
@@ -151,15 +151,13 @@ export default async function ChannelEntrancePage({
 
   const [featured, ...rest] = posts;
 
+  // Pre-Footer CTA 按鈕字樣
+  const contactLabel =
+    lang === "jp" ? "お問い合わせはこちら" : lang === "zh" ? "Contact Us 聯絡我們" : "Contact Us";
+
   return (
     <div style={{ backgroundColor: BRAND_BLUE }} className="min-h-screen text-white">
       <NavigationServer lang={lang} />
-
-      {/* 右上角語言切換移除（依需求隱藏，其餘不動）
-      <div className="absolute right-6 top-6 z-30">
-        <LangDropdown current={lang} basePath={basePath} />
-      </div>
-      */}
 
       {/* Hero */}
       <section className="relative w-full overflow-hidden" style={{ minHeight: TUNE.heroMinH }}>
@@ -176,19 +174,13 @@ export default async function ChannelEntrancePage({
             blurDataURL={heroImg.lqip}
           />
         )}
-        <div
-          className="absolute inset-0 mix-blend-multiply"
-          style={{ backgroundColor: BRAND_BLUE, opacity: 0.18 }}
-        />
+        <div className="absolute inset-0 mix-blend-multiply" style={{ backgroundColor: BRAND_BLUE, opacity: 0.18 }} />
         <div className="absolute inset-0 bg-black/18" />
         <div className="absolute inset-0" style={{ background: TUNE.heroOverlay }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-[rgba(28,61,90,0.22)]" />
 
         {/* 文字層 */}
-        <div
-          className="relative mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18"
-          style={{ maxWidth: TUNE.contentMaxW }}
-        >
+        <div className="relative mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18" style={{ maxWidth: TUNE.contentMaxW }}>
           <div className="inline-block max-w-3xl rounded-2xl bg-black/25 backdrop-blur-[2px] shadow-sm px-6 py-5">
             <p className="text-sm/6 tracking-wide text-white/85">{t.breadcrumb}</p>
             <h1 className="mt-2 text-4xl font-semibold sm:text-5xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
@@ -199,7 +191,7 @@ export default async function ChannelEntrancePage({
             </p>
           </div>
 
-          {/* 搜尋與快速主題 */}
+        {/* 搜尋與快速主題 */}
           <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto] items-stretch">
             <form action="#" className="w-full">
               <input
@@ -230,10 +222,7 @@ export default async function ChannelEntrancePage({
       {/* 主打文章 */}
       {featured && (
         <section className="relative">
-          <div
-            className="relative mx-auto px-4 sm:px-6 lg:px-8 pb-6"
-            style={{ maxWidth: TUNE.contentMaxW }}
-          >
+          <div className="relative mx-auto px-4 sm:px-6 lg:px-8 pb-6" style={{ maxWidth: TUNE.contentMaxW }}>
             <FeaturedCard post={featured} lang={lang} readMoreLabel={t.readMore} basePath={basePath} />
           </div>
         </section>
@@ -243,15 +232,9 @@ export default async function ChannelEntrancePage({
       <section className="relative">
         <div
           className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage:
-              "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.00))",
-          }}
+          style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.00))" }}
         />
-        <div
-          className="relative mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14"
-          style={{ maxWidth: TUNE.contentMaxW }}
-        >
+        <div className="relative mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14" style={{ maxWidth: TUNE.contentMaxW }}>
           {rest.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {rest.map((p: any) => (
@@ -274,6 +257,38 @@ export default async function ChannelEntrancePage({
           ) : (
             <p className="mt-10 text白色/90">{t.empty}</p>
           )}
+        </div>
+      </section>
+
+      {/* ===== Pre-Footer CTA（沿用 finance-advisory 樣式） ===== */}
+      <section className="border-y" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: TUNE.contentMaxW }}>
+          <div className="py-10 md:py-14 text-center">
+            <h3 className="text-white text-xl md:text-2xl font-semibold tracking-tight">
+              {(settings as any)?.heroSubtitle ?? t.subtitle}
+            </h3>
+
+            <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
+              <Link
+                href={`/contact?lang=${lang}`}
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
+                style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
+              >
+                {contactLabel}
+              </Link>
+
+              <a
+                href="mailto:info@twconnects.com"
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                }}
+              >
+                info@twconnects.com
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -380,7 +395,7 @@ function ArticleCard({
     >
       {/* 封面圖 */}
       {coverUrl ? (
-        <div className="relative aspect-[16/9] w-full">
+        <div className="relative aspect[16/9] w-full">
           <Image src={coverUrl} alt={title} width={800} height={450} className="object-cover w-full h-full" />
           {tag && (
             <span className="absolute left-3 top-3 inline-flex rounded-full bg-black/65 px-2.5 py-1 text-xs text-white">

@@ -1,8 +1,9 @@
-// File: apps/web/src/app/page.tsx
-import NavigationServer from "@/components/NavigationServer"; // 伺服端導覽，支援 zh-cn
+// apps/web/src/app/page.tsx
 import HeroBanner from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
 import ChallengesSection from "@/components/ChallengesSection";
+import NavigationServer from "@/components/NavigationServer"; // async server component
+import FooterServer from "@/components/FooterServer";         // async server component
 
 // CrossBorder 區段
 import CrossBorderSection, {
@@ -21,9 +22,6 @@ import type { AboutData } from "@/lib/types/about";
 import ContactSection from "@/components/ContactSection";
 import type { ContactData } from "@/lib/types/contact";
 
-// Footer
-import FooterServer from "@/components/FooterServer";
-
 import { sfetch } from "@/lib/sanity/fetch";
 import { siteSettingsByLang } from "@/lib/queries/siteSettings";
 import { heroByLang } from "@/lib/queries/hero";
@@ -32,60 +30,38 @@ import { crossBorderByLang } from "@/lib/queries/crossBorder";
 import { aboutByLang } from "@/lib/queries/about";
 import { contactByLang } from "@/lib/queries/contact";
 import { mixedHomeFeedByLang } from "@/lib/queries/insights";
-
 import Link from "next/link";
-import type { JSX } from "react";
+
+/* ============================ 重要：多語動態 ============================ */
+export const dynamic = "force-dynamic";
 
 /* ============================ 視覺與版面設定 ============================ */
 const NAV_HEIGHT = 72;
 
-/**
- * 手機優化重點：
- * 1) Hero 標題字級用 clamp 在小螢幕下降低
- * 2) Hero 區塊的內容位移全面縮小，避免溢出
- * 3) 語言切換器在手機時右上角更靠內，避免被瀏海或邊角遮擋
- * 4) 全站 main 加上 overflow-x-hidden 防止橫向捲動
- * 5) Section padding 在手機時降低，閱讀更順
- */
 const TUNE = {
-  // 語言切換器位置：手機時更靠內與略低
-  langOffsetYrem: (NAV_HEIGHT + 6) / 16, // 手機略低一點
-  langOffsetRightRem: 0.75,              // 手機更靠內
+  langOffsetYrem: (NAV_HEIGHT + 6) / 16,
+  langOffsetRightRem: 0.75,
   forceTopVh: true,
-
-  // Hero 內容的整體上移量（以 vh 為單位）
-  heroContentOffsetVh: 2.5, // 手機更貼近視窗
-
-  // Hero 左邊內距（rem）：手機縮小
+  heroContentOffsetVh: 2.5,
   heroLeftPadRem: { base: 1.0, md: 0.75, lg: 0.75 },
-
-  // Hero 內容最大寬：手機時自然換行，桌機維持視覺寬度
   heroMaxWidth: "72rem",
-
-  // Hero 圖片焦點：稍微上移，讓人物或主體不被遮擋
   heroObjectPos: "28%",
   heroObjectPosY: "30%",
-
-  // 手機以 clamp 限制字級，避免超出
-  headingSizes: "text-[clamp(1.75rem,6vw,2.5rem)] sm:text-4xl md:text-6xl lg:text-7xl",
+  headingSizes:
+    "text-[clamp(1.75rem,6vw,2.5rem)] sm:text-4xl md:text-6xl lg:text-7xl",
   subTextSize: "text-[clamp(0.95rem,3.8vw,1.05rem)] sm:text-lg md:text-xl",
-
   textColorClass: "text-white",
   ribbonRounded: "rounded-lg",
   ribbonBg: "bg-black/70",
   ctaTopMarginClass: "mt-4 sm:mt-6 md:mt-8",
-
-  // 針對 Hero 中各元素偏移：手機縮小位移，避免跑版
   blockOffsets: {
-    // rem 單位，base 將偏移量大幅縮小
-    heading: { xRem: 0.0,  yRem: -3.0 },
+    heading: { xRem: 0.0, yRem: -3.0 },
     subheading: { xRem: 0.0, yRem: -1.5 },
     subtitle: { xRem: 0.0, yRem: -0.5 },
     cta: { xRem: 0.0, yRem: 0.0 },
   },
 } as const;
 
-/** CrossBorder 位置微調（手機位移更保守） */
 const CROSS_TUNE: CrossBorderTune = {
   containerAlign: "center",
   offsetYvh: -2,
@@ -98,7 +74,6 @@ const CROSS_TUNE: CrossBorderTune = {
   },
 };
 
-/** 分隔帶：簡潔白線版 */
 function SectionDivider({ className = "" }: { className?: string }) {
   return (
     <div className={className} aria-hidden>
@@ -113,7 +88,6 @@ function SectionDivider({ className = "" }: { className?: string }) {
   );
 }
 
-/** 日期格式器（deterministic，不用 Intl 依賴環境） */
 const MONTH_EN = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December",
@@ -127,22 +101,18 @@ function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
   return `${y}年${m}月${d}日`;
 }
 
-/* ============================ 型別 ============================ */
+/* ============================ 型別與語言附掛（查詢參數制） ============================ */
 type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
 type Lang = "jp" | "zh" | "en";
 
-/** 首頁混合列表所需資料結構 */
-type HomeNewsItem = {
-  dateISO: string;        // "YYYY-MM-DD"
-  title: string;
-  href: string;           // /news/[slug]?lang=xx 或 /column/[slug]?lang=xx
-  channelLabel: string;   // 小分類：News / Column（多語）
-  hashtags?: string[];
-};
-
-/* 包裝 Server Components，避免使用 @ts-expect-error */
-const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
-const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
+/** 只處理站內路徑且避免重複附掛 ?lang= */
+function addLangQuery(href?: string, lang?: Lang): string {
+  if (!href || !lang) return href || "";
+  if (!href.startsWith("/")) return href; // 外部或相對檔案
+  if (/[?&]lang=/.test(href)) return href; // 已帶 lang
+  const joiner = href.includes("?") ? "&" : "?";
+  return `${href}${joiner}lang=${lang}`;
+}
 
 /* ============================ Page ============================ */
 export default async function Home({
@@ -155,10 +125,8 @@ export default async function Home({
       ? await (searchParams as Promise<{ lang?: string }>)
       : (searchParams as { lang?: string } | undefined);
 
-  // 讀取 URL 語言
   const spLang = (spRaw?.lang ?? "").toString().toLowerCase();
 
-  // 內容語言：若為 zh-cn 則回退 zh，其餘維持 jp/zh/en
   const contentLang: Lang =
     spLang === "zh-cn"
       ? "zh"
@@ -166,28 +134,27 @@ export default async function Home({
       ? (spLang as Lang)
       : "jp";
 
-  const [settings, hero, crossBorder, services, about, contact, mixed] = await Promise.all([
-    sfetch<any>(siteSettingsByLang, { lang: contentLang }),
-    sfetch<any>(heroByLang, { lang: contentLang }),
-    sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
-    sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
-    sfetch<AboutData>(aboutByLang, { lang: contentLang }),
-    sfetch<ContactData>(contactByLang, { lang: contentLang }),
-    // 混合 News + Column，最新 6 筆
-    sfetch<any>(mixedHomeFeedByLang, { lang: contentLang, limit: 5 }),
-  ]);
+  const [settings, hero, crossBorder, services, about, contact, mixed] =
+    await Promise.all([
+      sfetch<any>(siteSettingsByLang, { lang: contentLang }),
+      sfetch<any>(heroByLang, { lang: contentLang }),
+      sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
+      sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
+      sfetch<AboutData>(aboutByLang, { lang: contentLang }),
+      sfetch<ContactData>(contactByLang, { lang: contentLang }),
+      sfetch<any>(mixedHomeFeedByLang, { lang: contentLang, limit: 5 }),
+    ]);
 
-  // 導覽列資料供 Footer 使用
-  const rawItems: NavItem[] = Array.isArray(settings?.navigation) ? settings.navigation : [];
+  const rawItems: NavItem[] = Array.isArray(settings?.navigation)
+    ? settings.navigation
+    : [];
   const items: NavItem[] = rawItems
     .map((it) => {
       if (!it?.href) return it;
-      const join = it.href.includes("?") ? "&" : "?";
-      return { ...it, href: `${it.href}${join}lang=${contentLang}` };
+      return { ...it, href: addLangQuery(it.href, contentLang) };
     })
     .sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
-  // Footer
   type LooseContact = { email?: string | null; phone?: string | null };
   const c = (contact as unknown as LooseContact | null);
 
@@ -202,31 +169,47 @@ export default async function Home({
   };
 
   const primaryLinks =
-    items?.map((i) => ({ label: i.label, href: i.href, external: i.external })) ?? [];
+    items?.map((i) => ({ label: i.label, href: i.href, external: i.external })) ??
+    [];
 
   const secondaryLinks = [
-    { label: contentLang === "jp" ? "サービス" : contentLang === "zh" ? "服務內容" : "Services", href: "/services" },
-    { label: contentLang === "jp" ? "事例紹介" : contentLang === "zh" ? "成功案例" : "Case Studies", href: "/cases" },
-    { label: "News", href: "/news" },
     {
-      label: contentLang === "jp" ? "IPOアドバイザリー" : contentLang === "zh" ? "IPO 顧問" : "IPO Advisory",
-      href: "/ipo",
+      label:
+        contentLang === "jp" ? "サービス" : contentLang === "zh" ? "服務內容" : "Services",
+      href: addLangQuery("/services", contentLang),
+    },
+    {
+      label:
+        contentLang === "jp" ? "事例紹介" : contentLang === "zh" ? "成功案例" : "Case Studies",
+      href: addLangQuery("/cases", contentLang),
+    },
+    { label: "News", href: addLangQuery("/news", contentLang) },
+    {
+      label:
+        contentLang === "jp" ? "IPOアドバイザリー" : contentLang === "zh" ? "IPO 顧問" : "IPO Advisory",
+      href: addLangQuery("/ipo", contentLang),
     },
   ];
 
-  // 混合資料 => 首頁所需
   const posts = Array.isArray(mixed?.posts) ? mixed.posts : [];
   const channelLabel = (channel: "news" | "column"): string => {
     if (contentLang === "jp") return channel === "news" ? "ニュース" : "コラム";
     if (contentLang === "zh") return channel === "news" ? "新聞" : "專欄";
     return channel === "news" ? "News" : "Column";
   };
+  type HomeNewsItem = {
+    dateISO: string;
+    title: string;
+    href: string;
+    channelLabel: string;
+    hashtags?: string[];
+  };
   const homeNewsItems: HomeNewsItem[] = posts.map((p: any) => {
     const published = typeof p?.publishedAt === "string" ? p.publishedAt : "";
     const dateISO = published ? published.slice(0, 10) : "1970-01-01";
     const slug = p?.slug ?? "";
     const base = p?.channel === "column" ? "/column" : "/news";
-    const href = `${base}/${slug}?lang=${contentLang}`;
+    const href = addLangQuery(`${base}/${slug}`, contentLang);
     const hashtags =
       Array.isArray(p?.tags) && p.tags.length > 0
         ? p.tags.map((t: any) => t?.title).filter(Boolean)
@@ -241,76 +224,80 @@ export default async function Home({
   });
 
   return (
-    <main
-      id="top"
-      className="bg-background text-foreground overflow-x-hidden" // 手機防橫向捲動
-    >
-      {/* 導覽列：僅導覽列支援 zh-cn 其餘內容用 contentLang */}
-      <Nav lang={spRaw?.lang as string} />
+    <main id="top" className="bg-background text-foreground overflow-x-hidden">
+      {/* 導覽列：是 async server component，請以函式呼叫並 await */}
+      {await (NavigationServer as any)({ lang: spRaw?.lang as string })}
 
-      {/* 語言切換器：手機更靠內與略低，避免瀏海遮擋 */}
       <LanguageSwitcher
         current={contentLang}
         offsetY={TUNE.langOffsetYrem}
         offsetRight={TUNE.langOffsetRightRem}
       />
 
-      {/* Hero：字級與位移已針對手機優化 */}
-      <HeroBanner data={hero} navHeight={NAV_HEIGHT} tune={TUNE} />
+      {/* Hero：CTA 會跳 /xxx?lang=jp|zh|en */}
+      <HeroBanner
+        data={hero}
+        navHeight={NAV_HEIGHT}
+        tune={TUNE}
+        lang={contentLang}
+      />
 
-      {/* 五大痛點：移除外層水平 padding，避免左右留白 */}
+      <div>{await ChallengesSection({ lang: contentLang })}</div>
+
       <div>
-        {await ChallengesSection({ lang: contentLang })}
+        <ServiceSection items={services || []} lang={contentLang} />
       </div>
 
-      {/* 服務：移除外層水平 padding */}
       <div>
-        <ServiceSection items={services || []} />
-      </div>
-
-      {/* CrossBorder：移除外層水平 padding */}
-      <div>
-        <CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} />
-      </div>
-
-      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-
-      {/* About 區塊：移除外層水平 padding */}
-      <div>
-        <AboutSection data={about ?? null} />
+        <CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} lang={contentLang} />
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      {/* 混合 News + Column 區塊：本身已有滿版色底，維持不變 */}
+      <div>
+        <AboutSection data={about ?? null} lang={contentLang} />
+      </div>
+
+      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
+
       <div>
         <NewsSection lang={contentLang} items={homeNewsItems} />
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      {/* Contact：移除外層水平 padding */}
       <div>
         <ContactSection data={contact ?? null} lang={contentLang} />
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      {/* Footer */}
-      <Footer
-        lang={(spRaw?.lang?.toLowerCase() as "jp" | "zh" | "en" | "zh-cn") || contentLang}
-        company={footerCompany}
-        contact={footerContact}
-        primaryLinks={primaryLinks}
-        secondaryLinks={secondaryLinks}
-      />
+      {/* Footer 亦為 async server component，採函式呼叫並 await */}
+      {await (FooterServer as any)({
+        lang: (spRaw?.lang?.toLowerCase() as "jp" | "zh" | "en" | "zh-cn") || contentLang,
+        company: footerCompany,
+        contact: footerContact,
+        primaryLinks,
+        secondaryLinks,
+      })}
     </main>
   );
 }
 
 /** 混合 News & Column 的首頁列表（手機優化字級與間距） */
-function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
-  // 標題多語直接寫在程式
+function NewsSection({
+  lang,
+  items,
+}: {
+  lang: Lang;
+  items: {
+    dateISO: string;
+    title: string;
+    href: string;
+    channelLabel: string;
+    hashtags?: string[];
+  }[];
+}) {
   const t = {
     jp: { title: "ニュースとコラム", sub: "最新のニュースと実務コラムをまとめてお届けします。", cta: "すべて見る" },
     zh: { title: "新聞與專欄", sub: "最新新聞與深度專欄一次掌握。", cta: "查看全部" },
@@ -321,7 +308,6 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
     <section className="text-white" style={{ backgroundColor: "#1C3D5A" }}>
       <div className="mx-auto max-w-6xl px-3 sm:px-4 py-10 sm:py-14 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 items-start">
-          {/* 左側標題與按鈕 */}
           <div className="md:col-span-1">
             <h2
               className="text-[clamp(1.35rem,5.2vw,1.75rem)] sm:text-3xl md:text-4xl font-bold tracking-wide text-white drop-shadow-sm leading-snug"
@@ -336,7 +322,7 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
 
             <div className="mt-6 sm:mt-8">
               <Link
-                href={`/news?lang=${lang}`}
+                href={addLangQuery("/news", lang)}
                 className="inline-flex items-center justify-center rounded-full px-5 sm:px-6 py-2.5 sm:py-3 text-sm md:text-base font-semibold shadow-md text-white bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-400 hover:to-blue-300 transition-colors"
               >
                 {t.cta}
@@ -344,7 +330,6 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
             </div>
           </div>
 
-          {/* 右側混合列表 */}
           <div className="md:col-span-2">
             <ul className="divide-y divide-white/20">
               {items.map((a, i) => (
@@ -354,12 +339,10 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
                       {formatDateDeterministic(lang, a.dateISO)}
                     </time>
 
-                    {/* 小分類：News / Column（多語） */}
                     <span className="inline-flex items-center rounded-full border border-blue-200/40 bg-blue-900/30 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-blue-100">
                       {a.channelLabel}
                     </span>
 
-                    {/* Hashtags */}
                     {a.hashtags && a.hashtags.length > 0 && (
                       <div className="w-full md:w-auto md:ml-auto text-[11px] sm:text-xs text-blue-200">
                         {a.hashtags.map((h, idx) => (
@@ -379,7 +362,6 @@ function NewsSection({ lang, items }: { lang: Lang; items: HomeNewsItem[] }) {
                 </li>
               ))}
 
-              {/* 若沒有資料 */}
               {items.length === 0 && (
                 <li className="py-6">
                   <h3 className="mt-3 text-[15px] md:text-base leading-relaxed text-blue-100">

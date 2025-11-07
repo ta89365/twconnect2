@@ -342,9 +342,9 @@ export default async function FinanceAdvisoryPage({
             {renderTitleNoWrap(title, lang)}
           </h1>
           <p className="mt-4 text-base md:text-lg leading-relaxed opacity-95">
-            {lang === "jp" && "数字と戦略の両面から、国際展開を支える総合アドバイザリー。"}
-            {lang === "zh" && "結合財務與策略的專業顧問，穩健支持企業的國際擴張。"}
-            {lang === "en" && "Advisory that connects numbers with strategy to support global growth."}
+            {lang === "jp" && "国際財務アドバイザリーで企業の成長を支援"}
+            {lang === "zh" && "國際財務顧問，助力企業全球成長"}
+            {lang === "en" && "Global Financial Advisory for Business Growth"}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             {/* 錨點連結不需加 lang */}

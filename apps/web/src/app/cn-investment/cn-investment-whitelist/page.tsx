@@ -211,7 +211,7 @@ export default async function Page() {
                 <div className="flex items-start gap-3">
                   <Info className="h-5 w-5 shrink-0 mt-1" />
                   <div className="space-y-4">
-                    <h2 className="text-2xl font-semibold">一、白名单制度简介</h2>
+                    <h2 className="text-2xl font-semibold">一、正面表列制度简介</h2>
                     <div className="prose prose-invert max-w-none">
                       <PortableText value={doc.introZhCn} components={ptComponents} />
                     </div>

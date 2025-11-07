@@ -158,7 +158,7 @@ function safeHref(item: Topic) {
   if (item?.internal?.slug) {
     const ch = item.internal.channel ?? "news";
     return withLang(`/${ch}/${item.internal.slug}`);
-    }
+  }
   return item?.external ?? "#";
 }
 
@@ -246,7 +246,6 @@ function Stat({
   );
 }
 
-
 /* ============================ Page ============================ */
 export default async function Page(): Promise<JSX.Element> {
   const doc = (await sfetch(cnInvestmentLandingQuery)) as LandingDoc | null;
@@ -291,86 +290,86 @@ export default async function Page(): Promise<JSX.Element> {
 
           {/* 重要數字重點 */}
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Stat icon={Lucide.Clock} value="5–8 周" label="一般核准周期预估" />
+            <Stat icon={Lucide.Clock} value="全程代辦" label="最快 1个月内核准" />
             <Stat icon={Lucide.Files} value="12+ 项" label="关键申请与佐证文件" />
-            <Stat icon={Lucide.SquareCheck} value="4 阶段" label="从核准到开业全流程" />
+            <Stat icon={Lucide.SquareCheck} value="6 阶段" label="从核准到开业全流程" />
             <Stat icon={Lucide.Users} value="专案制" label="顾问与法遵协作" />
           </div>
         </div>
       </section>
 
-{/* ============================ Why + Principle 三欄 Features ============================ */}
-{(doc?.whyZh?.length || doc?.principleZh) && (
-  <section
-    className="mx-auto px-6 py-14 md:py-20 border-t border-white/10"
-    style={{ maxWidth: TUNE.contentMaxW }}
-  >
-    <div className="grid md:grid-cols-3 gap-6">
-      {/* 卡片 1 */}
-      <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="rounded-lg bg-white/20 p-2.5">
-            <Lucide.Target className="h-5 w-5" />
-          </div>
-          <p className="text-lg font-semibold">进入台湾的正确路径</p>
-        </div>
-        {!!doc?.whyZh?.length ? (
-          <div className="prose prose-invert max-w-none text-sm leading-relaxed opacity-90">
-            <PortableText value={doc.whyZh} components={ptComponents} />
-          </div>
-        ) : (
-          <p className="text-sm opacity-90 leading-relaxed">
-            台湾市场具有高潜能与法制完善的投资环境。陆资若未依法核准设立，可能导致严重退件或延误。
-            <br />
-            Taiwan Connect 提供合规路径，协助顺利核准、设立、营运。
-          </p>
-        )}
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#4FC3F7] to-[#A7FFEB]" />
-      </div>
+      {/* ============================ Why + Principle 三欄 Features ============================ */}
+      {(doc?.whyZh?.length || doc?.principleZh) && (
+        <section
+          className="mx-auto px-6 py-14 md:py-20 border-t border-white/10"
+          style={{ maxWidth: TUNE.contentMaxW }}
+        >
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* 卡片 1 */}
+            <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-lg bg-white/20 p-2.5">
+                  <Lucide.Target className="h-5 w-5" />
+                </div>
+                <p className="text-lg font-semibold">进入台湾的正确路径</p>
+              </div>
+              {!!doc?.whyZh?.length ? (
+                <div className="prose prose-invert max-w-none text-sm leading-relaxed opacity-90">
+                  <PortableText value={doc.whyZh} components={ptComponents} />
+                </div>
+              ) : (
+                <p className="text-sm opacity-90 leading-relaxed">
+                  台湾市场具有高潜能与法制完善的投资环境。陆资若未依法核准设立，可能导致严重退件或延误。
+                  <br />
+                  Taiwan Connect 提供合规路径，协助顺利核准、设立、营运。
+                </p>
+              )}
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#4FC3F7] to-[#A7FFEB]" />
+            </div>
 
-      {/* 卡片 2 */}
-      <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="rounded-lg bg-white/20 p-2.5">
-            <Lucide.Scale className="h-5 w-5" />
-          </div>
-          <p className="text-lg font-semibold">合规先行的核心原则</p>
-        </div>
-        <p className="text-sm opacity-90 leading-relaxed whitespace-pre-line">
-          {doc?.principleZh || "让陆资企业合规落地、顺利营运，真正开启台湾市场的大门。"}
-        </p>
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#FFD54F] to-[#FFB300]" />
-      </div>
+            {/* 卡片 2 */}
+            <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-lg bg-white/20 p-2.5">
+                  <Lucide.Scale className="h-5 w-5" />
+                </div>
+                <p className="text-lg font-semibold">合规先行的核心原则</p>
+              </div>
+              <p className="text-sm opacity-90 leading-relaxed whitespace-pre-line">
+                {doc?.principleZh || "让陆资企业合规落地、顺利营运，真正开启台湾市场的大门。"}
+              </p>
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#FFD54F] to-[#FFB300]" />
+            </div>
 
-      {/* 卡片 3 */}
-      <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="rounded-lg bg-white/20 p-2.5">
-            <Lucide.Layers className="h-5 w-5" />
+            {/* 卡片 3 */}
+            <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-lg bg-white/20 p-2.5">
+                  <Lucide.Layers className="h-5 w-5" />
+                </div>
+                <p className="text-lg font-semibold">从核准到营运的衔接</p>
+              </div>
+              <ul className="space-y-2 text-sm opacity-90">
+                <li className="flex items-start gap-2">
+                  <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
+                  投审会核准
+                </li>
+                <li className="flex items-start gap-2">
+                  <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
+                  公司设立与开户
+                </li>
+                <li className="flex items-start gap-2">
+                  <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
+                  税务登记与人事合规
+                </li>
+              </ul>
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#64B5F6] to-[#1E88E5]" />
+            </div>
           </div>
-          <p className="text-lg font-semibold">从核准到营运的衔接</p>
-        </div>
-        <ul className="space-y-2 text-sm opacity-90">
-          <li className="flex items-start gap-2">
-            <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
-            投审会核准
-          </li>
-          <li className="flex items-start gap-2">
-            <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
-            公司设立与开户
-          </li>
-          <li className="flex items-start gap-2">
-            <Lucide.CheckCircle2 className="h-4 w-4 mt-0.5 text-[#80DEEA]" />
-            税务登记与人事合规
-          </li>
-        </ul>
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#64B5F6] to-[#1E88E5]" />
-      </div>
-    </div>
-  </section>
-)}
+        </section>
+      )}
 
-      {/* ============================ 法规定义與主管机关 ============================ */}
+      {/* ============================ 法规定义與主管机关 + 審查重點 ============================ */}
       {(doc?.regulationDefinitionZh?.length || doc?.authorities?.length) && (
         <section
           className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
@@ -409,31 +408,43 @@ export default async function Page(): Promise<JSX.Element> {
               </div>
             </div>
           )}
-        </section>
-      )}
 
-      {/* ============================ 审查重点：卡片清单 ============================ */}
-      {!!doc?.reviewFocus?.length && (
-        <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
-          style={{ maxWidth: TUNE.contentMaxW }}
-        >
-          <h2 className="text-2xl font-bold mb-6">主要审查重点</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {[...doc.reviewFocus]
-              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-              .map((x, idx) => (
-                <div key={idx} className="rounded-2xl bg-white/5 p-5">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="rounded-xl bg-white/10 p-2">
-                      <Lucide.FileSearch className="h-5 w-5" />
-                    </div>
-                    <p className="font-semibold">{x.titleZh}</p>
-                  </div>
-                  {!!x.bodyZh && <p className="opacity-90 text-sm whitespace-pre-line">{x.bodyZh}</p>}
+          {/* ▼▼ 審查重點直接接在主管機關下方，沿用玻璃卡樣式與配色 ▼▼ */}
+          {!!doc?.reviewFocus?.length && (
+            <div className="mt-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="rounded-xl bg-white/10 p-2">
+                  <Lucide.FileSearch className="h-5 w-5" />
                 </div>
-              ))}
-          </div>
+                <h3 className="text-xl font-semibold">主要审查重点</h3>
+              </div>
+              <p className="opacity-80 text-sm mb-4">Key items evaluated by MOEAIC / MAC.</p>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {[...doc.reviewFocus]
+                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                  .map((x, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-5"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="rounded-xl bg-white/10 p-2">
+                          <Lucide.SearchCheck className="h-5 w-5" />
+                        </div>
+                        <p className="font-semibold leading-tight">{x.titleZh}</p>
+                      </div>
+                      {!!x.bodyZh && (
+                        <p className="opacity-90 text-sm leading-relaxed whitespace-pre-line">
+                          {x.bodyZh}
+                        </p>
+                      )}
+                      <div className="mt-4 h-1 rounded-full bg-gradient-to-r from-[#4FC3F7]/70 to-[#A7FFEB]/70" />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -540,7 +551,7 @@ export default async function Page(): Promise<JSX.Element> {
 
             {!!doc?.serviceBulletsZh?.length && (
               <div className="rounded-2xl bg-white/5 p-6">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items中心 gap-3 mb-4">
                   <div className="rounded-xl bg-white/10 p-2">
                     <Lucide.ListChecks className="h-5 w-5" />
                   </div>

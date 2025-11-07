@@ -1,235 +1,227 @@
-// schemas/twServiceDetail.ts
-import { defineField, defineType } from "sanity";
+// apps/cms/schemaTypes/twServiceDetail.ts
+import { defineField, defineType, defineArrayMember } from "sanity";
 
+/** ---------- Locale helpers ---------- */
+const localeString = (name: string, title: string) =>
+  defineField({
+    name,
+    title,
+    type: "object",
+    fields: [
+      defineField({ name: "jp", title: "Japanese", type: "string" }),
+      defineField({ name: "zh", title: "Chinese (Traditional)", type: "string" }),
+      defineField({ name: "en", title: "English", type: "string" }),
+    ],
+  });
+
+const localeText = (name: string, title: string, rows = 4) =>
+  defineField({
+    name,
+    title,
+    type: "object",
+    fields: [
+      defineField({ name: "jp", title: "Japanese", type: "text", rows }),
+      defineField({ name: "zh", title: "Chinese (Traditional)", type: "text", rows }),
+      defineField({ name: "en", title: "English", type: "text", rows }),
+    ],
+  });
+
+const localeStringArray = (name: string, title: string) =>
+  defineField({
+    name,
+    title,
+    type: "object",
+    fields: [
+      defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
+      defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+      defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
+    ],
+  });
+
+/** ---------- Reusable row field sets ---------- */
+const planRowFields = [
+  localeString("plan", "Plan Name"),
+  localeStringArray("services", "Service Content"),
+  localeString("who", "Ideal For"),
+  defineField({ name: "feeJpy", title: "Fee (JPY)", type: "string" }),
+  localeText("notes", "Notes (Optional)", 3),
+];
+
+const commonRowFields = [
+  localeString("name", "Row Title / Service Name"),
+  localeStringArray("details", "Service Details / Items"),
+  localeString("idealFor", "Ideal For / Target Customers"),
+  defineField({ name: "feeJpy", title: "Fee (JPY)", type: "string" }),
+  localeText("notes", "Notes (Optional)", 3),
+];
+
+/** ---------- Document ---------- */
 export default defineType({
   name: "twServiceDetail",
   title: "Taiwan Market Entry Detail",
   type: "document",
-
   fields: [
-    /* ========== Basic Info ========== */
     defineField({
       name: "title",
       title: "Service Title",
       type: "string",
-      description: "Enter the English title shown on the page and used to generate the slug.",
+      description: "English title used on page and to generate the slug.",
       validation: (Rule) => Rule.required().min(2),
     }),
-
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
-      description: "URL friendly identifier generated from the English Service Title.",
       options: { source: "title", maxLength: 100 },
       validation: (Rule) => Rule.required(),
     }),
-
     defineField({
       name: "coverImage",
       title: "Hero Image",
       type: "image",
-      description: "Top hero image. Use a wide image and enable Hotspot to control the focal point.",
       options: { hotspot: true },
-      fields: [
-        defineField({
-          name: "alt",
-          title: "Alt Text",
-          type: "string",
-          description: "Alternative text for accessibility and SEO.",
-        }),
-      ],
+      fields: [defineField({ name: "alt", title: "Alt Text", type: "string" })],
     }),
 
-    /* ========== Background ========== */
-    defineField({
-      name: "background",
-      title: "Background",
-      type: "object",
-      description: "Short background description for this service in three languages.",
-      fields: [
-        { name: "zh", type: "text", title: "Chinese", rows: 4 },
-        { name: "jp", type: "text", title: "Japanese", rows: 4 },
-        { name: "en", type: "text", title: "English", rows: 4 },
-      ],
-    }),
+    /** ---------- Section heading: 料金（参考） / 費用（參考） / Fees (Reference) ---------- */
+    localeString("feesSectionTitle", "Fees Section Title"),
 
-    /* ========== Challenges ========== */
+    /** ---------- Originals kept ---------- */
+    localeText("background", "Background", 4),
+
     defineField({
       name: "challenges",
       title: "Challenges",
       type: "object",
-      description: "Key challenges that clients typically face.",
       fields: [
-        { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
-        { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
-        { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
+        defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
       ],
     }),
 
-    /* ========== Service Items ========== */
     defineField({
       name: "services",
       title: "Service Items",
       type: "object",
-      description: "What is included in this service and related keywords.",
       fields: [
-        { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
-        { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
-        { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
+        defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
         defineField({
           name: "keywords",
           title: "Keywords",
           type: "object",
-          description: "Search and tagging keywords per language.",
           fields: [
-            { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
-            { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
-            { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
+            defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
+            defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+            defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
           ],
         }),
       ],
     }),
 
-    /* ========== Service Flow ========== */
     defineField({
       name: "serviceFlow",
       title: "Service Flow",
       type: "object",
-      description: "Step by step flow or checklist that clients will follow.",
       fields: [
-        { name: "zh", type: "array", of: [{ type: "string" }], title: "Chinese" },
-        { name: "jp", type: "array", of: [{ type: "string" }], title: "Japanese" },
-        { name: "en", type: "array", of: [{ type: "string" }], title: "English" },
+        defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
       ],
     }),
 
-    /* ========== Schedule Example ========== */
     defineField({
       name: "scheduleExample",
       title: "Schedule Example",
       type: "object",
-      description: "Example timeline blocks with a title and bullet items for each language.",
       fields: [
-        {
-          name: "zh",
-          title: "Chinese",
-          type: "array",
-          of: [
-            {
-              type: "object",
-              fields: [
-                { name: "title", type: "string", title: "Title" },
-                { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
-              ],
-            },
-          ],
-        },
-        {
+        defineField({
           name: "jp",
           title: "Japanese",
           type: "array",
-          of: [
-            {
-              type: "object",
-              fields: [
-                { name: "title", type: "string", title: "Title" },
-                { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
-              ],
-            },
-          ],
-        },
-        {
+          of: [defineArrayMember({ type: "object", name: "jpScheduleBlock", fields: [
+            defineField({ name: "title", type: "string", title: "Title" }),
+            defineField({ name: "items", type: "array", title: "Items", of: [defineArrayMember({ type: "string" })] }),
+          ]})],
+        }),
+        defineField({
+          name: "zh",
+          title: "Chinese (Traditional)",
+          type: "array",
+          of: [defineArrayMember({ type: "object", name: "zhScheduleBlock", fields: [
+            defineField({ name: "title", type: "string", title: "Title" }),
+            defineField({ name: "items", type: "array", title: "Items", of: [defineArrayMember({ type: "string" })] }),
+          ]})],
+        }),
+        defineField({
           name: "en",
           title: "English",
           type: "array",
-          of: [
-            {
-              type: "object",
-              fields: [
-                { name: "title", type: "string", title: "Title" },
-                { name: "items", type: "array", of: [{ type: "string" }], title: "Items" },
-              ],
-            },
-          ],
-        },
-      ],
-    }),
-
-    /* ========== Fees ========== */
-    defineField({
-      name: "fees",
-      title: "Fees Reference",
-      type: "array",
-      description: "Reference pricing grouped by category.",
-      of: [
-        defineField({
-          name: "feeGroup",
-          title: "Fee Group",
-          type: "object",
-          fields: [
-            { name: "category", type: "string", title: "Category" },
-            {
-              name: "entries",
-              title: "Fee Entries",
-              type: "array",
-              of: [
-                defineField({
-                  name: "feeEntry",
-                  title: "Fee Entry",
-                  type: "object",
-                  fields: [
-                    {
-                      name: "serviceName",
-                      title: "Service Name",
-                      type: "object",
-                      description: "Display name for the fee entry in three languages.",
-                      fields: [
-                        { name: "zh", type: "string", title: "Chinese" },
-                        { name: "jp", type: "string", title: "Japanese" },
-                        { name: "en", type: "string", title: "English" },
-                      ],
-                    },
-                    { name: "fee", type: "string", title: "Fee JPY" },
-                    {
-                      name: "notes",
-                      title: "Notes",
-                      type: "object",
-                      description: "Optional notes in three languages.",
-                      fields: [
-                        { name: "zh", type: "string", title: "Chinese" },
-                        { name: "jp", type: "string", title: "Japanese" },
-                        { name: "en", type: "string", title: "English" },
-                      ],
-                    },
-                  ],
-                }),
-              ],
-            },
-          ],
+          of: [defineArrayMember({ type: "object", name: "enScheduleBlock", fields: [
+            defineField({ name: "title", type: "string", title: "Title" }),
+            defineField({ name: "items", type: "array", title: "Items", of: [defineArrayMember({ type: "string" })] }),
+          ]})],
         }),
       ],
     }),
 
-    /* ========== CTA ========== */
+    /** ---------- New Fees Tables (structured by sections) ---------- */
+
+    // I. Subsidiary plans (Light / Standard / Premium)
     defineField({
-      name: "ctaLabel",
-      title: "CTA Button Label",
-      type: "object",
-      description: "Text on the call to action button in three languages.",
-      fields: [
-        { name: "zh", type: "string", title: "Chinese" },
-        { name: "jp", type: "string", title: "Japanese" },
-        { name: "en", type: "string", title: "English" },
-      ],
+      name: "subsidiaryPlans",
+      title: "I. Subsidiary Establishment Support – Plans",
+      type: "array",
+      of: [defineArrayMember({ type: "object", name: "planRow", title: "Plan Row", fields: planRowFields,
+        preview: { select: { jp: "plan.jp", zh: "plan.zh", en: "plan.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Unnamed Plan)" }) },
+      })],
     }),
 
+    // II. Branch Office Establishment Support (rows)
     defineField({
-      name: "ctaLink",
-      title: "CTA Link",
-      type: "url",
-      description: "Target URL for the call to action button such as contact page.",
+      name: "branchSupport",
+      title: "II. Branch Office Establishment Support",
+      type: "array",
+      of: [defineArrayMember({ type: "object", name: "branchRow", title: "Branch Row", fields: commonRowFields,
+        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Branch Row)" }) },
+      })],
     }),
+
+    // III. Representative Office Establishment Support (rows)
+    defineField({
+      name: "repOfficeSupport",
+      title: "III. Representative Office Establishment Support",
+      type: "array",
+      of: [defineArrayMember({ type: "object", name: "repOfficeRow", title: "Representative Office Row", fields: commonRowFields,
+        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Rep Office Row)" }) },
+      })],
+    }),
+
+    // IV. Accounting & Tax Support (rows)
+    defineField({
+      name: "accountingTaxSupport",
+      title: "IV. Accounting & Tax Support",
+      type: "array",
+      of: [defineArrayMember({ type: "object", name: "accountingTaxRow", title: "Accounting / Tax Row", fields: commonRowFields,
+        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Accounting/Tax Row)" }) },
+      })],
+    }),
+
+    // V. Value-Added Services (rows)
+    defineField({
+      name: "valueAddedServices",
+      title: "V. Value-Added Services (Optional)",
+      type: "array",
+      of: [defineArrayMember({ type: "object", name: "valueAddedRow", title: "Value-Added Row", fields: commonRowFields,
+        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Value-Added Row)" }) },
+      })],
+    }),
+
+    /** ---------- CTA ---------- */
+    localeString("ctaLabel", "CTA Button Label"),
+    defineField({ name: "ctaLink", title: "CTA Link", type: "url" }),
   ],
 
   preview: {

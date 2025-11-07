@@ -8,7 +8,6 @@ import {
   Facebook,
   Instagram,
   Globe2,
-  LineChart,
   Mail,
   MapPin,
   Github,
@@ -26,7 +25,6 @@ export type FooterCompany = {
 
 export type FooterContact = {
   email?: string | null;
-  lineId?: string | null;
   addressJp?: string | null;
   addressTw?: string | null;
 };
@@ -38,7 +36,6 @@ export type FooterSocial = {
   github?: string | null;
   medium?: string | null;
   note?: string | null;
-  line?: string | null;
 };
 
 type FooterProps = {
@@ -88,7 +85,7 @@ export default function Footer({
   company,
   contact,
   primaryLinks,
-  secondaryLinks, // unused
+  secondaryLinks,
   sitemapLabel,
   social,
   logoUrl,
@@ -102,7 +99,6 @@ export default function Footer({
   const safeLogoSrc = isValidSrc(incomingLogo) ? incomingLogo : "/logo.png";
 
   const displayEmail = (contact?.email || "info@twconnects.com").trim();
-  const displayLineId = contact?.lineId?.trim() || "@030qreji";
   const displayDesc =
     (company?.desc && company.desc.trim()) ||
     (lang === "en"
@@ -121,9 +117,8 @@ export default function Footer({
   return (
     <footer className="text-slate-100" style={{ backgroundColor: BRAND_BG }}>
       <div className="border-t border-white/15">
-        {/* ✅ 調整容器寬度 + 欄位比例 */}
         <div className="mx-auto max-w-[90rem] px-8 py-8 sm:py-10 flex flex-col md:flex-row md:items-start md:justify-between gap-8 md:gap-5">
-          {/* 左：公司敘述（38%） */}
+          {/* 左：公司敘述 */}
           <section className="md:w-[38%]">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden ring-1 ring-white/20">
@@ -140,7 +135,7 @@ export default function Footer({
             <p className="mt-2 text-[14px] leading-6 text-slate-300">{displayDesc}</p>
           </section>
 
-          {/* 中：聯絡資訊（32%） */}
+          {/* 中：聯絡資訊 */}
           <section className="md:w-[32%]">
             <ul className="space-y-1.5 text-slate-200 text-[14px]">
               {contact?.addressJp && (
@@ -166,16 +161,10 @@ export default function Footer({
                   </a>
                 </li>
               )}
-              {displayLineId && (
-                <li className="flex items-start gap-2 leading-5">
-                  <LineChart className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
-                  <span>{displayLineId}</span>
-                </li>
-              )}
             </ul>
           </section>
 
-          {/* 右：網站導覽 + 社群（30%） */}
+          {/* 右：網站導覽 + 社群 */}
           <nav className="md:w-[30%]">
             <div className="font-semibold text-white mb-1 text-[14px]">
               {displaySitemap}
@@ -268,18 +257,6 @@ export default function Footer({
                   prefetch={false}
                 >
                   <Globe2 className="h-4 w-4" />
-                </Link>
-              )}
-              {nonEmpty(s.line) && (
-                <Link
-                  href={toExternalHref(s.line)!}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="LINE"
-                  className="text-white/90 hover:text-sky-200"
-                  prefetch={false}
-                >
-                  <LineChart className="h-4 w-4" />
                 </Link>
               )}
             </div>

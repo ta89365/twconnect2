@@ -2,6 +2,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 type Lang = "jp" | "zh" | "zh-cn" | "en";
@@ -48,6 +49,27 @@ function resolveCopy(lang: Exclude<Lang, "zh-cn">) {
   return dict[lang];
 }
 
+/** 判斷是否為不應附掛語言參數的連結 */
+function isBypassLink(href?: string | null): boolean {
+  const s = String(href ?? "").trim().toLowerCase();
+  if (!s) return true;
+  return (
+    s.startsWith("http://") ||
+    s.startsWith("https://") ||
+    s.startsWith("mailto:") ||
+    s.startsWith("tel:") ||
+    s.startsWith("#")
+  );
+}
+
+/** 對站內相對路徑附掛 ?lang=xx；若已帶 lang 則不重複附掛 */
+function addLangQuery(href: string, lang: Exclude<Lang, "zh-cn">): string {
+  if (!href.startsWith("/")) return href;
+  if (/[?&]lang=/.test(href)) return href;
+  const joiner = href.includes("?") ? "&" : "?";
+  return `${href}${joiner}lang=${lang}`;
+}
+
 export default function ServiceSection({
   items,
   lang, // 可選；若未傳，將以 URL ?lang 為主
@@ -66,11 +88,18 @@ export default function ServiceSection({
 }) {
   if (!items?.length) return null;
 
-  // ✅ 以 URL ?lang 優先，其次使用 props.lang，最後預設 jp
+  // ✅ 以 URL ?lang 優先，其次 props.lang，最後預設 jp
   const sp = useSearchParams();
   const urlLang = normalizeLang(sp?.get("lang"));
   const effectiveLang = normalizeLang(lang ?? urlLang);
   const copy = resolveCopy(effectiveLang);
+
+  const toHref = (raw?: string | null) => {
+    const href = String(raw ?? "").trim();
+    if (!href) return "#";
+    if (isBypassLink(href)) return href;
+    return addLangQuery(href, effectiveLang);
+  };
 
   return (
     <section className="relative overflow-hidden bg-[#1C3D5A] py-16 sm:py-20">
@@ -91,52 +120,55 @@ export default function ServiceSection({
 
         {/* Cards */}
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((it) => (
-            <a
-              key={it._id}
-              href={it.href || "#"}
-              className="group relative flex flex-col overflow-hidden rounded-2xl bg-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]"
-            >
-              {/* image */}
-              {it.imageUrl ? (
-                <div className="relative aspect-[16/9] w-full">
-                  <Image
-                    src={it.imageUrl}
-                    alt={it.title || ""}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    sizes="(min-width: 1280px) 280px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-                  />
-                </div>
-              ) : (
-                <div className="aspect-[16/9] w-full bg-slate-700" />
-              )}
+          {items.map((it) => {
+            const finalHref = toHref(it.href);
+            return (
+              <Link
+                key={it._id}
+                href={finalHref}
+                className="group relative flex flex-col overflow-hidden rounded-2xl bg-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]"
+              >
+                {/* image */}
+                {it.imageUrl ? (
+                  <div className="relative aspect-[16/9] w-full">
+                    <Image
+                      src={it.imageUrl}
+                      alt={it.title || ""}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="(min-width: 1280px) 280px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[16/9] w-full bg-slate-700" />
+                )}
 
-              {/* body */}
-              <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                <h3 className="text-base font-semibold leading-snug text-white">
-                  {it.title}
-                </h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-200">
-                  {it.desc}
-                </p>
+                {/* body */}
+                <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
+                  <h3 className="text-base font-semibold leading-snug text-white">
+                    {it.title}
+                  </h3>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-200">
+                    {it.desc}
+                  </p>
 
-                {/* CTA */}
-                <div className="mt-4">
-                  <span
-                    className="
-                      inline-flex items-center justify-center rounded-xl
-                      px-4 py-2 text-sm font-semibold shadow
-                      transition-colors duration-200
-                      text-[#FFFFFF] bg-[#4A90E2] hover:bg-[#5AA2F0]
-                    "
-                  >
-                    {ctaText ?? copy.cta}
-                  </span>
+                  {/* CTA */}
+                  <div className="mt-4">
+                    <span
+                      className="
+                        inline-flex items-center justify-center rounded-xl
+                        px-4 py-2 text-sm font-semibold shadow
+                        transition-colors duration-200
+                        text-[#FFFFFF] bg-[#4A90E2] hover:bg-[#5AA2F0]
+                      "
+                    >
+                      {ctaText ?? copy.cta}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </a>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

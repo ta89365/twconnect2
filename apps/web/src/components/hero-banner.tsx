@@ -1,12 +1,15 @@
 // apps/web/src/components/hero-banner.tsx
 import Image from "next/image";
+import Link from "next/link";
+
+type Lang = "jp" | "zh" | "en";
 
 type HeroData = {
   heading?: string;
   subheading?: string;
   subtitle?: string;
   ctaText?: string;
-  ctaHref?: string;
+  ctaHref?: string; // Sanity：站內相對路徑或外部完整網址
   bgUrl?: string;
   hotspot?: { x: number; y: number } | null;
 };
@@ -14,7 +17,7 @@ type HeroData = {
 type Offset = { xRem: number; yRem: number };
 
 type Tune = {
-  heroContentOffsetVh: number; // 供 forceTopVh 使用
+  heroContentOffsetVh: number;
   heroLeftPadRem: { base: number; md: number; lg: number };
   heroMaxWidth: string;
   heroObjectPos: string;
@@ -31,20 +34,46 @@ type Tune = {
     subtitle?: Offset;
     cta?: Offset;
   };
-  /** 若 true 則採用頂端偏移（原本的行為）；否則預設垂直置中 */
   forceTopVh?: boolean;
-  /** ✅ 整塊內容上下移動的量（vh）— 正數往下，負數往上 */
   shiftVh?: number;
 };
+
+/** 外部或不需處理的連結判斷 */
+function isBypassLink(href?: string): boolean {
+  if (!href) return true;
+  const s = href.trim().toLowerCase();
+  if (!s) return true;
+  return (
+    s.startsWith("http://") ||
+    s.startsWith("https://") ||
+    s.startsWith("mailto:") ||
+    s.startsWith("tel:") ||
+    s.startsWith("#")
+  );
+}
+
+/** ✅ 將 ?lang=xx 附掛到站內相對路徑；若已帶 lang 則不重複附掛 */
+function withLangQuery(href: string, lang: Lang): string {
+  if (isBypassLink(href)) return href;
+  if (!href.startsWith("/")) return href;
+
+  // 已經帶有 lang 參數就不再附掛
+  if (/[?&]lang=/.test(href)) return href;
+
+  const joiner = href.includes("?") ? "&" : "?";
+  return `${href}${joiner}lang=${lang}`;
+}
 
 export default function HeroBanner({
   data,
   navHeight = 72,
   tune,
+  lang,
 }: {
   data?: HeroData;
   navHeight?: number;
   tune: Tune;
+  lang: Lang;
 }) {
   const objectPosition = tune.heroObjectPosY
     ? `${tune.heroObjectPos} ${tune.heroObjectPosY}`
@@ -70,37 +99,13 @@ export default function HeroBanner({
     transform: `translate(${o?.xRem ?? 0}rem, ${o?.yRem ?? 0}rem)`,
   });
 
-  const renderSubtitle = (t?: string) => {
-    if (!t) return null;
-    const m = t.match(/[。．\.!?？！]/);
-    if (!m) return <>{t}</>;
-    const idx = m.index ?? -1;
-    if (idx < 0) return <>{t}</>;
-    const first = t.slice(0, idx + 1);
-    const rest = t.slice(idx + 1).trim();
-    return (
-      <>
-        <span>{first}</span>
-        {rest && (
-          <>
-            <br />
-            <span>{rest}</span>
-          </>
-        )}
-      </>
-    );
-  };
-
-  // ===== 文字陰影設定 =====
   const SHADOW = { color: "rgba(0,0,0,0.65)", blur: 10 };
   const textShadow = `0 2px ${SHADOW.blur}px ${SHADOW.color}`;
 
-  // ===== 內容容器設定 =====
   const containerBaseClass = "mx-auto h-full flex px-4 sm:px-6 lg:px-8";
   const containerAlignClass = tune.forceTopVh ? "items-start" : "items-center";
   const containerJustifyClass = "justify-center";
 
-  // ✅ 直接內建 shiftVh = 6，可自行改數字（正數往下、負數往上）
   const shift = typeof tune.shiftVh === "number" ? tune.shiftVh : 12;
 
   const containerStyle: React.CSSProperties = {
@@ -108,15 +113,18 @@ export default function HeroBanner({
     paddingTop: tune.forceTopVh
       ? `max(${navHeight + 8}px, ${tune.heroContentOffsetVh}vh)`
       : undefined,
-    transform: `translateY(${shift}vh)`, // 整塊移動
+    transform: `translateY(${shift}vh)`,
   };
+
+  // ✅ 產出最終 CTA：站內自動附掛 ?lang=，外部維持原樣
+  const ctaHrefFinal =
+    data?.ctaHref && lang ? withLangQuery(data.ctaHref, lang) : data?.ctaHref ?? "";
 
   return (
     <section
       className="relative z-0 w-full overflow-hidden bg-black"
       style={{ height: `calc(100lvh - ${navHeight}px)` }}
     >
-      {/* 背景圖 */}
       {data?.bgUrl && (
         <Image
           src={data.bgUrl}
@@ -128,14 +136,12 @@ export default function HeroBanner({
         />
       )}
 
-      {/* 內容層 */}
       <div className="absolute inset-0 z-20">
         <div
           className={`${containerBaseClass} ${containerAlignClass} ${containerJustifyClass}`}
           style={containerStyle}
         >
           <div className="w-full text-white text-center flex flex-col items-center">
-            {/* 主標題 */}
             {data?.heading && (
               <div style={move(blocks.heading)}>
                 <h1
@@ -153,7 +159,6 @@ export default function HeroBanner({
               </div>
             )}
 
-            {/* 副標題 */}
             {data?.subheading && (
               <div style={move(blocks.subheading)}>
                 <p
@@ -172,7 +177,6 @@ export default function HeroBanner({
               </div>
             )}
 
-            {/* subtitle */}
             {data?.subtitle && (
               <div style={move(blocks.subtitle)}>
                 <p
@@ -186,18 +190,15 @@ export default function HeroBanner({
                     fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
                   }}
                 >
-                  <span className="whitespace-pre-wrap">
-                    {renderSubtitle(data.subtitle)}
-                  </span>
+                  <span className="whitespace-pre-wrap">{data.subtitle}</span>
                 </p>
               </div>
             )}
 
-            {/* CTA */}
             {data?.ctaText && data?.ctaHref && (
               <div style={move(blocks.cta)}>
-                <a
-                  href={data.ctaHref}
+                <Link
+                  href={ctaHrefFinal}
                   className="mt-8 inline-flex items-center justify-center rounded-xl text-center font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:bg-[#2a5882]"
                   style={{
                     fontSize: "1.125rem",
@@ -208,7 +209,7 @@ export default function HeroBanner({
                   }}
                 >
                   {data.ctaText}
-                </a>
+                </Link>
               </div>
             )}
           </div>
