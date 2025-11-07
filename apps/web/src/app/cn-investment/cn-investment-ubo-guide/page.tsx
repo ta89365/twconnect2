@@ -65,8 +65,8 @@ const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => J
 const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
 
 /* ============================ UI tokens ============================ */
-const CARD_BG = "bg-white/12 backdrop-blur-sm";
-const CARD_BORDER = "border border-white/25";
+const CARD_BG = "bg-white/20 backdrop-blur-sm";
+const CARD_BORDER = "border border-white/30";
 const TEXT_SOFT = "text-white/90";
 
 /** YYYY.M.D（不補零） */
@@ -123,7 +123,7 @@ function ExampleDisclosure({ ex, idx }: { ex: UboExample; idx: number }) {
       <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 text-white grid place-items-center text-sm">{idx}</div>
-          <h3 className="text-lg md:text-xl text-white font-semibold">{ex.titleZhCn || `示例 ${idx}`}</h3>
+          <h3 className="text-lg md:text-xl text白 font-semibold">{ex.titleZhCn || `示例 ${idx}`}</h3>
         </div>
         <Lucide.ChevronDown className="size-5 text-white/80 transition-transform group-open:rotate-180" />
       </summary>
@@ -227,16 +227,12 @@ export default async function Page() {
               className="object-cover opacity-90"
             />
             {/* 遮罩很淺：僅在底部加 25%，中段只 5% */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1C3D5A]/5 to-[#1C3D5A]/25" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1C3D5A]/25 to-[#1C3D5A]/50" />
           </>
         ) : null}
 
         {/* Hero 內容容器放大，避免撐不下 */}
         <div className="relative z-10 w-full max-w-[1200px] mx-auto">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <Badge><Lucide.ShieldCheck className="size-3.5" />陆资判定与 UBO</Badge>
-            <Badge><Lucide.Scale className="size-3.5" />法规要点</Badge>
-          </div>
 
           <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
             {doc.heroTitleZhCn || "实质受益人（UBO）判定指南"}
@@ -297,7 +293,7 @@ export default async function Page() {
                   {doc.ownershipThresholdZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.Percent className="size-5 text-white/90 shrink-0 mt-0.5" />
+                        <Lucide.Percent className="size-5 text白/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">持股比例门槛</h3>
                           <PortableText value={doc.ownershipThresholdZhCn as TypedObject[]} components={ptComponents as any} />
@@ -308,7 +304,7 @@ export default async function Page() {
                   {doc.controlCriteriaZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.SlidersHorizontal className="size-5 text-white/90 shrink-0 mt-0.5" />
+                        <Lucide.SlidersHorizontal className="size-5 text白/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">控制能力判断</h3>
                           <PortableText value={doc.controlCriteriaZhCn as TypedObject[]} components={ptComponents as any} />
@@ -327,7 +323,7 @@ export default async function Page() {
                   {doc.layeredCalculationZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.GitCommitVertical className="size-5 text-white/90 shrink-0 mt-0.5" />
+                        <Lucide.GitCommitVertical className="size-5 text白/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">多层回溯计算</h3>
                           <PortableText value={doc.layeredCalculationZhCn as TypedObject[]} components={ptComponents as any} />
@@ -338,7 +334,7 @@ export default async function Page() {
                   {doc.uboFocusZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.Target className="size-5 text-white/90 shrink-0 mt-0.5" />
+                        <Lucide.Target className="size-5 text白/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">审查焦点</h3>
                           <PortableText value={doc.uboFocusZhCn as TypedObject[]} components={ptComponents as any} />
@@ -437,6 +433,33 @@ export default async function Page() {
           <SideTOC />
         </div>
       </main>
+
+      {/* ============================ Prefooter CTA ============================ */}
+      <section
+        id="prefooter-cta"
+        className="py-12 md:py-14 text-center border-t border-white/10"
+        style={{ backgroundColor: BRAND_BLUE }}
+      >
+        <div className="max-w-4xl mx-auto px-6">
+          <h3 className="text-xl md:text-2xl font-semibold text-white">
+            用最合适的进出策略，安心展开在台事业
+          </h3>
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <a
+              href="/contact?lang=zh-cn"
+              className="inline-block bg-[#4A90E2] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
+            >
+              联系我们
+            </a>
+            <a
+              href={`mailto:${doc?.contact?.email ?? "info@twconnects.com"}`}
+              className="inline-block bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
+            >
+              {doc?.contact?.email ?? "info@twconnects.com"}
+            </a>
+          </div>
+        </div>
+      </section>
 
       <Footer lang={PAGE_LANG} />
     </div>

@@ -284,67 +284,34 @@ export default async function Page(): Promise<JSX.Element> {
             </div>
           </section>
         ) : null}
-
-        {/* 聯絡我們 */}
-        {(doc?.contactEmail || doc?.contactLine) && (
-          <section className="mt-10 overflow-hidden rounded-3xl border border-white/15 bg-white/10">
-            <div className="grid gap-0 md:grid-cols-[1.2fr_0.8fr]">
-              <div className="p-6 md:p-8">
-                <div className="mb-2 text-sm uppercase tracking-wider opacity-90">
-                  需要更進一步的協助嗎
-                </div>
-                <h4 className="text-2xl font-semibold md:text-3xl">與顧問快速確認判斷方向</h4>
-                <p className="mt-3 max-w-xl text-sm opacity-95">
-                  針對 UBO、控制權層級、投審會文件準備與申請流程，我們可協助進一步盤點與規劃。
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {doc.contactEmail ? (
-                    <a
-                      href={`mailto:${doc.contactEmail}`}
-                      className="rounded-xl border border-white/20 bg-white/90 px-4 py-2 text-sm font-medium"
-                      style={{ color: BRAND_BLUE }}
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <Lucide.Mail className="h-4 w-4" />
-                        {doc.contactEmail}
-                      </span>
-                    </a>
-                  ) : null}
-                  {doc.contactLine ? (
-                    <span className="rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm">
-                      <span className="inline-flex items-center gap-2">
-                        <Lucide.MessageCircle className="h-4 w-4" />
-                        LINE：{doc.contactLine}
-                      </span>
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="relative hidden min-h-[180px] md:block">
-                <svg
-                  aria-hidden="true"
-                  className="absolute inset-0 h-full w-full"
-                  viewBox="0 0 400 300"
-                  preserveAspectRatio="none"
-                >
-                  <defs>
-                    <linearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.22" />
-                      <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.06" />
-                    </linearGradient>
-                  </defs>
-                  <rect x="0" y="0" width="400" height="300" fill="url(#cta)" />
-                  <circle cx="320" cy="60" r="36" fill="#FFFFFF" opacity="0.2" />
-                  <circle cx="360" cy="220" r="22" fill="#FFFFFF" opacity="0.12" />
-                  <circle cx="280" cy="180" r="14" fill="#FFFFFF" opacity="0.18" />
-                </svg>
-              </div>
-            </div>
-          </section>
-        )}
       </main>
+
+      {/* ============================ Prefooter CTA ============================ */}
+      <section
+        id="prefooter-cta"
+        className="py-12 md:py-14 text-center border-t border-white/10"
+        style={{ backgroundColor: BRAND_BLUE }}
+      >
+        <div className="max-w-4xl mx-auto px-6">
+          <h3 className="text-xl md:text-2xl font-semibold text-white">
+            用最合适的进出策略，安心展开在台事业
+          </h3>
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <a
+              href="/contact?lang=zh-cn"
+              className="inline-block bg-[#4A90E2] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
+            >
+              联系我们
+            </a>
+            <a
+              href={`mailto:${doc?.contactEmail ?? "info@twconnects.com"}`}
+              className="inline-block bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
+            >
+              {doc?.contactEmail ?? "info@twconnects.com"}
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ✅ Footer 改為簡中版本 */}
       <FooterServer lang="zh-cn" />

@@ -148,13 +148,13 @@ export default async function Page(): Promise<JSX.Element> {
               <a href="#files" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text-white transition">
                 申请所需文件
               </a>
-              <a href="#rejections" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text-white transition">
+              <a href="#rejections" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text白 transition">
                 常见退件
               </a>
-              <a href="#tips" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text-white transition">
+              <a href="#tips" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text白 transition">
                 实务建议
               </a>
-              <a href="#conclusion" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text-white transition">
+              <a href="#conclusion" className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-2 text-white/90 hover:bg-white/20 hover:text白 transition">
                 结语与联系
               </a>
             </nav>
@@ -301,6 +301,33 @@ export default async function Page(): Promise<JSX.Element> {
           ) : null}
         </div>
       </main>
+
+      {/* ============================ Prefooter CTA ============================ */}
+      <section
+        id="prefooter-cta"
+        className="py-12 md:py-14 text-center border-t border-white/10"
+        style={{ backgroundColor: BRAND_BLUE }}
+      >
+        <div className="max-w-4xl mx-auto px-6">
+          <h3 className="text-xl md:text-2xl font-semibold text-white">
+            用最合适的进出策略，安心展开在台事业
+          </h3>
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <Link
+              href="/contact?lang=zh-cn"
+              className="inline-block bg-[#4A90E2] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
+            >
+              联系我们
+            </Link>
+            <a
+              href={`mailto:${doc?.contact?.email ?? "info@twconnects.com"}`}
+              className="inline-block bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
+            >
+              {doc?.contact?.email ?? "info@twconnects.com"}
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ✅ Footer 強制使用 zh-cn */}
       {/* @ts-ignore Async Server Component */}

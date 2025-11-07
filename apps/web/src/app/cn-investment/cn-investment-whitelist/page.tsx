@@ -318,46 +318,35 @@ export default async function Page() {
               ))}
             </ol>
           </section>
-
-          {/* Contact */}
-          {(doc.contact && (doc.contact.email || doc.contact.lineId || doc.contact.contactNoteZhCn)) && (
-            <section id="contact" className="mt-10 scroll-mt-24">
-              <div className="rounded-2xl border border-white/15 bg-white/5 p-6 md:p-8">
-                <h2 className="text-2xl font-semibold mb-3">五、联系我们</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <div className="text-sm opacity-80">咨询邮箱</div>
-                    {doc.contact.email ? (
-                      <a
-                        href={`mailto:${doc.contact.email}`}
-                        className="text-lg underline decoration-white/50 underline-offset-4 hover:decoration-white"
-                      >
-                        {doc.contact.email}
-                      </a>
-                    ) : (
-                      <span className="opacity-70">未提供</span>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm opacity-80">LINE</div>
-                    {doc.contact.lineId ? (
-                      <span className="font-mono text-lg">{doc.contact.lineId}</span>
-                    ) : (
-                      <span className="opacity-70">未提供</span>
-                    )}
-                  </div>
-                </div>
-
-                {doc.contact.contactNoteZhCn && (
-                  <div className="prose prose-invert max-w-none mt-6">
-                    <PortableText value={doc.contact.contactNoteZhCn} components={ptComponents} />
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
         </div>
       </main>
+
+      {/* ============================ Prefooter CTA ============================ */}
+      <section
+        id="prefooter-cta"
+        className="py-12 md:py-14 text-center border-t border-white/10"
+        style={{ backgroundColor: BRAND_BLUE }}
+      >
+        <div className="max-w-4xl mx-auto px-6">
+          <h3 className="text-xl md:text-2xl font-semibold text-white">
+            用最合适的进出策略，安心展开在台事业
+          </h3>
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <a
+              href="/contact?lang=zh-cn"
+              className="inline-block bg-[#4A90E2] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
+            >
+              联系我们
+            </a>
+            <a
+              href={`mailto:${doc?.contact?.email ?? "info@twconnects.com"}`}
+              className="inline-block bg-white/10 border border-white/20 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
+            >
+              {doc?.contact?.email ?? "info@twconnects.com"}
+            </a>
+          </div>
+        </div>
+      </section>
 
       <Footer lang="zh-cn" />
     </div>

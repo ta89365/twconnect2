@@ -49,6 +49,9 @@ const TUNE = {
     "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.22) 55%, rgba(0,0,0,0.50) 100%)",
 } as const;
 
+// 淡淡底色（整段區塊底的輕微白霧層）
+const STRIP_BG = "bg-white/5";
+
 /* ============================ Types ============================ */
 type Block = any;
 
@@ -261,7 +264,7 @@ export default async function Page(): Promise<JSX.Element> {
       <Nav lang={NAV_FOOTER_LANG} />
 
       {/* ============================ Hero 區：大標題 + 徽章 + 數字重點 ============================ */}
-      <section className="relative w-full" style={{ minHeight: TUNE.heroMinH }}>
+      <section className={`relative w-full ${STRIP_BG}`} style={{ minHeight: TUNE.heroMinH }}>
         {doc?.heroImage?.url && (
           <Image
             src={doc.heroImage.url}
@@ -301,7 +304,7 @@ export default async function Page(): Promise<JSX.Element> {
       {/* ============================ Why + Principle 三欄 Features ============================ */}
       {(doc?.whyZh?.length || doc?.principleZh) && (
         <section
-          className="mx-auto px-6 py-14 md:py-20 border-t border-white/10"
+          className={`mx-auto px-6 py-14 md:py-20 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           <div className="grid md:grid-cols-3 gap-6">
@@ -372,7 +375,7 @@ export default async function Page(): Promise<JSX.Element> {
       {/* ============================ 法规定义與主管机关 + 審查重點 ============================ */}
       {(doc?.regulationDefinitionZh?.length || doc?.authorities?.length) && (
         <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+          className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           {!!doc?.regulationDefinitionZh?.length && (
@@ -451,7 +454,7 @@ export default async function Page(): Promise<JSX.Element> {
       {/* ============================ 疑问與 CTA ============================ */}
       {(doc?.doubtsZh?.length || doc?.contactFormHref) && (
         <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+          className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           <div className="grid md:grid-cols-3 gap-6">
@@ -489,7 +492,7 @@ export default async function Page(): Promise<JSX.Element> {
       {/* ============================ 流程：時間軸 ============================ */}
       {!!doc?.processSteps?.length && (
         <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+          className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           <h2 className="text-2xl font-bold mb-6">陆资投资与公司设立流程</h2>
@@ -531,7 +534,7 @@ export default async function Page(): Promise<JSX.Element> {
         doc?.serviceBulletsZh?.length ||
         doc?.teamImage?.url) && (
         <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+          className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           <div className="grid md:grid-cols-2 gap-6">
@@ -551,7 +554,7 @@ export default async function Page(): Promise<JSX.Element> {
 
             {!!doc?.serviceBulletsZh?.length && (
               <div className="rounded-2xl bg-white/5 p-6">
-                <div className="flex items中心 gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-4">
                   <div className="rounded-xl bg-white/10 p-2">
                     <Lucide.ListChecks className="h-5 w-5" />
                   </div>
@@ -588,7 +591,7 @@ export default async function Page(): Promise<JSX.Element> {
       {/* ============================ FAQ 手風琴 ============================ */}
       {!!doc?.faq?.length && (
         <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+          className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           <h2 className="text-2xl font-bold mb-6">常见问题（Q&A）</h2>
@@ -612,7 +615,7 @@ export default async function Page(): Promise<JSX.Element> {
 
       {/* ============================ 四張推薦文章卡片 ============================ */}
       <section
-        className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
+        className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
         style={{ maxWidth: TUNE.contentMaxW }}
       >
         <div className="flex items-center justify-between mb-6">
@@ -652,57 +655,40 @@ export default async function Page(): Promise<JSX.Element> {
         </div>
       </section>
 
-      {/* ============================ 聯絡卡片 ============================ */}
-      {(doc?.contactEmail || doc?.contactLine || doc?.bookingHref) && (
-        <section
-          className="mx-auto px-6 py-12 md:py-16 border-t border-white/10"
-          style={{ maxWidth: TUNE.contentMaxW }}
-        >
-          <h2 className="text-2xl font-bold mb-6">联系我们</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            {!!doc?.contactEmail && (
-              <div className="rounded-2xl bg-white/5 p-5">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="rounded-xl bg-white/10 p-2">
-                    <Lucide.Mail className="h-5 w-5" />
-                  </div>
-                  <p className="font-semibold">Email</p>
-                </div>
-                <p className="font-medium">{doc.contactEmail}</p>
-              </div>
-            )}
-            {!!doc?.contactLine && (
-              <div className="rounded-2xl bg-white/5 p-5">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="rounded-xl bg-white/10 p-2">
-                    <Lucide.MessageCircle className="h-5 w-5" />
-                  </div>
-                  <p className="font-semibold">LINE</p>
-                </div>
-                <p className="font-medium">{doc.contactLine}</p>
-              </div>
-            )}
-            {!!doc?.bookingHref && (
-              <div className="rounded-2xl bg-white p-5 text-black">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="rounded-xl bg-black/10 p-2">
-                    <Lucide.CalendarClock className="h-5 w-5" />
-                  </div>
-                  <p className="font-semibold">预约咨询</p>
-                </div>
-                <p className="text-sm opacity-80">选择方便的时间与顾问进行线上咨询。</p>
-                <Link
-                  href={withLang(doc.bookingHref)}
-                  className="mt-4 inline-flex items-center justify-center rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/50"
+      {/* ============================ Prefooter CTA（品牌藍底，與背景一致） ============================ */}
+      {(() => {
+        const rawHref = doc?.contactFormHref || doc?.bookingHref || "/contact";
+        const ctaHref = withLang(rawHref);
+        const isExternal = /^https?:\/\//i.test(ctaHref);
+        return (
+          <section
+            id="prefooter-cta"
+            className="py-12 md:py-14 text-center border-t border-white/10"
+            style={{ backgroundColor: BRAND_BLUE }}
+          >
+            <div className="max-w-4xl mx-auto px-6">
+              <h3 className="text-xl md:text-2xl font-semibold">
+                用最合适的进出策略，安心展开在台事业
+              </h3>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <a
+                  href={ctaHref}
+                  {...(isExternal ? { target: "_blank", rel: "noreferrer" } : {})}
+                  className="inline-block bg-[#4A90E2] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
                 >
-                  立即预约
-                  <Lucide.ArrowRight className="h-4 w-4 ml-2" />
-                </Link>
+                  联系我们
+                </a>
+                <a
+                  href="mailto:info@twconnects.com"
+                  className="inline-block bg-white/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
+                >
+                  info@twconnects.com
+                </a>
               </div>
-            )}
-          </div>
-        </section>
-      )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Footer：顯示簡中內容，但語系傳 zh，避免內部 links 取用錯誤 */}
       <Footer lang={NAV_FOOTER_LANG} />

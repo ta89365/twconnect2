@@ -110,7 +110,9 @@ export default async function ChallengesSection({
   sub?: string;
 }) {
   const copy = resolveCopy(lang);
-  const items = await sfetch<ChallengeItem[]>(challengesQueryML, { lang: lang === "zh-cn" ? "zh" : lang });
+  const items = await sfetch<ChallengeItem[]>(challengesQueryML, {
+    lang: lang === "zh-cn" ? "zh" : lang,
+  });
   if (!items?.length) return null;
 
   const list = items.slice(0, 5);
@@ -129,16 +131,15 @@ export default async function ChallengesSection({
           </p>
         </header>
 
-        {/* 頭三張卡：維持原來的格線位置 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* 前三張卡片 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
           {head.map((it) => (
             <article
               key={it._id}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur transition hover:border-white/20"
+              className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur transition hover:border-white/20 flex flex-col h-full"
             >
               <div className="mb-4 flex items-center gap-3">
                 <ChallengeIcon item={it} />
-                {/* 數字移除，其他不變 */}
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
               <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
@@ -147,15 +148,14 @@ export default async function ChallengesSection({
             </article>
           ))}
 
-          {/* 後兩張在小螢幕單獨顯示，維持原來邏輯 */}
+          {/* 後兩張卡片（行動版與桌機版） */}
           {tail.map((it) => (
             <article
               key={it._id}
-              className="lg:hidden rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur transition hover:border-white/20"
+              className="lg:hidden rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur transition hover:border-white/20 flex flex-col h-full"
             >
               <div className="mb-4 flex items-center gap-3">
                 <ChallengeIcon item={it} />
-                {/* 數字移除，其他不變 */}
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
               <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
@@ -164,17 +164,15 @@ export default async function ChallengesSection({
             </article>
           ))}
 
-          {/* lg 版：後兩張置中兩欄，維持原本 w-[380px] 與居中容器 */}
           <div className="hidden lg:block lg:col-span-3">
-            <div className="grid grid-cols-[auto_auto] gap-5 w-fit mx-auto">
+            <div className="grid grid-cols-[auto_auto] gap-5 w-fit mx-auto items-stretch">
               {tail.map((it) => (
                 <article
                   key={it._id}
-                  className="w-[380px] rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur transition hover:border-white/20"
+                  className="w-[380px] rounded-2xl border border-white/10 bg-white/5 p-6 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] backdrop-blur transition hover:border-white/20 flex flex-col h-full"
                 >
                   <div className="mb-4 flex items-center gap-3">
                     <ChallengeIcon item={it} />
-                    {/* 數字移除，其他不變 */}
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
                   <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
@@ -186,17 +184,16 @@ export default async function ChallengesSection({
           </div>
         </div>
 
-        {/* CTA Ribbon */}
+        {/* 保留 Ribbon CTA */}
         <div className="mt-8 sm:mt-10 md:mt-14">
           <div className="w-fit mx-auto flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 text-white backdrop-blur sm:flex-row sm:px-8 sm:py-5">
             <div className="text-center sm:text-left">
               <div className="font-semibold whitespace-nowrap">{copy.ribbonTitle}</div>
               <div className="text-slate-200 whitespace-nowrap">{copy.ribbonSub}</div>
             </div>
-
             <a
               href={`/client-challenges?lang=${lang}`}
-              className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200 text-white bg-[#4A90E2] hover:bg-[#5AA2F0] whitespace-nowrap"
+              className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200 text-white bg-[#1f2454] hover:bg-[#2b3068] whitespace-nowrap"
             >
               {copy.cta}
             </a>
