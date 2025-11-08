@@ -1,7 +1,7 @@
-// apps/web/src/app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import QuickConsult from "@/components/QuickConsult"; // ★ 新增：全域掛載諮詢按鈕
 
 // === Google Fonts ===
 const geistSans = Geist({
@@ -45,6 +45,16 @@ export default function RootLayout({
         `}
       >
         {children}
+
+        {/* ★ 全站固定顯示的諮詢按鈕（桌機右上、手機右下） */}
+        <QuickConsult
+          targetId="contact"
+          anchorSelector='[data-lang-switcher="true"]'
+          followAnchor={false}
+          position="top-right"
+          topAdjustRem={-0.325}     // 桌機微上移 10px
+          matchAnchorWidth={true}   // 桌機與語言切換寬度一致
+        />
       </body>
     </html>
   );

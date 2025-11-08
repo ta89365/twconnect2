@@ -179,38 +179,32 @@ export default async function ChannelEntrancePage({
         <div className="absolute inset-0" style={{ background: TUNE.heroOverlay }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-[rgba(28,61,90,0.22)]" />
 
-        {/* 文字層 */}
-        <div className="relative mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18" style={{ maxWidth: TUNE.contentMaxW }}>
-          <div className="inline-block max-w-3xl rounded-2xl bg-black/25 backdrop-blur-[2px] shadow-sm px-6 py-5">
-            <p className="text-sm/6 tracking-wide text-white/85">{t.breadcrumb}</p>
-            <h1 className="mt-2 text-4xl font-semibold sm:text-5xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
-              {(settings as any)?.heroTitle ?? t.title}
-            </h1>
-            <p className="mt-3 text-white/90 max-w-3xl drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
-              {(settings as any)?.heroSubtitle ?? t.subtitle}
-            </p>
-          </div>
+        {/* 內容置中層：移除搜尋，保留文案與快速主題，全部置中 */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full" style={{ maxWidth: TUNE.contentMaxW }}>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-sm/6 tracking-wide text-white/85">{t.breadcrumb}</p>
+              <h1 className="mt-2 text-4xl font-semibold sm:text-5xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]">
+                {(settings as any)?.heroTitle ?? t.title}
+              </h1>
+              <p className="mt-3 text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.25)]">
+                {(settings as any)?.heroSubtitle ?? t.subtitle}
+              </p>
 
-        {/* 搜尋與快速主題 */}
-          <div className="mt-8 grid gap-4 md:grid-cols-[1fr_auto] items-stretch">
-            <form action="#" className="w-full">
-              <input
-                name="q"
-                placeholder={t.searchPH}
-                className="w-full rounded-xl bg-white/30 backdrop-blur-[2px] text-white placeholder-white/70 caret-white border border-white/50 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </form>
-
-            <div className="flex items-center gap-2 overflow-x-auto md:overflow-visible">
-              {(settings as any)?.quickTopics?.map?.((topic: any) => (
-                <a
-                  key={topic.slug}
-                  href={`#tag-${topic.slug}`}
-                  className="shrink-0 inline-flex items-center rounded-full border border-white/50 bg-white/30 backdrop-blur-[2px] px-3 py-2 text-sm text-white hover:bg白色/40 hover:text-white transition"
-                >
-                  {topic.title}
-                </a>
-              ))}
+              {/* 快速主題（可選） */}
+              {Array.isArray((settings as any)?.quickTopics) && (settings as any).quickTopics.length > 0 && (
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                  {(settings as any).quickTopics.map((topic: any) => (
+                    <a
+                      key={topic.slug}
+                      href={`#tag-${topic.slug}`}
+                      className="shrink-0 inline-flex items-center rounded-full border border-white/50 bg-white/30 backdrop-blur-[2px] px-3 py-2 text-sm text-white hover:bg-white/40 transition"
+                    >
+                      {topic.title}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -255,7 +249,7 @@ export default async function ChannelEntrancePage({
               ))}
             </div>
           ) : (
-            <p className="mt-10 text白色/90">{t.empty}</p>
+            <p className="mt-10 text-white/90">{t.empty}</p>
           )}
         </div>
       </section>
@@ -324,7 +318,7 @@ function FeaturedCard({
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
           ) : (
-            <div className="h-full w-full bg白色/10" />
+            <div className="h-full w-full bg-white/10" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
           {post?.category?.title && (
@@ -341,7 +335,7 @@ function FeaturedCard({
             </Link>
           </h3>
           {post?.excerpt && <p className="mt-3 text-white/90 line-clamp-4">{post.excerpt}</p>}
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text白色/80">
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/80">
             {post?.author?.name && <span>👤 {post.author.name}</span>}
             {Array.isArray(post?.tags) && post.tags.length > 0 && (
               <span>🏷️ {post.tags.map((t: any) => t?.title).filter(Boolean).join(", ")}</span>
@@ -395,7 +389,7 @@ function ArticleCard({
     >
       {/* 封面圖 */}
       {coverUrl ? (
-        <div className="relative aspect[16/9] w-full">
+        <div className="relative aspect-[16/9] w-full">
           <Image src={coverUrl} alt={title} width={800} height={450} className="object-cover w-full h-full" />
           {tag && (
             <span className="absolute left-3 top-3 inline-flex rounded-full bg-black/65 px-2.5 py-1 text-xs text-white">
@@ -436,7 +430,7 @@ function ArticleCard({
   );
 }
 
-/* ============================ 右上角語言下拉元件 ============================ */
+/* ============================ 右上角語言下拉元件（目前未使用） ============================ */
 function LangDropdown({
   current,
   basePath,

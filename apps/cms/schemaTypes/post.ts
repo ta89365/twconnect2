@@ -6,12 +6,12 @@ export default defineType({
   title: "News & Columns",
   type: "document",
   fields: [
-    // 內容頻道區分：news 或 column
+    /* ===== Channel ===== */
     defineField({
       name: "channel",
       title: "Channel",
       type: "string",
-      description: "內容頻道。news 為新聞動態，column 為專欄文章。",
+      description: "Select whether this content belongs to News or Column.",
       options: {
         list: [
           { title: "News", value: "news" },
@@ -23,11 +23,12 @@ export default defineType({
       validation: (r) => r.required(),
     }),
 
-    /* ===== 發佈與中台資訊 ===== */
+    /* ===== Publication Info ===== */
     defineField({
       name: "publishedAt",
       title: "Published At",
       type: "datetime",
+      description: "Date and time when the post was published.",
       initialValue: () => new Date().toISOString(),
       validation: (r) => r.required(),
     }),
@@ -36,20 +37,30 @@ export default defineType({
       title: "Featured on Entrance",
       type: "boolean",
       initialValue: false,
+      description: "If enabled, this post will appear on the News/Column entrance page.",
     }),
     defineField({
       name: "pinnedAtTop",
       title: "Pin to Top",
       type: "boolean",
       initialValue: false,
+      description: "If enabled, this post will stay pinned at the top of its list.",
+    }),
+    defineField({
+      name: "showOnHome",
+      title: "Show on Home",
+      type: "boolean",
+      initialValue: false,
+      description: "If enabled, this post will be displayed on the homepage article section.",
     }),
 
-    /* ===== 類別與標籤 ===== */
+    /* ===== Category & Tags ===== */
     defineField({
       name: "category",
       title: "Category",
       type: "reference",
       to: [{ type: "category" }],
+      description: "Select the category that this post belongs to.",
       validation: (r) => r.required(),
     }),
     defineField({
@@ -57,37 +68,47 @@ export default defineType({
       title: "Tags",
       type: "array",
       of: [{ type: "reference", to: [{ type: "tag" }] }],
+      description: "Optional tags associated with this post.",
     }),
     defineField({
       name: "author",
       title: "Author",
       type: "reference",
       to: [{ type: "author" }],
+      description: "Author or contributor of the post.",
     }),
 
-    /* ===== 封面與圖庫 ===== */
+    /* ===== Cover & Gallery ===== */
     defineField({
       name: "coverImage",
       title: "Cover Image",
       type: "image",
       options: { hotspot: true },
       fields: [
-        defineField({ name: "alt", title: "Alt text", type: "string" }),
+        defineField({
+          name: "alt",
+          title: "Alt Text",
+          type: "string",
+          description: "Alternative text for the cover image.",
+        }),
       ],
       validation: (r) => r.required(),
+      description: "Main image shown as the post thumbnail or banner.",
     }),
     defineField({
       name: "gallery",
       title: "Gallery",
       type: "array",
       of: [{ type: "image", options: { hotspot: true } }],
+      description: "Optional gallery of images used within the post.",
     }),
 
-    /* ===== 多語 slug ===== */
+    /* ===== Multi-language Slugs ===== */
     defineField({
       name: "slugJp",
       title: "Slug JP",
       type: "slug",
+      description: "Slug for the Japanese version of this post.",
       options: {
         source: "titleJp",
         maxLength: 96,
@@ -99,6 +120,7 @@ export default defineType({
       name: "slugZh",
       title: "Slug ZH",
       type: "slug",
+      description: "Slug for the Traditional Chinese version of this post.",
       options: {
         source: "titleZh",
         maxLength: 96,
@@ -110,6 +132,7 @@ export default defineType({
       name: "slugEn",
       title: "Slug EN",
       type: "slug",
+      description: "Slug for the English version of this post.",
       options: {
         source: "titleEn",
         maxLength: 96,
@@ -118,63 +141,118 @@ export default defineType({
       },
     }),
 
-    /* ===== 多語標題與摘要 ===== */
-    defineField({ name: "titleJp", title: "Title JP", type: "string" }),
-    defineField({ name: "titleZh", title: "Title ZH", type: "string" }),
-    defineField({ name: "titleEn", title: "Title EN", type: "string" }),
-    defineField({ name: "excerptJp", title: "Excerpt JP", type: "text", rows: 3 }),
-    defineField({ name: "excerptZh", title: "Excerpt ZH", type: "text", rows: 3 }),
-    defineField({ name: "excerptEn", title: "Excerpt EN", type: "text", rows: 3 }),
+    /* ===== Multi-language Titles & Excerpts ===== */
+    defineField({
+      name: "titleJp",
+      title: "Title JP",
+      type: "string",
+      description: "Japanese title of the post.",
+    }),
+    defineField({
+      name: "titleZh",
+      title: "Title ZH",
+      type: "string",
+      description: "Traditional Chinese title of the post.",
+    }),
+    defineField({
+      name: "titleEn",
+      title: "Title EN",
+      type: "string",
+      description: "English title of the post.",
+    }),
+    defineField({
+      name: "excerptJp",
+      title: "Excerpt JP",
+      type: "text",
+      rows: 3,
+      description: "Short summary for the Japanese version.",
+    }),
+    defineField({
+      name: "excerptZh",
+      title: "Excerpt ZH",
+      type: "text",
+      rows: 3,
+      description: "Short summary for the Traditional Chinese version.",
+    }),
+    defineField({
+      name: "excerptEn",
+      title: "Excerpt EN",
+      type: "text",
+      rows: 3,
+      description: "Short summary for the English version.",
+    }),
 
-    /* ===== 多語內文（Portable Text）===== */
+    /* ===== Multi-language Body (Portable Text) ===== */
     defineField({
       name: "bodyJp",
       title: "Body JP",
       type: "array",
+      description: "Main article body for the Japanese version.",
       of: [{ type: "block" }, { type: "image", options: { hotspot: true } }],
     }),
     defineField({
       name: "bodyZh",
       title: "Body ZH",
       type: "array",
+      description: "Main article body for the Traditional Chinese version.",
       of: [{ type: "block" }, { type: "image", options: { hotspot: true } }],
     }),
     defineField({
       name: "bodyEn",
       title: "Body EN",
       type: "array",
+      description: "Main article body for the English version.",
       of: [{ type: "block" }, { type: "image", options: { hotspot: true } }],
     }),
 
-    /* ===== SEO（多語）===== */
-    defineField({ name: "seoTitleJp", title: "SEO Title JP", type: "string" }),
-    defineField({ name: "seoTitleZh", title: "SEO Title ZH", type: "string" }),
-    defineField({ name: "seoTitleEn", title: "SEO Title EN", type: "string" }),
+    /* ===== SEO (Multi-language) ===== */
+    defineField({
+      name: "seoTitleJp",
+      title: "SEO Title JP",
+      type: "string",
+      description: "SEO title for the Japanese version.",
+    }),
+    defineField({
+      name: "seoTitleZh",
+      title: "SEO Title ZH",
+      type: "string",
+      description: "SEO title for the Traditional Chinese version.",
+    }),
+    defineField({
+      name: "seoTitleEn",
+      title: "SEO Title EN",
+      type: "string",
+      description: "SEO title for the English version.",
+    }),
     defineField({
       name: "seoDescriptionJp",
       title: "SEO Description JP",
       type: "text",
       rows: 3,
+      description: "SEO description for the Japanese version.",
     }),
     defineField({
       name: "seoDescriptionZh",
       title: "SEO Description ZH",
       type: "text",
       rows: 3,
+      description: "SEO description for the Traditional Chinese version.",
     }),
     defineField({
       name: "seoDescriptionEn",
       title: "SEO Description EN",
       type: "text",
       rows: 3,
+      description: "SEO description for the English version.",
     }),
 
-    /* ===== 自動欄位 ===== */
+    /* ===== Auto-generated Field ===== */
     defineField({
       name: "readingMinutes",
       title: "Reading Minutes",
       type: "number",
       readOnly: true,
+      description: "Automatically calculated estimated reading time (in minutes).",
     }),
   ],
 
@@ -188,7 +266,7 @@ export default defineType({
       ],
     },
     {
-      title: "Newest",
+      title: "Newest first",
       name: "dateDesc",
       by: [{ field: "publishedAt", direction: "desc" }],
     },
@@ -201,9 +279,11 @@ export default defineType({
       titleEn: "titleEn",
       media: "coverImage",
       date: "publishedAt",
+      showOnHome: "showOnHome",
     },
     prepare(sel) {
-      const title = sel.titleJp || sel.titleZh || sel.titleEn || "Untitled";
+      const baseTitle = sel.titleJp || sel.titleZh || sel.titleEn || "Untitled";
+      const title = sel.showOnHome ? `[HOME] ${baseTitle}` : baseTitle;
       return {
         title,
         subtitle: sel.date ? new Date(sel.date).toLocaleString() : "",

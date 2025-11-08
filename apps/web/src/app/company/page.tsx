@@ -238,9 +238,9 @@ export default async function CompanyPage({
   const missionLabel = lang === "jp" ? "経営理念" : lang === "zh" ? "經營理念" : "Our Purpose";
   const repLabel = lang === "jp" ? "代表者メッセージ" : lang === "zh" ? "代表者訊息" : "Representative Message";
   const companyInfoLabel = lang === "jp" ? "会社情報" : lang === "zh" ? "公司資訊" : "Company Information";
-  const leadershipLabel = lang === "jp" ? "リーダーシップ" : lang === "zh" ? "領導團隊" : "Leadership";
+  const leadershipLabel = lang === "jp" ? "創業者・代表" : lang === "zh" ? "創辦人代表" : "Founder & Representative";
   const founderBioLabel =
-    lang === "jp" ? "創業者略歴" : lang === "zh" ? "創辦人詳細經歷" : "Founder Long Biography";
+    lang === "jp" ? "創業者紹介" : lang === "zh" ? "創辦人介紹" : "About the Founder";
   const cofounderBioLabel =
     lang === "jp" ? "共同創業者略歴" : lang === "zh" ? "共同創辦人詳細經歷" : "Co-Founder Long Biography";
 

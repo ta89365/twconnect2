@@ -2,9 +2,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-type Lang = "jp" | "zh" | "en";
+export type Lang = "jp" | "zh" | "en";
 
-type HeroData = {
+export type HeroData = {
   heading?: string;
   subheading?: string;
   subtitle?: string;
@@ -16,12 +16,19 @@ type HeroData = {
 
 type Offset = { xRem: number; yRem: number };
 
-type Tune = {
+/**
+ * Tune：支援既有的字串型別，也支援數字。
+ * - heroMaxWidth: 若是 number 會被視為 rem
+ * - heroObjectPos / heroObjectPosY: 若是 number 會被視為 %
+ */
+export type Tune = {
+  langOffsetYrem?: number;       
+  langOffsetRightRem?: number;
   heroContentOffsetVh: number;
   heroLeftPadRem: { base: number; md: number; lg: number };
-  heroMaxWidth: string;
-  heroObjectPos: string;
-  heroObjectPosY?: string;
+  heroMaxWidth: string | number;         // ← 支援 string 或 number(rem)
+  heroObjectPos: string | number;        // ← 支援 string 或 number(%)
+  heroObjectPosY?: string | number;      // ← 支援 string 或 number(%)
   headingSizes: string;
   subTextSize: string;
   textColorClass: string;
@@ -37,6 +44,20 @@ type Tune = {
   forceTopVh?: boolean;
   shiftVh?: number;
 };
+
+/** 將數值寬度轉成 CSS（rem） */
+function toMaxWidth(v: string | number | undefined): string | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v === "number") return `${v}rem`;
+  return v;
+}
+
+/** 將數值座標轉成 CSS 百分比字串 */
+function toPercent(v: string | number | undefined): string | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v === "number") return `${v}%`;
+  return v;
+}
 
 /** 外部或不需處理的連結判斷 */
 function isBypassLink(href?: string): boolean {
@@ -75,9 +96,10 @@ export default function HeroBanner({
   tune: Tune;
   lang: Lang;
 }) {
-  const objectPosition = tune.heroObjectPosY
-    ? `${tune.heroObjectPos} ${tune.heroObjectPosY}`
-    : tune.heroObjectPos;
+  // 物件定位：允許數字或字串
+  const posX = toPercent(tune.heroObjectPos) ?? "50%";
+  const posY = toPercent(tune.heroObjectPosY) ?? "50%";
+  const objectPosition = `${posX} ${posY}`;
 
   const defaults: Required<Required<Tune>["blockOffsets"]> = {
     heading: { xRem: 0, yRem: 0 },
@@ -109,7 +131,7 @@ export default function HeroBanner({
   const shift = typeof tune.shiftVh === "number" ? tune.shiftVh : 12;
 
   const containerStyle: React.CSSProperties = {
-    maxWidth: tune.heroMaxWidth,
+    maxWidth: toMaxWidth(tune.heroMaxWidth),
     paddingTop: tune.forceTopVh
       ? `max(${navHeight + 8}px, ${tune.heroContentOffsetVh}vh)`
       : undefined,

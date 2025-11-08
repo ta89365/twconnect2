@@ -1,4 +1,4 @@
-// apps/web/src/components/NavigationServer.tsx
+// File: apps/web/src/components/NavigationServer.tsx
 import Navigation from "@/components/navigation";
 import { sfetch } from "@/lib/sanity/fetch";
 import { siteSettingsByLang } from "@/lib/queries/siteSettings";
@@ -28,10 +28,11 @@ function normalizeLang(x?: string): Lang {
   return "jp";
 }
 
-export default async function NavigationServer({ lang = "jp" as Lang }) {
+/** props 現在支援 linkLang，讓你能以 A 語言取資料顯示、以 B 語言輸出連結 */
+export default async function NavigationServer({ lang = "jp" as Lang, linkLang }: { lang?: Lang; linkLang?: Lang }) {
   const resolvedLang = normalizeLang(lang);
 
-  // 1) 站點設定（品牌與主選單）
+  // 1) 站點設定（品牌與主選單）以顯示語言抓資料
   const data = await sfetch<{
     logoUrl?: string | null;
     logoText?: string | null;
@@ -40,7 +41,7 @@ export default async function NavigationServer({ lang = "jp" as Lang }) {
 
   const items: NavItemIn[] = Array.isArray(data?.navigation) ? data!.navigation! : [];
 
-  // 2) 從 CMS 取回「服務內容」的子選單
+  // 2) 從 CMS 取回「服務內容」的子選單（同顯示語言）
   const servicesChildren = await sfetch<Array<{ _id: string; href: string; label: string }>>(
     servicesNavChildrenQuery,
     { lang: resolvedLang }
@@ -63,9 +64,11 @@ export default async function NavigationServer({ lang = "jp" as Lang }) {
     return it;
   });
 
+  // 4) 將顯示語言與連結語言分開傳給 <Navigation>
   return (
     <Navigation
       lang={resolvedLang}
+      linkLang={linkLang} // 可為 undefined，則在 navigation.tsx 內部自動處理 zh-cn→zh
       items={itemsWithChildren}
       brand={{
         name: data?.logoText ?? "Taiwan Connect",

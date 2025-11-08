@@ -1,7 +1,8 @@
 // apps/web/src/app/page.tsx
 import HeroBanner from "@/components/hero-banner";
+import type { Tune } from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
-import QuickConsult from "@/components/QuickConsult";
+// QuickConsult 移至 layout.tsx 全域掛載
 import ChallengesSection from "@/components/ChallengesSection";
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
@@ -20,24 +21,24 @@ import { servicesQueryML } from "@/lib/queries/services";
 import { crossBorderByLang } from "@/lib/queries/crossBorder";
 import { aboutByLang } from "@/lib/queries/about";
 import { contactByLang } from "@/lib/queries/contact";
-import { mixedHomeFeedByLang } from "@/lib/queries/insights";
+import { homePostsQuery } from "@/lib/queries/homePosts";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
 /* ========= 常數 ========= */
 const NAV_HEIGHT = 72; // px
+
 const TUNE = {
-  langOffsetYrem: 0.3, // 語言列距離導覽列 0.3rem
+  langOffsetYrem: 0.3,
   langOffsetRightRem: 0.75,
   forceTopVh: true,
   heroContentOffsetVh: 2.5,
   heroLeftPadRem: { base: 1.0, md: 0.75, lg: 0.75 },
-  heroMaxWidth: "72rem",
-  heroObjectPos: "28%",
-  heroObjectPosY: "30%",
-  headingSizes:
-    "text-[clamp(1.75rem,6vw,2.5rem)] sm:text-4xl md:text-6xl lg:text-7xl",
+  heroMaxWidth: 72,
+  heroObjectPos: 28,
+  heroObjectPosY: 30,
+  headingSizes: "text-[clamp(1.75rem,6vw,2.5rem)] sm:text-4xl md:text-6xl lg:text-7xl",
   subTextSize: "text-[clamp(0.95rem,3.8vw,1.05rem)] sm:text-lg md:text-xl",
   textColorClass: "text-white",
   ribbonRounded: "rounded-lg",
@@ -49,7 +50,7 @@ const TUNE = {
     subtitle: { xRem: 0.0, yRem: -0.5 },
     cta: { xRem: 0.0, yRem: 0.0 },
   },
-} as const;
+} satisfies Tune;
 
 const CROSS_TUNE: CrossBorderTune = {
   containerAlign: "center",
@@ -109,14 +110,16 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     spLang === "zh-cn" ? "zh" :
     spLang === "zh" || spLang === "en" || spLang === "jp" ? (spLang as Lang) : "jp";
 
-  const [settings, hero, crossBorder, services, about, contact, mixed] = await Promise.all([
+  const [
+    settings, hero, crossBorder, services, about, contact, homePosts
+  ] = await Promise.all([
     sfetch<any>(siteSettingsByLang, { lang: contentLang }),
     sfetch<any>(heroByLang, { lang: contentLang }),
     sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
     sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
     sfetch<AboutData>(aboutByLang, { lang: contentLang }),
     sfetch<ContactData>(contactByLang, { lang: contentLang }),
-    sfetch<any>(mixedHomeFeedByLang, { lang: contentLang, limit: 5 }),
+    sfetch<any[]>(homePostsQuery, { lang: contentLang }),
   ]);
 
   const rawItems: NavItem[] = Array.isArray(settings?.navigation) ? settings.navigation : [];
@@ -143,32 +146,29 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     { label: contentLang === "jp" ? "IPOアドバイザリー" : contentLang === "zh" ? "IPO 顧問" : "IPO Advisory", href: addLangQuery("/ipo", contentLang) },
   ];
 
-  const posts = Array.isArray(mixed?.posts) ? mixed.posts : [];
   const channelLabel = (channel: "news" | "column"): string => {
     if (contentLang === "jp") return channel === "news" ? "ニュース" : "コラム";
     if (contentLang === "zh") return channel === "news" ? "新聞" : "專欄";
     return channel === "news" ? "News" : "Column";
   };
 
-  type HomeNewsItem = { dateISO: string; title: string; href: string; channelLabel: string; hashtags?: string[] };
-  const homeNewsItems: HomeNewsItem[] = posts.map((p: any) => {
+  const posts = Array.isArray(homePosts) ? homePosts : [];
+  const homeNewsItems = posts.map((p: any) => {
     const dateISO = typeof p?.publishedAt === "string" ? p.publishedAt.slice(0, 10) : "1970-01-01";
     const base = p?.channel === "column" ? "/column" : "/news";
     return {
       dateISO,
       title: p?.title ?? "",
       href: addLangQuery(`${base}/${p?.slug ?? ""}`, contentLang),
-      channelLabel: channelLabel(p?.channel),
-      hashtags: Array.isArray(p?.tags) ? p.tags.map((t: any) => t?.title).filter(Boolean) : [],
+      channelLabel: channelLabel(p?.channel ?? "news"),
+      hashtags: [],
     };
   });
 
   return (
     <main id="top" className="bg-background text-foreground overflow-x-hidden">
-      {/* 導覽列 */}
       {await (NavigationServer as any)({ lang: spRaw?.lang as string })}
 
-      {/* 語言列：在目前位置（導覽列後），捲動會消失 */}
       <div className="relative" style={{ height: 0 }}>
         <LanguageSwitcher
           current={contentLang}
@@ -178,18 +178,6 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
         />
       </div>
 
-      {/* 立刻諮詢：上移 10px，仍對齊語言列下方；固定不消失 */}
-<QuickConsult
-  targetId="contact"
-  anchorSelector='[data-lang-switcher="true"]'
-  followAnchor={false}
-  position="top-right"
-  topAdjustRem={-0.325}     // 上移10px
-  matchAnchorWidth={true}   // 同語言列寬度
-/>
-
-
-      {/* Hero */}
       <section className="relative">
         <HeroBanner data={hero} navHeight={NAV_HEIGHT} tune={TUNE} lang={contentLang} />
       </section>
@@ -201,9 +189,16 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
       <div><AboutSection data={about ?? null} lang={contentLang} /></div>
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-      <div><NewsSection lang={contentLang} items={homeNewsItems} /></div>
-      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
+      {/* News 區塊 */}
+      <div><NewsSection lang={contentLang} items={homeNewsItems ?? []} /></div>
+
+      {/* ✅ 新增分隔線：新聞與聯絡表單之間，使用不折疊的內距容器 */}
+      <div className="relative py-2" style={{ backgroundColor: "#1C3D5A" }}>
+        <SectionDivider className="m-0" />
+      </div>
+
+      {/* Contact 表單 */}
       <div id="contact" data-contact-anchor="true" className="scroll-mt-[84px]">
         {await (ContactSection as any)({ data: contact ?? null, lang: contentLang })}
       </div>
@@ -220,7 +215,7 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
   );
 }
 
-/** 混合 News & Column 的首頁列表 */
+/** News 區塊 */
 function NewsSection({
   lang,
   items,
@@ -235,7 +230,11 @@ function NewsSection({
   }[lang];
 
   return (
-    <section className="text-white" style={{ backgroundColor: "#1C3D5A" }}>
+    <section
+      id="home-news"
+      className="text-white relative z-[1] min-h-[120px]"
+      style={{ backgroundColor: "#1C3D5A" }}
+    >
       <div className="mx-auto max-w-6xl px-3 sm:px-4 py-10 sm:py-14 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 items-start">
           <div className="md:col-span-1">
@@ -268,13 +267,6 @@ function NewsSection({
                     <span className="inline-flex items-center rounded-full border border-blue-200/40 bg-blue-900/30 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-blue-100">
                       {a.channelLabel}
                     </span>
-                    {a.hashtags && a.hashtags.length > 0 && (
-                      <div className="w-full md:w-auto md:ml-auto text-[11px] sm:text-xs text-blue-200">
-                        {a.hashtags.map((h, idx) => (
-                          <span key={idx} className="mr-2">#{h}</span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   <h3 className="mt-2 sm:mt-3 text-[15px] sm:text-[15.5px] md:text-base leading-relaxed">
                     <Link href={a.href} className="text-white hover:text-blue-200 hover:underline">

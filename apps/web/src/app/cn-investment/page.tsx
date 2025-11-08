@@ -14,8 +14,8 @@ import type { JSX } from "react";
 
 /* ============================ i18n ============================ */
 type Lang = "zh" | "zh-cn" | "jp" | "en";
-/** 本頁固定以簡中呈現，但 Nav/Footer 實際 props 傳 zh 以避免語系未對應造成 links undefined */
-const PAGE_LANG: Lang = "zh-cn";
+/** 本頁固定以簡中呈現，但所有連結一律導向 zh；Nav/Footer 亦傳 zh 以確保連結正確 */
+const PAGE_LANG: Lang = "zh";
 const NAV_FOOTER_LANG: "jp" | "zh" | "en" = "zh";
 
 /* ============================ Fonts ============================ */
@@ -97,6 +97,33 @@ interface LandingDoc {
 }
 type Topic = NonNullable<LandingDoc["recommended"]>[number];
 
+/* ============================ Utils ============================ */
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+const LANG_Q = `lang=${PAGE_LANG}`;
+function withLang(href: string) {
+  if (!href) return "#";
+  if (/^https?:\/\//i.test(href)) return href; // 外部連結不加 lang
+  const join = href.includes("?") ? "&" : "?";
+  return `${href}${join}${LANG_Q}`;
+}
+
+function safeHref(item: Topic) {
+  if (item?.href) return withLang(item.href);
+  if (item?.internal?.slug) {
+    const ch = item.internal.channel ?? "news";
+    return withLang(`/${ch}/${item.internal.slug}`);
+  }
+  // external 直接回傳，不加 lang
+  return item?.external ?? "#";
+}
+
+/* ===== 包裝 Server Components ===== */
+const Nav = NavigationServer as unknown as (props: Record<string, any>) => JSX.Element;
+const Footer = FooterServer as unknown as (props: Record<string, any>) => JSX.Element;
+
 /* ============================ PortableText Components ============================ */
 const ptComponents: PortableTextComponents = {
   block: ({ children, value }) => {
@@ -126,11 +153,12 @@ const ptComponents: PortableTextComponents = {
   },
   marks: {
     link: ({ children, value }) => {
-      const href = (value as any)?.href || "#";
+      const raw = (value as any)?.href || "#";
+      const href = /^https?:\/\//i.test(raw) ? raw : withLang(raw);
       return (
         <a
           href={href}
-          target="_blank"
+          target={/^https?:\/\//i.test(href) ? "_blank" : "_self"}
           rel="noreferrer"
           className="underline underline-offset-4 hover:opacity-90"
         >
@@ -142,72 +170,6 @@ const ptComponents: PortableTextComponents = {
     em: ({ children }) => <em className="italic">{children}</em>,
   },
 };
-
-/* ============================ Utils ============================ */
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-const LANG_Q = `lang=${PAGE_LANG}`;
-function withLang(href: string) {
-  if (!href) return "#";
-  if (/^https?:\/\//i.test(href)) return href; // 外部連結不加
-  const join = href.includes("?") ? "&" : "?";
-  return `${href}${join}${LANG_Q}`;
-}
-
-function safeHref(item: Topic) {
-  if (item?.href) return withLang(item.href);
-  if (item?.internal?.slug) {
-    const ch = item.internal.channel ?? "news";
-    return withLang(`/${ch}/${item.internal.slug}`);
-  }
-  return item?.external ?? "#";
-}
-
-/* ===== 包裝 Server Components ===== */
-const Nav = NavigationServer as unknown as (props: Record<string, unknown>) => JSX.Element;
-const Footer = FooterServer as unknown as (props: Record<string, unknown>) => JSX.Element;
-
-/* ============================ Fallback Topics ============================ */
-const FALLBACK_TOPICS: Topic[] = [
-  {
-    titleZh: "陆资来台投资全流程解析",
-    summaryZh: "从核准到设立，一次掌握投审会申报、资金汇入、公司登记与税务登记。",
-    ctaLabelZh: "阅读文章 →",
-    internal: null,
-    external: "/news/cn-investment-full-guide",
-    href: "/news/cn-investment-full-guide",
-    cover: null,
-  },
-  {
-    titleZh: "陆资投资开放与限制行业清单",
-    summaryZh: "快速了解正面表列、限制与禁止领域，判断营业项目合规性。",
-    ctaLabelZh: "阅读文章 →",
-    internal: null,
-    external: "/news/cn-positive-list",
-    href: "/news/cn-positive-list",
-    cover: null,
-  },
-  {
-    titleZh: "是否属于陆资？UBO 实质受益人判定",
-    summaryZh: "用股权与控制权结构判断陆资认定，避免误判造成延误。",
-    ctaLabelZh: "阅读文章 →",
-    internal: null,
-    external: "/news/cn-ubo-checklist",
-    href: "/news/cn-ubo-checklist",
-    cover: null,
-  },
-  {
-    titleZh: "申请文件清单与常见退件原因",
-    summaryZh: "准备清单、格式与常见错误，降低被退件风险。",
-    ctaLabelZh: "阅读文章 →",
-    internal: null,
-    external: "/news/cn-application-pitfalls",
-    href: "/news/cn-application-pitfalls",
-    cover: null,
-  },
-];
 
 /* ============================ 小元件 ============================ */
 function Badge({
@@ -253,17 +215,57 @@ function Stat({
 export default async function Page(): Promise<JSX.Element> {
   const doc = (await sfetch(cnInvestmentLandingQuery)) as LandingDoc | null;
   const topics = (doc?.recommended ?? []).slice(0, 4);
-  const finalTopics = topics.length >= 4 ? topics : FALLBACK_TOPICS;
+  const finalTopics: Topic[] =
+    topics.length >= 4
+      ? topics
+      : [
+          {
+            titleZh: "陆资来台投资全流程解析",
+            summaryZh: "从核准到设立，一次掌握投审会申报、资金汇入、公司登记与税务登记。",
+            ctaLabelZh: "阅读文章 →",
+            internal: null,
+            external: "/news/cn-investment-full-guide",
+            href: "/news/cn-investment-full-guide",
+            cover: null,
+          },
+          {
+            titleZh: "陆资投资开放与限制行业清单",
+            summaryZh: "快速了解正面表列、限制与禁止领域，判断营业项目合规性。",
+            ctaLabelZh: "阅读文章 →",
+            internal: null,
+            external: "/news/cn-positive-list",
+            href: "/news/cn-positive-list",
+            cover: null,
+          },
+          {
+            titleZh: "是否属于陆资？UBO 实质受益人判定",
+            summaryZh: "用股权与控制权结构判断陆资认定，避免误判造成延误。",
+            ctaLabelZh: "阅读文章 →",
+            internal: null,
+            external: "/news/cn-ubo-checklist",
+            href: "/news/cn-ubo-checklist",
+            cover: null,
+          },
+          {
+            titleZh: "申请文件清单与常见退件原因",
+            summaryZh: "准备清单、格式与常见错误，降低被退件风险。",
+            ctaLabelZh: "阅读文章 →",
+            internal: null,
+            external: "/news/cn-application-pitfalls",
+            href: "/news/cn-application-pitfalls",
+            cover: null,
+          },
+        ];
 
   return (
     <div
       style={{ backgroundColor: BRAND_BLUE }}
       className={`${notoSC.className} min-h-screen text-white`}
     >
-      {/* Nav：顯示簡中內容，但語系傳 zh，避免內部 links 取用錯誤 */}
-      <Nav lang={NAV_FOOTER_LANG} />
+      {/* Nav：傳 zh，讓導覽列所有連結均為中文版本 */}
+      <Nav lang="zh-cn" linkLang="zh" />
 
-      {/* ============================ Hero 區：大標題 + 徽章 + 數字重點 ============================ */}
+      {/* ============================ Hero ============================ */}
       <section className={`relative w-full ${STRIP_BG}`} style={{ minHeight: TUNE.heroMinH }}>
         {doc?.heroImage?.url && (
           <Image
@@ -291,7 +293,6 @@ export default async function Page(): Promise<JSX.Element> {
             <p className="mt-4 text-base md:text-lg opacity-90">{doc.taglineEn}</p>
           )}
 
-          {/* 重要數字重點 */}
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
             <Stat icon={Lucide.Clock} value="全程代辦" label="最快 1个月内核准" />
             <Stat icon={Lucide.Files} value="12+ 项" label="关键申请与佐证文件" />
@@ -301,14 +302,13 @@ export default async function Page(): Promise<JSX.Element> {
         </div>
       </section>
 
-      {/* ============================ Why + Principle 三欄 Features ============================ */}
+      {/* ============================ Why + Principle ============================ */}
       {(doc?.whyZh?.length || doc?.principleZh) && (
         <section
           className={`mx-auto px-6 py-14 md:py-20 border-t border-white/10 ${STRIP_BG}`}
           style={{ maxWidth: TUNE.contentMaxW }}
         >
           <div className="grid md:grid-cols-3 gap-6">
-            {/* 卡片 1 */}
             <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
               <div className="flex items-center gap-3 mb-4">
                 <div className="rounded-lg bg-white/20 p-2.5">
@@ -330,7 +330,6 @@ export default async function Page(): Promise<JSX.Element> {
               <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#4FC3F7] to-[#A7FFEB]" />
             </div>
 
-            {/* 卡片 2 */}
             <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
               <div className="flex items-center gap-3 mb-4">
                 <div className="rounded-lg bg-white/20 p-2.5">
@@ -344,7 +343,6 @@ export default async function Page(): Promise<JSX.Element> {
               <div className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-2xl bg-gradient-to-r from-[#FFD54F] to-[#FFB300]" />
             </div>
 
-            {/* 卡片 3 */}
             <div className="relative rounded-2xl bg-gradient-to-b from-white/10 to-white/5 border border-white/15 p-6 transition-all hover:from-white/15 hover:to-white/10 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)]">
               <div className="flex items-center gap-3 mb-4">
                 <div className="rounded-lg bg-white/20 p-2.5">
@@ -372,7 +370,7 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* ============================ 法规定义與主管机关 + 審查重點 ============================ */}
+      {/* ============================ 法規與審查重點 ============================ */}
       {(doc?.regulationDefinitionZh?.length || doc?.authorities?.length) && (
         <section
           className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
@@ -412,7 +410,6 @@ export default async function Page(): Promise<JSX.Element> {
             </div>
           )}
 
-          {/* ▼▼ 審查重點直接接在主管機關下方，沿用玻璃卡樣式與配色 ▼▼ */}
           {!!doc?.reviewFocus?.length && (
             <div className="mt-10">
               <div className="flex items-center gap-3 mb-2">
@@ -451,7 +448,7 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* ============================ 疑问與 CTA ============================ */}
+      {/* ============================ 疑問與 CTA ============================ */}
       {(doc?.doubtsZh?.length || doc?.contactFormHref) && (
         <section
           className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
@@ -489,7 +486,7 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* ============================ 流程：時間軸 ============================ */}
+      {/* ============================ 流程 ============================ */}
       {!!doc?.processSteps?.length && (
         <section
           className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
@@ -503,11 +500,9 @@ export default async function Page(): Promise<JSX.Element> {
                 const last = i === arr.length - 1;
                 return (
                   <li key={i} className="relative pl-10 pb-6">
-                    {/* 時間軸節點 */}
                     <span className="absolute left-0 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-black text-xs font-bold">
                       {i + 1}
                     </span>
-                    {/* 連線 */}
                     {!last && (
                       <span className="absolute left-2.5 top-8 h-full w-px bg-white/30" aria-hidden />
                     )}
@@ -529,7 +524,7 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* ============================ 优势 + 服务条列 + 团队图 ============================ */}
+      {/* ============================ 優勢 + 服務 + 團隊 ============================ */}
       {(doc?.advantagesIntroZh?.length ||
         doc?.serviceBulletsZh?.length ||
         doc?.teamImage?.url) && (
@@ -588,7 +583,7 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* ============================ FAQ 手風琴 ============================ */}
+      {/* ============================ FAQ ============================ */}
       {!!doc?.faq?.length && (
         <section
           className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
@@ -613,7 +608,7 @@ export default async function Page(): Promise<JSX.Element> {
         </section>
       )}
 
-      {/* ============================ 四張推薦文章卡片 ============================ */}
+      {/* ============================ 推薦閱讀 ============================ */}
       <section
         className={`mx-auto px-6 py-12 md:py-16 border-t border-white/10 ${STRIP_BG}`}
         style={{ maxWidth: TUNE.contentMaxW }}
@@ -655,7 +650,7 @@ export default async function Page(): Promise<JSX.Element> {
         </div>
       </section>
 
-      {/* ============================ Prefooter CTA（品牌藍底，與背景一致） ============================ */}
+      {/* ============================ Prefooter CTA ============================ */}
       {(() => {
         const rawHref = doc?.contactFormHref || doc?.bookingHref || "/contact";
         const ctaHref = withLang(rawHref);
@@ -690,8 +685,8 @@ export default async function Page(): Promise<JSX.Element> {
         );
       })()}
 
-      {/* Footer：顯示簡中內容，但語系傳 zh，避免內部 links 取用錯誤 */}
-      <Footer lang={NAV_FOOTER_LANG} />
+      {/* Footer：傳 zh，讓頁尾所有連結均為中文版本 */}
+      <Footer lang="zh-cn" linkLang="zh" />
     </div>
   );
 }

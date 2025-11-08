@@ -11,7 +11,10 @@ type NavChild = { label: string; href: string; external?: boolean };
 type NavItem = { label?: string; href?: string; external?: boolean; order?: number; children?: NavChild[] };
 
 type NavigationProps = {
+  /** 顯示文案用語言 */
   lang?: Lang;
+  /** 連結輸出用語言；若未給，預設沿用 lang（且 zh-cn 會自動轉 zh） */
+  linkLang?: Lang;
   items?: NavItem[];
   brand?: { logoUrl?: string | null; name?: string | null };
 };
@@ -33,10 +36,12 @@ function isContactItem(it?: { label?: string; href?: string }) {
   return CONTACT_LABELS.has(label);
 }
 
-export default function Navigation({ lang = "jp", items = [], brand }: NavigationProps) {
+export default function Navigation({ lang = "jp", linkLang, items = [], brand }: NavigationProps) {
   const pathname = usePathname();
-  const onHome = pathname === "/" || pathname === "";
   const BRAND_BLUE = "#1C3D5A";
+
+  // 顯示名稱依 lang；連結語言依 linkLang，若未指定則跟 lang 一致，但 zh-cn 自動轉 zh
+  const linkLangEffective: Lang = (linkLang ?? lang) === "zh-cn" ? "zh" : (linkLang ?? lang);
 
   const displayName = brand?.name?.trim() || "Taiwan Connect";
   const brandNameForLang = lang === "jp" ? "株式会社台湾コネクト" : displayName;
@@ -45,14 +50,14 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
 
   const normalizeHref = (href?: string) => {
     if (!href) return "#";
-    if (/^https?:\/\//i.test(href)) return href;
+    if (/^https?:\/\//i.test(href)) return href; // 外部連結不動
     const join = href.includes("?") ? "&" : "?";
-    return `${href}${join}lang=${lang}`;
+    return `${href}${join}lang=${linkLangEffective}`;
   };
 
   const sorted = items.slice().sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
-  // ===== 陸資專區子選單 =====
+  // ===== 陸資專區子選單（文案依 lang 顯示）=====
   const CN_LABELS: Record<Lang, [string, string, string, string, string]> = {
     zh: ["陸資首頁", "公司設立流程指引", "營業項目與政策", "最終受益人判斷方法", "退件原因與顧問建議"],
     "zh-cn": ["陆资首页", "公司设立流程指引", "经营项目与政策", "最终受益人判定方法", "退件原因与顾问建议"],
@@ -86,15 +91,14 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
   const desktopItemBase =
     "text-slate-100 hover:text-sky-200 text-sm transition-colors inline-flex items-center gap-1";
 
-  // ✅ 白底黑字粗體
-  const desktopContactOnHome =
+  // 白底黑字粗體（全站一致）
+  const desktopContactSpecial =
     "inline-flex items-center gap-1 rounded-md bg-white px-3 py-1.5 font-bold text-black transition-all hover:bg-slate-100";
 
   const mobileItemBase =
     "flex-1 block px-3 py-3 text-white text-[15px] font-medium hover:bg-white/10 rounded-md";
 
-  // ✅ 手機版白底黑字
-  const mobileContactOnHome =
+  const mobileContactSpecial =
     "flex-1 block px-3 py-3 rounded-md bg-white font-bold text-black hover:bg-slate-100";
 
   return (
@@ -112,7 +116,7 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
           <ul className="flex items-center gap-8 whitespace-nowrap">
             {augmented.map((it, i) => {
               const hasChildren = Array.isArray(it.children) && it.children.length > 0;
-              const contactOnHome = onHome && isContactItem(it);
+              const contactSpecial = isContactItem(it);
 
               return (
                 <li
@@ -125,7 +129,7 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
                     href={normalizeHref(it.href)}
                     target={it.external ? "_blank" : undefined}
                     rel={it.external ? "noreferrer" : undefined}
-                    className={contactOnHome ? desktopContactOnHome : desktopItemBase}
+                    className={contactSpecial ? desktopContactSpecial : desktopItemBase}
                   >
                     {it.label}
                     {hasChildren && (
@@ -220,14 +224,14 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
               {augmented.map((it, i) => {
                 const hasChildren = Array.isArray(it.children) && it.children.length > 0;
                 const expanded = !!accordion[i];
-                const contactOnHome = onHome && isContactItem(it);
+                const contactSpecial = isContactItem(it);
 
                 return (
                   <li key={`${it.href ?? "#"}-m-${i}`} className="border-b border-white/15 last:border-b-0">
                     <div className="flex items-center">
                       <Link
                         href={normalizeHref(it.href)}
-                        className={contactOnHome ? mobileContactOnHome : mobileItemBase}
+                        className={contactSpecial ? mobileContactSpecial : mobileItemBase}
                         onClick={() => setMobileOpen(false)}
                       >
                         {it.label}

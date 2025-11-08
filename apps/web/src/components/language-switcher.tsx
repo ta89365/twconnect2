@@ -67,6 +67,7 @@ export default function LanguageSwitcher({
   return (
     <div
       data-lang-switcher="true"
+      data-mobile-fab="lang"
       className={[
         "z-[80] flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none",
         className,
@@ -111,6 +112,24 @@ export default function LanguageSwitcher({
           </button>
         );
       })}
+      {/* 手機版覆寫：只影響寬度 <= 768px，桌機完全不變 */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          [data-mobile-fab="lang"] {
+            position: fixed !important;
+            top: auto !important;
+            left: auto !important;
+            right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 88px) !important; /* 上方留位給諮詢鈕 */
+            width: 8.6rem !important;
+            z-index: 40 !important; /* 低於行動導覽抽屜 */
+          }
+          [data-mobile-fab="lang"] button {
+            padding: 0.375rem 0.75rem; /* 更精巧 */
+            font-size: 13px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

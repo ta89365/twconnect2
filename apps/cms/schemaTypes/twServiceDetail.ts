@@ -1,3 +1,4 @@
+// apps/cms/schemaTypes/twServiceDetail.ts
 import { defineField, defineType, defineArrayMember } from "sanity";
 
 /** ---------- Locale helpers ---------- */
@@ -8,7 +9,7 @@ const localeString = (name: string, title: string) =>
     type: "object",
     fields: [
       defineField({ name: "jp", title: "Japanese", type: "string" }),
-      defineField({ name: "zh", title: "Chinese (Traditional)", type: "string" }),
+      defineField({ name: "zh", title: "Chinese", type: "string" }),
       defineField({ name: "en", title: "English", type: "string" }),
     ],
   });
@@ -20,7 +21,7 @@ const localeText = (name: string, title: string, rows = 4) =>
     type: "object",
     fields: [
       defineField({ name: "jp", title: "Japanese", type: "text", rows }),
-      defineField({ name: "zh", title: "Chinese (Traditional)", type: "text", rows }),
+      defineField({ name: "zh", title: "Chinese", type: "text", rows }),
       defineField({ name: "en", title: "English", type: "text", rows }),
     ],
   });
@@ -32,7 +33,7 @@ const localeStringArray = (name: string, title: string) =>
     type: "object",
     fields: [
       defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
-      defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] } ),
+      defineField({ name: "zh", title: "Chinese", type: "array", of: [defineArrayMember({ type: "string" })] }),
       defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
     ],
   });
@@ -75,7 +76,6 @@ export default defineType({
       title: "Slug",
       type: "slug",
       options: {
-        // ✅ 改成函式
         source: (doc: any) => doc.titleEn || doc.titleZh || doc.titleJp || doc.title || "service",
         maxLength: 100,
       },
@@ -90,17 +90,18 @@ export default defineType({
       fields: [defineField({ name: "alt", title: "Alt Text", type: "string" })],
     }),
 
-    // ===== 其餘欄位保持你的版本 =====
+    // ===== Meta / intro =====
     localeString("feesSectionTitle", "Fees Section Title"),
     localeText("background", "Background", 4),
 
+    // ===== Flow / content =====
     defineField({
       name: "challenges",
       title: "Challenges",
       type: "object",
       fields: [
         defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
-        defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "zh", title: "Chinese", type: "array", of: [defineArrayMember({ type: "string" })] }),
         defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
       ],
     }),
@@ -111,7 +112,7 @@ export default defineType({
       type: "object",
       fields: [
         defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
-        defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "zh", title: "Chinese", type: "array", of: [defineArrayMember({ type: "string" })] }),
         defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
         defineField({
           name: "keywords",
@@ -119,7 +120,7 @@ export default defineType({
           type: "object",
           fields: [
             defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
-            defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+            defineField({ name: "zh", title: "Chinese", type: "array", of: [defineArrayMember({ type: "string" })] }),
             defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
           ],
         }),
@@ -132,7 +133,7 @@ export default defineType({
       type: "object",
       fields: [
         defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
-        defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+        defineField({ name: "zh", title: "Chinese", type: "array", of: [defineArrayMember({ type: "string" })] }),
         defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
       ],
     }),
@@ -153,7 +154,7 @@ export default defineType({
         }),
         defineField({
           name: "zh",
-          title: "Chinese (Traditional)",
+          title: "Chinese",
           type: "array",
           of: [defineArrayMember({ type: "object", name: "zhScheduleBlock", fields: [
             defineField({ name: "title", type: "string", title: "Title" }),
@@ -172,6 +173,14 @@ export default defineType({
       ],
     }),
 
+    // ====== 新增：各表格「分段標題」可多語填寫 ======
+    localeString("subsidiaryTitle", "Table Title – Subsidiary"),
+    localeString("branchTitle", "Table Title – Branch"),
+    localeString("repOfficeTitle", "Table Title – Representative Office"),
+    localeString("accountingTaxTitle", "Table Title – Accounting & Tax"),
+    localeString("valueAddedTitle", "Table Title – Value-Added Services"),
+
+    // ====== 表格資料 ======
     defineField({
       name: "subsidiaryPlans",
       title: "I. Subsidiary Establishment Support – Plans",
@@ -203,6 +212,7 @@ export default defineType({
       of: [defineArrayMember({ type: "object", name: "valueAddedRow", title: "Value-Added Row", fields: commonRowFields })],
     }),
 
+    // CTA
     localeString("ctaLabel", "CTA Button Label"),
     defineField({ name: "ctaLink", title: "CTA Link", type: "url" }),
   ],

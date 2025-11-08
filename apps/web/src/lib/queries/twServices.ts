@@ -1,8 +1,8 @@
+// apps/web/src/lib/queries/twServices.ts
 import { groq } from "next-sanity";
 
 export type Lang = "jp" | "zh" | "en";
 
-// 簡化且穩定：select 只做語系挑選，內容用 coalesce，空字串交給前端 fallback
 const pickTitleByLang = `
   coalesce(
     select($lang == "jp" => coalesce(titleJp, title.jp)),
@@ -24,7 +24,7 @@ export const twServiceDetailBySlug = groq`
   _id,
   "slug": slug.current,
 
-  // 最終單一標題
+  // 單一標題（已選語系）
   "title": ${pickTitleByLang},
 
   coverImage{ ..., "url": asset->url },
@@ -40,8 +40,14 @@ export const twServiceDetailBySlug = groq`
   "serviceFlow":     coalesce(serviceFlow[$lang],     serviceFlow.jp,     serviceFlow.zh,     serviceFlow.en),
   "scheduleExample": coalesce(scheduleExample[$lang], scheduleExample.jp, scheduleExample.zh, scheduleExample.en),
 
-  "feesSectionTitle": coalesce(feesSectionTitle[$lang], feesSectionTitle.jp, feesSectionTitle.zh, feesSectionTitle.en),
+  // ====== 新增：各表格多語標題（已選語系） ======
+  "subsidiaryTitle":    coalesce(subsidiaryTitle[$lang],    subsidiaryTitle.jp,    subsidiaryTitle.zh,    subsidiaryTitle.en),
+  "branchTitle":        coalesce(branchTitle[$lang],        branchTitle.jp,        branchTitle.zh,        branchTitle.en),
+  "repOfficeTitle":     coalesce(repOfficeTitle[$lang],     repOfficeTitle.jp,     repOfficeTitle.zh,     repOfficeTitle.en),
+  "accountingTaxTitle": coalesce(accountingTaxTitle[$lang], accountingTaxTitle.jp, accountingTaxTitle.zh, accountingTaxTitle.en),
+  "valueAddedTitle":    coalesce(valueAddedTitle[$lang],    valueAddedTitle.jp,    valueAddedTitle.zh,    valueAddedTitle.en),
 
+  // ====== 表格資料 ======
   "subsidiaryPlans": subsidiaryPlans[]{
     "plan":     coalesce(plan[$lang], plan.jp, plan.zh, plan.en),
     "services": coalesce(services[$lang], services.jp, services.zh, services.en),
@@ -82,6 +88,7 @@ export const twServiceDetailBySlug = groq`
     "notes":    coalesce(notes[$lang], notes.jp, notes.zh, notes.en)
   },
 
+  // 舊 flat fallback（保留）
   "feesFlat": select(
     $lang == "jp" => feesFlatJp[],
     $lang == "zh" => feesFlatZh[],
