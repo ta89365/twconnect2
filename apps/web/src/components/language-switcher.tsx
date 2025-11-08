@@ -1,4 +1,3 @@
-// apps/web/src/components/LanguageSwitcher.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -19,33 +18,32 @@ type Props = {
   current?: Lang;
   offsetY?: number;
   offsetRight?: number;
+  behavior?: "fixed" | "static";
+  className?: string;
 };
 
 export default function LanguageSwitcher({
   current,
   offsetY = 5,
   offsetRight = 1.25,
+  behavior = "fixed",
+  className = "",
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const BRAND_BLUE_RGB = "28,61,90"; // #1C3D5A
-  const OP = {
-    border: 0.30,
-    active: 0.08,   // 非 hover 時，當前語言微弱底色
-    divider: 0.22,
-    text: 0.98,
-    dot: 0.95,
-  };
+  const OP = { border: 0.30, active: 0.08, divider: 0.22, text: 0.98, dot: 0.95 };
 
-  // 只讓被 hover 的那個按鈕變色
+  // ⬇ 統一寬度（再窄一點）
+  const WIDTH_REM = 8.6;
+
   const [hoverKey, setHoverKey] = useState<Lang | null>(null);
 
   const rawUrlLang = searchParams?.get("lang");
   const activeLang = normalizeLang(rawUrlLang ?? current);
 
-  // ✅ 繁中顯示為「中文」
   const items = useMemo(
     () => [
       { key: "zh" as Lang, label: "中文" },
@@ -61,12 +59,21 @@ export default function LanguageSwitcher({
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const positionStyle: React.CSSProperties =
+    behavior === "fixed"
+      ? { position: "fixed", top: `${offsetY}rem`, right: `${offsetRight}rem` }
+      : { position: "absolute", top: `${offsetY}rem`, right: `${offsetRight}rem` };
+
   return (
     <div
-      className="fixed z-[80] flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none"
+      data-lang-switcher="true"
+      className={[
+        "z-[80] flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none",
+        className,
+      ].join(" ")}
       style={{
-        top: `${offsetY}rem`,
-        right: `${offsetRight}rem`,
+        ...positionStyle,
+        width: `${WIDTH_REM}rem`,
         backgroundColor: "rgba(255,255,255,1)",
         border: `1px solid rgba(${BRAND_BLUE_RGB},${OP.border})`,
         color: `rgba(${BRAND_BLUE_RGB},${OP.text})`,
@@ -78,24 +85,10 @@ export default function LanguageSwitcher({
         const active = it.key === activeLang;
         const hovered = it.key === hoverKey;
 
-        // hover 時完全品牌藍底、白字；非 hover 時維持原樣
-        const btnBg = hovered
-          ? `rgba(${BRAND_BLUE_RGB},1)`
-          : active
-          ? `rgba(${BRAND_BLUE_RGB},${OP.active})`
-          : "transparent";
-
+        const btnBg = hovered ? `rgba(${BRAND_BLUE_RGB},1)` : active ? `rgba(${BRAND_BLUE_RGB},${OP.active})` : "transparent";
         const btnColor = hovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},${OP.text})`;
-
-        const dotBg = hovered
-          ? "#FFFFFF"
-          : active
-          ? `rgba(${BRAND_BLUE_RGB},${OP.dot})`
-          : "transparent";
-
-        const dividerColor = hovered
-          ? "rgba(255,255,255,0.25)" // 這條 divider 在藍底上淡一點
-          : `rgba(${BRAND_BLUE_RGB},${OP.divider})`;
+        const dotBg = hovered ? "#FFFFFF" : active ? `rgba(${BRAND_BLUE_RGB},${OP.dot})` : "transparent";
+        const dividerColor = hovered ? "rgba(255,255,255,0.25)" : `rgba(${BRAND_BLUE_RGB},${OP.divider})`;
 
         return (
           <button
@@ -104,29 +97,16 @@ export default function LanguageSwitcher({
             onClick={() => setLang(it.key)}
             onMouseEnter={() => setHoverKey(it.key)}
             onMouseLeave={() => setHoverKey(null)}
-            onFocus={() => setHoverKey(it.key)}   // 鍵盤聚焦也套用相同效果
+            onFocus={() => setHoverKey(it.key)}
             onBlur={() => setHoverKey(null)}
             aria-pressed={active}
-            className="relative flex items-center justify-between px-2.5 py-1.5 text-[13px] whitespace-nowrap outline-none min-w-[70px] transition-colors duration-150"
-            style={{
-              backgroundColor: btnBg,
-              color: btnColor,
-            }}
+            className="relative flex items-center justify-between px-3 py-2 text-[13px] outline-none transition-colors duration-150 w-full"
+            style={{ backgroundColor: btnBg, color: btnColor }}
           >
             <span className="truncate">{it.label}</span>
-
-            <span
-              aria-hidden="true"
-              className="ml-1 h-2 w-2 rounded-full"
-              style={{ backgroundColor: dotBg }}
-            />
-
+            <span aria-hidden="true" className="ml-2 h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotBg }} />
             {idx !== items.length - 1 && (
-              <span
-                aria-hidden
-                className="absolute left-0 right-0"
-                style={{ bottom: -0.5, height: 1, backgroundColor: dividerColor }}
-              />
+              <span aria-hidden className="absolute left-0 right-0" style={{ bottom: -0.5, height: 1, backgroundColor: dividerColor }} />
             )}
           </button>
         );

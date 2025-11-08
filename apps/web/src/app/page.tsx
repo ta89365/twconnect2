@@ -1,24 +1,15 @@
 // apps/web/src/app/page.tsx
 import HeroBanner from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
+import QuickConsult from "@/components/QuickConsult";
 import ChallengesSection from "@/components/ChallengesSection";
-import NavigationServer from "@/components/NavigationServer"; // async server component
-import FooterServer from "@/components/FooterServer";         // async server component
+import NavigationServer from "@/components/NavigationServer";
+import FooterServer from "@/components/FooterServer";
 
-// CrossBorder 區段
-import CrossBorderSection, {
-  CrossBorderData,
-  CrossBorderTune,
-} from "@/components/CrossBorderSection";
-
-// Service 區段
+import CrossBorderSection, { CrossBorderData, CrossBorderTune } from "@/components/CrossBorderSection";
 import ServiceSection, { ServiceItem } from "@/components/ServiceSection";
-
-// About 區段
 import AboutSection from "@/components/AboutSection";
 import type { AboutData } from "@/lib/types/about";
-
-// Contact 區段
 import ContactSection from "@/components/ContactSection";
 import type { ContactData } from "@/lib/types/contact";
 
@@ -32,14 +23,12 @@ import { contactByLang } from "@/lib/queries/contact";
 import { mixedHomeFeedByLang } from "@/lib/queries/insights";
 import Link from "next/link";
 
-/* ============================ 重要：多語動態 ============================ */
 export const dynamic = "force-dynamic";
 
-/* ============================ 視覺與版面設定 ============================ */
-const NAV_HEIGHT = 72;
-
+/* ========= 常數 ========= */
+const NAV_HEIGHT = 72; // px
 const TUNE = {
-  langOffsetYrem: (NAV_HEIGHT + 6) / 16,
+  langOffsetYrem: 0.3, // 語言列距離導覽列 0.3rem
   langOffsetRightRem: 0.75,
   forceTopVh: true,
   heroContentOffsetVh: 2.5,
@@ -89,70 +78,50 @@ function SectionDivider({ className = "" }: { className?: string }) {
 }
 
 const MONTH_EN = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
   const [yyyy, mm, dd] = iso.split("-");
-  const y = yyyy;
-  const m = String(Number(mm));
-  const d = String(Number(dd));
+  const y = yyyy, m = String(Number(mm)), d = String(Number(dd));
   if (lang === "en") return `${MONTH_EN[Number(mm) - 1]} ${d}, ${y}`;
   return `${y}年${m}月${d}日`;
 }
 
-/* ============================ 型別與語言附掛（查詢參數制） ============================ */
 type NavItem = { label?: string; href?: string; external?: boolean; order?: number };
 type Lang = "jp" | "zh" | "en";
-
-/** 只處理站內路徑且避免重複附掛 ?lang= */
 function addLangQuery(href?: string, lang?: Lang): string {
   if (!href || !lang) return href || "";
-  if (!href.startsWith("/")) return href; // 外部或相對檔案
-  if (/[?&]lang=/.test(href)) return href; // 已帶 lang
+  if (!href.startsWith("/")) return href;
+  if (/[?&]lang=/.test(href)) return href;
   const joiner = href.includes("?") ? "&" : "?";
   return `${href}${joiner}lang=${lang}`;
 }
 
-/* ============================ Page ============================ */
-export default async function Home({
-  searchParams,
-}: {
-  searchParams?: { lang?: string } | Promise<{ lang?: string }>;
-}) {
+export default async function Home({ searchParams }: { searchParams?: { lang?: string } | Promise<{ lang?: string }> }) {
   const spRaw =
     searchParams && typeof (searchParams as any).then === "function"
       ? await (searchParams as Promise<{ lang?: string }>)
       : (searchParams as { lang?: string } | undefined);
 
   const spLang = (spRaw?.lang ?? "").toString().toLowerCase();
-
   const contentLang: Lang =
-    spLang === "zh-cn"
-      ? "zh"
-      : spLang === "zh" || spLang === "en" || spLang === "jp"
-      ? (spLang as Lang)
-      : "jp";
+    spLang === "zh-cn" ? "zh" :
+    spLang === "zh" || spLang === "en" || spLang === "jp" ? (spLang as Lang) : "jp";
 
-  const [settings, hero, crossBorder, services, about, contact, mixed] =
-    await Promise.all([
-      sfetch<any>(siteSettingsByLang, { lang: contentLang }),
-      sfetch<any>(heroByLang, { lang: contentLang }),
-      sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
-      sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
-      sfetch<AboutData>(aboutByLang, { lang: contentLang }),
-      sfetch<ContactData>(contactByLang, { lang: contentLang }),
-      sfetch<any>(mixedHomeFeedByLang, { lang: contentLang, limit: 5 }),
-    ]);
+  const [settings, hero, crossBorder, services, about, contact, mixed] = await Promise.all([
+    sfetch<any>(siteSettingsByLang, { lang: contentLang }),
+    sfetch<any>(heroByLang, { lang: contentLang }),
+    sfetch<CrossBorderData>(crossBorderByLang, { lang: contentLang }),
+    sfetch<ServiceItem[]>(servicesQueryML, { lang: contentLang }),
+    sfetch<AboutData>(aboutByLang, { lang: contentLang }),
+    sfetch<ContactData>(contactByLang, { lang: contentLang }),
+    sfetch<any>(mixedHomeFeedByLang, { lang: contentLang, limit: 5 }),
+  ]);
 
-  const rawItems: NavItem[] = Array.isArray(settings?.navigation)
-    ? settings.navigation
-    : [];
+  const rawItems: NavItem[] = Array.isArray(settings?.navigation) ? settings.navigation : [];
   const items: NavItem[] = rawItems
-    .map((it) => {
-      if (!it?.href) return it;
-      return { ...it, href: addLangQuery(it.href, contentLang) };
-    })
+    .map((it) => (it?.href ? { ...it, href: addLangQuery(it.href, contentLang) } : it))
     .sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
   type LooseContact = { email?: string | null; phone?: string | null };
@@ -162,33 +131,16 @@ export default async function Home({
     name: settings?.logoText ?? settings?.title ?? "Taiwan Connect",
     logoUrl: settings?.logoUrl ?? null,
   };
-
-  const footerContact = {
-    email: c?.email ?? settings?.contactEmail ?? null,
-    phone: c?.phone ?? settings?.contactPhone ?? null,
-  };
+  const footerContact = { email: c?.email ?? settings?.contactEmail ?? null, phone: c?.phone ?? settings?.contactPhone ?? null };
 
   const primaryLinks =
-    items?.map((i) => ({ label: i.label, href: i.href, external: i.external })) ??
-    [];
+    items?.map((i) => ({ label: i.label, href: i.href, external: i.external })) ?? [];
 
   const secondaryLinks = [
-    {
-      label:
-        contentLang === "jp" ? "サービス" : contentLang === "zh" ? "服務內容" : "Services",
-      href: addLangQuery("/services", contentLang),
-    },
-    {
-      label:
-        contentLang === "jp" ? "事例紹介" : contentLang === "zh" ? "成功案例" : "Case Studies",
-      href: addLangQuery("/cases", contentLang),
-    },
+    { label: contentLang === "jp" ? "サービス" : contentLang === "zh" ? "服務內容" : "Services", href: addLangQuery("/services", contentLang) },
+    { label: contentLang === "jp" ? "事例紹介" : contentLang === "zh" ? "成功案例" : "Case Studies", href: addLangQuery("/cases", contentLang) },
     { label: "News", href: addLangQuery("/news", contentLang) },
-    {
-      label:
-        contentLang === "jp" ? "IPOアドバイザリー" : contentLang === "zh" ? "IPO 顧問" : "IPO Advisory",
-      href: addLangQuery("/ipo", contentLang),
-    },
+    { label: contentLang === "jp" ? "IPOアドバイザリー" : contentLang === "zh" ? "IPO 顧問" : "IPO Advisory", href: addLangQuery("/ipo", contentLang) },
   ];
 
   const posts = Array.isArray(mixed?.posts) ? mixed.posts : [];
@@ -197,85 +149,69 @@ export default async function Home({
     if (contentLang === "zh") return channel === "news" ? "新聞" : "專欄";
     return channel === "news" ? "News" : "Column";
   };
-  type HomeNewsItem = {
-    dateISO: string;
-    title: string;
-    href: string;
-    channelLabel: string;
-    hashtags?: string[];
-  };
+
+  type HomeNewsItem = { dateISO: string; title: string; href: string; channelLabel: string; hashtags?: string[] };
   const homeNewsItems: HomeNewsItem[] = posts.map((p: any) => {
-    const published = typeof p?.publishedAt === "string" ? p.publishedAt : "";
-    const dateISO = published ? published.slice(0, 10) : "1970-01-01";
-    const slug = p?.slug ?? "";
+    const dateISO = typeof p?.publishedAt === "string" ? p.publishedAt.slice(0, 10) : "1970-01-01";
     const base = p?.channel === "column" ? "/column" : "/news";
-    const href = addLangQuery(`${base}/${slug}`, contentLang);
-    const hashtags =
-      Array.isArray(p?.tags) && p.tags.length > 0
-        ? p.tags.map((t: any) => t?.title).filter(Boolean)
-        : [];
     return {
       dateISO,
       title: p?.title ?? "",
-      href,
+      href: addLangQuery(`${base}/${p?.slug ?? ""}`, contentLang),
       channelLabel: channelLabel(p?.channel),
-      hashtags,
+      hashtags: Array.isArray(p?.tags) ? p.tags.map((t: any) => t?.title).filter(Boolean) : [],
     };
   });
 
   return (
     <main id="top" className="bg-background text-foreground overflow-x-hidden">
-      {/* 導覽列：是 async server component，請以函式呼叫並 await */}
+      {/* 導覽列 */}
       {await (NavigationServer as any)({ lang: spRaw?.lang as string })}
 
-      <LanguageSwitcher
-        current={contentLang}
-        offsetY={TUNE.langOffsetYrem}
-        offsetRight={TUNE.langOffsetRightRem}
-      />
+      {/* 語言列：在目前位置（導覽列後），捲動會消失 */}
+      <div className="relative" style={{ height: 0 }}>
+        <LanguageSwitcher
+          current={contentLang}
+          behavior="static"
+          offsetY={TUNE.langOffsetYrem}
+          offsetRight={TUNE.langOffsetRightRem}
+        />
+      </div>
 
-      {/* Hero：CTA 會跳 /xxx?lang=jp|zh|en */}
-      <HeroBanner
-        data={hero}
-        navHeight={NAV_HEIGHT}
-        tune={TUNE}
-        lang={contentLang}
-      />
+      {/* 立刻諮詢：上移 10px，仍對齊語言列下方；固定不消失 */}
+<QuickConsult
+  targetId="contact"
+  anchorSelector='[data-lang-switcher="true"]'
+  followAnchor={false}
+  position="top-right"
+  topAdjustRem={-0.325}     // 上移10px
+  matchAnchorWidth={true}   // 同語言列寬度
+/>
+
+
+      {/* Hero */}
+      <section className="relative">
+        <HeroBanner data={hero} navHeight={NAV_HEIGHT} tune={TUNE} lang={contentLang} />
+      </section>
 
       <div>{await ChallengesSection({ lang: contentLang })}</div>
+      <div><ServiceSection items={services || []} lang={contentLang} /></div>
+      <div><CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} lang={contentLang} /></div>
 
-      <div>
-        <ServiceSection items={services || []} lang={contentLang} />
-      </div>
+      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
+      <div><AboutSection data={about ?? null} lang={contentLang} /></div>
+      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
+      <div><NewsSection lang={contentLang} items={homeNewsItems} /></div>
+      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
 
-      <div>
-        <CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} lang={contentLang} />
+      <div id="contact" data-contact-anchor="true" className="scroll-mt-[84px]">
+        {await (ContactSection as any)({ data: contact ?? null, lang: contentLang })}
       </div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-
-      <div>
-        <AboutSection data={about ?? null} lang={contentLang} />
-      </div>
-
-      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-
-      <div>
-        <NewsSection lang={contentLang} items={homeNewsItems} />
-      </div>
-
-      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-
-      <div>
-        <ContactSection data={contact ?? null} lang={contentLang} />
-      </div>
-
-      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-
-      {/* Footer 亦為 async server component，採函式呼叫並 await */}
       {await (FooterServer as any)({
         lang: (spRaw?.lang?.toLowerCase() as "jp" | "zh" | "en" | "zh-cn") || contentLang,
-        company: footerCompany,
+        company: { name: settings?.logoText ?? settings?.title ?? "Taiwan Connect", logoUrl: settings?.logoUrl ?? null },
         contact: footerContact,
         primaryLinks,
         secondaryLinks,
@@ -284,19 +220,13 @@ export default async function Home({
   );
 }
 
-/** 混合 News & Column 的首頁列表（手機優化字級與間距） */
+/** 混合 News & Column 的首頁列表 */
 function NewsSection({
   lang,
   items,
 }: {
-  lang: Lang;
-  items: {
-    dateISO: string;
-    title: string;
-    href: string;
-    channelLabel: string;
-    hashtags?: string[];
-  }[];
+  lang: "jp" | "zh" | "en";
+  items: { dateISO: string; title: string; href: string; channelLabel: string; hashtags?: string[] }[];
 }) {
   const t = {
     jp: { title: "ニュースとコラム", sub: "最新のニュースと実務コラムをまとめてお届けします。", cta: "すべて見る" },
@@ -315,11 +245,9 @@ function NewsSection({
             >
               {lang === "en" ? "News &\u00A0Column" : t.title}
             </h2>
-
             <p className="mt-3 sm:mt-4 text-[clamp(0.95rem,3.6vw,1.05rem)] sm:text-lg text-blue-100">
               {t.sub}
             </p>
-
             <div className="mt-6 sm:mt-8">
               <Link
                 href={addLangQuery("/news", lang)}
@@ -329,7 +257,6 @@ function NewsSection({
               </Link>
             </div>
           </div>
-
           <div className="md:col-span-2">
             <ul className="divide-y divide-white/20">
               {items.map((a, i) => (
@@ -338,22 +265,17 @@ function NewsSection({
                     <time className="text-xs sm:text-sm text-blue-200" suppressHydrationWarning>
                       {formatDateDeterministic(lang, a.dateISO)}
                     </time>
-
                     <span className="inline-flex items-center rounded-full border border-blue-200/40 bg-blue-900/30 px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold text-blue-100">
                       {a.channelLabel}
                     </span>
-
                     {a.hashtags && a.hashtags.length > 0 && (
                       <div className="w-full md:w-auto md:ml-auto text-[11px] sm:text-xs text-blue-200">
                         {a.hashtags.map((h, idx) => (
-                          <span key={idx} className="mr-2">
-                            #{h}
-                          </span>
+                          <span key={idx} className="mr-2">#{h}</span>
                         ))}
                       </div>
                     )}
                   </div>
-
                   <h3 className="mt-2 sm:mt-3 text-[15px] sm:text-[15.5px] md:text-base leading-relaxed">
                     <Link href={a.href} className="text-white hover:text-blue-200 hover:underline">
                       {a.title}
@@ -361,7 +283,6 @@ function NewsSection({
                   </h3>
                 </li>
               ))}
-
               {items.length === 0 && (
                 <li className="py-6">
                   <h3 className="mt-3 text-[15px] md:text-base leading-relaxed text-blue-100">

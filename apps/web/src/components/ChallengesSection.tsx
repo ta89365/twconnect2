@@ -184,7 +184,7 @@ export default async function ChallengesSection({
           </div>
         </div>
 
-        {/* 保留 Ribbon CTA */}
+        {/* Ribbon CTA */}
         <div className="mt-8 sm:mt-10 md:mt-14">
           <div className="w-fit mx-auto flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/15 bg-white/10 px-6 py-4 text-white backdrop-blur sm:flex-row sm:px-8 sm:py-5">
             <div className="text-center sm:text-left">
@@ -192,7 +192,7 @@ export default async function ChallengesSection({
               <div className="text-slate-200 whitespace-nowrap">{copy.ribbonSub}</div>
             </div>
             <a
-              href={`/client-challenges?lang=${lang}`}
+              href={`/services?lang=${lang}`}
               className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200 text-white bg-[#1f2454] hover:bg-[#2b3068] whitespace-nowrap"
             >
               {copy.cta}

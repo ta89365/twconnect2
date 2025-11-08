@@ -22,6 +22,7 @@ function isChannel(v: string): v is Channel {
 }
 
 const BRAND_BLUE = "#1C3D5A";
+const ACCENT_BLUE = "#4A90E2"; // ✅ 內卡 CTA 主要按鈕底色
 const CONTENT_MAX_W = "1200px";
 
 /* ============================ 多語與工具 ============================ */
@@ -179,7 +180,7 @@ export default async function ChannelPostPage({
   // 麵包屑標題
   const crumbLabel = channel === "news" ? "News" : "Column";
 
-  // Pre-Footer CTA 語系字串
+  // 內卡 CTA 語系字串（移入白框內）
   const ctaHeading =
     lang === "jp"
       ? "安心して世界へ、一歩ずつ確実に"
@@ -256,6 +257,8 @@ export default async function ChannelPostPage({
               />
             </div>
           )}
+
+          {/* 內容區 */}
           <div className="p-8 sm:p-10">
             <section>
               {Array.isArray(data.body) && data.body.length > 0 ? (
@@ -303,51 +306,51 @@ export default async function ChannelPostPage({
                 ))}
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="mt-14 text-center">
-          <Link
-            href={withLang(basePath, lang)}
-            className="inline-flex items-center rounded-md border border-white/40 px-5 py-2.5 text-sm text-white hover:bg-white/10"
-          >
-            ← Back to {crumbLabel}
-          </Link>
+            {/* ============================ 內卡 CTA（搬進白色卡片底部） ============================ */}
+            <div className="mt-12 border-t border-slate-200 pt-8">
+              <div className="rounded-xl bg-slate-50 px-6 py-7 sm:px-8 sm:py-8 ring-1 ring-slate-200">
+                <h3 className="text-slate-900 text-lg sm:text-xl font-semibold tracking-tight text-center">
+                  {ctaHeading}
+                </h3>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3 md:gap-4">
+                  <Link
+                    href={withLang("/contact", lang)}
+                    className="inline-flex items-center justify-center rounded-lg px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white hover:opacity-95"
+                    style={{ backgroundColor: ACCENT_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
+                  >
+                    {ctaPrimary}
+                  </Link>
+
+                  <a
+                    href="mailto:info@twconnects.com"
+                    className="inline-flex items-center justify-center rounded-lg px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-slate-800 hover:bg-white"
+                    style={{
+                      border: "1px solid rgba(15,23,42,0.15)",
+                      backgroundColor: "rgba(255,255,255,0.9)",
+                    }}
+                  >
+                    info@twconnects.com
+                  </a>
+                </div>
+              </div>
+
+              {/* 回列表 */}
+              <div className="mt-10 text-center">
+                <Link
+                  href={withLang(basePath, lang)}
+                  className="inline-flex items-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  ← Back to {crumbLabel}
+                </Link>
+              </div>
+            </div>
+            {/* ============================ /內卡 CTA ============================ */}
+          </div>
         </div>
       </article>
 
-      {/* ===== Pre-Footer CTA（沿用 finance-advisory 樣式） ===== */}
-      <section className="border-y" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
-        <div className="mx-auto px-6 lg:px-10" style={{ maxWidth: CONTENT_MAX_W }}>
-          <div className="py-10 md:py-14 text-center">
-            <h3 className="text-white text-xl md:text-2xl font-semibold tracking-tight">
-              {ctaHeading}
-            </h3>
-
-            <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
-              <Link
-                href={withLang("/contact", lang)}
-                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
-                style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
-              >
-                {ctaPrimary}
-              </Link>
-
-              <a
-                href="mailto:info@twconnects.com"
-                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white"
-                style={{
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                }}
-              >
-                info@twconnects.com
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* 🔁 外層原 Pre-Footer CTA 已移除，避免重複出現 */}
       <FooterServer lang={lang} />
     </div>
   );

@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
+import { usePathname } from "next/navigation";
 
 type Lang = "jp" | "zh" | "zh-cn" | "en";
 type NavChild = { label: string; href: string; external?: boolean };
@@ -23,8 +24,20 @@ function isValidSrc(s?: string | null) {
   return true;
 }
 
+// 判斷是否為「聯絡我們」
+function isContactItem(it?: { label?: string; href?: string }) {
+  const base = String(it?.href ?? "").split("?")[0];
+  if (base === "/contact") return true;
+  const label = String(it?.label ?? "").trim();
+  const CONTACT_LABELS = new Set(["聯絡我們", "联系我们", "お問い合わせ", "Contact", "Contact Us"]);
+  return CONTACT_LABELS.has(label);
+}
+
 export default function Navigation({ lang = "jp", items = [], brand }: NavigationProps) {
+  const pathname = usePathname();
+  const onHome = pathname === "/" || pathname === "";
   const BRAND_BLUE = "#1C3D5A";
+
   const displayName = brand?.name?.trim() || "Taiwan Connect";
   const brandNameForLang = lang === "jp" ? "株式会社台湾コネクト" : displayName;
   const rawLogo = brand?.logoUrl?.trim() || "";
@@ -39,11 +52,12 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
 
   const sorted = items.slice().sort((a, b) => (a?.order ?? 999) - (b?.order ?? 999));
 
-  const CN_LABELS: Record<Lang, [string, string, string, string]> = {
-    jp: ["中資投資ガイド", "ホワイトリスト", "UBO 実務指引", "申請資料と却下事例"],
-    zh: ["中資來台投資指南", "白名單", "UBO 實務指引", "申請文件與退件原因"],
-    "zh-cn": ["陆资来台投资指南", "白名单", "UBO 实务指引", "申请文件与退件原因"],
-    en: ["Mainland Investment Guide", "Whitelist", "UBO Guide", "Docs and Rejection Causes"],
+  // ===== 陸資專區子選單 =====
+  const CN_LABELS: Record<Lang, [string, string, string, string, string]> = {
+    zh: ["陸資首頁", "公司設立流程指引", "營業項目與政策", "最終受益人判斷方法", "退件原因與顧問建議"],
+    "zh-cn": ["陆资首页", "公司设立流程指引", "经营项目与政策", "最终受益人判定方法", "退件原因与顾问建议"],
+    jp: ["陸資トップページ", "会社設立の手続きガイド", "事業項目と関連政策", "最終受益者の判定方法", "差し戻し理由"],
+    en: ["Main Page", "Company Setup Guidance", "Business Scope Limitation", "UBO Check", "Rejected Reasons & Advice"],
   };
 
   const augmented: NavItem[] = sorted.map((it) => {
@@ -53,10 +67,11 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
       return {
         ...it,
         children: [
-          { label: labels[0], href: "/cn-investment/mainland-investment" },
-          { label: labels[1], href: "/cn-investment/cn-investment-whitelist" },
-          { label: labels[2], href: "/cn-investment/cn-investment-ubo-guide" },
-          { label: labels[3], href: "/cn-investment/cn-investment-docs-cn" },
+          { label: labels[0], href: "/cn-investment" },
+          { label: labels[1], href: "/cn-investment/mainland-investment" },
+          { label: labels[2], href: "/cn-investment/cn-investment-whitelist" },
+          { label: labels[3], href: "/cn-investment/cn-investment-ubo-guide" },
+          { label: labels[4], href: "/cn-investment/cn-investment-docs-cn" },
         ],
       };
     }
@@ -67,6 +82,20 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [accordion, setAccordion] = useState<Record<number, boolean>>({});
   const toggleAccordion = (i: number) => setAccordion((p) => ({ ...p, [i]: !p[i] }));
+
+  const desktopItemBase =
+    "text-slate-100 hover:text-sky-200 text-sm transition-colors inline-flex items-center gap-1";
+
+  // ✅ 白底黑字粗體
+  const desktopContactOnHome =
+    "inline-flex items-center gap-1 rounded-md bg-white px-3 py-1.5 font-bold text-black transition-all hover:bg-slate-100";
+
+  const mobileItemBase =
+    "flex-1 block px-3 py-3 text-white text-[15px] font-medium hover:bg-white/10 rounded-md";
+
+  // ✅ 手機版白底黑字
+  const mobileContactOnHome =
+    "flex-1 block px-3 py-3 rounded-md bg-white font-bold text-black hover:bg-slate-100";
 
   return (
     <header className="w-full" style={{ backgroundColor: BRAND_BLUE }}>
@@ -83,6 +112,8 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
           <ul className="flex items-center gap-8 whitespace-nowrap">
             {augmented.map((it, i) => {
               const hasChildren = Array.isArray(it.children) && it.children.length > 0;
+              const contactOnHome = onHome && isContactItem(it);
+
               return (
                 <li
                   key={`${it.href ?? "#"}-${i}`}
@@ -94,7 +125,7 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
                     href={normalizeHref(it.href)}
                     target={it.external ? "_blank" : undefined}
                     rel={it.external ? "noreferrer" : undefined}
-                    className="text-slate-100 hover:text-sky-200 text-sm transition-colors inline-flex items-center gap-1"
+                    className={contactOnHome ? desktopContactOnHome : desktopItemBase}
                   >
                     {it.label}
                     {hasChildren && (
@@ -189,12 +220,14 @@ export default function Navigation({ lang = "jp", items = [], brand }: Navigatio
               {augmented.map((it, i) => {
                 const hasChildren = Array.isArray(it.children) && it.children.length > 0;
                 const expanded = !!accordion[i];
+                const contactOnHome = onHome && isContactItem(it);
+
                 return (
                   <li key={`${it.href ?? "#"}-m-${i}`} className="border-b border-white/15 last:border-b-0">
                     <div className="flex items-center">
                       <Link
                         href={normalizeHref(it.href)}
-                        className="flex-1 block px-3 py-3 text-white text-[15px] font-medium hover:bg-white/10 rounded-md"
+                        className={contactOnHome ? mobileContactOnHome : mobileItemBase}
                         onClick={() => setMobileOpen(false)}
                       >
                         {it.label}

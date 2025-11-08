@@ -13,7 +13,7 @@ import {
 } from "@/lib/queries/financeAdvisoryDetail";
 
 export const revalidate = 60;
-export const dynamic = "force-dynamic"; // ✅ (1) 改為強制動態
+export const dynamic = "force-dynamic";
 
 /* ============================ 視覺調整區 ============================ */
 const BRAND_BLUE = "#1C3D5A";
@@ -25,12 +25,12 @@ const HERO_TUNE = {
   minH: 440,
 };
 
-/** Hero 文字區位置與寬度調整 */
+/** Hero 文字區位置與寬度調整：置中顯示 */
 const HERO_TEXT_TUNE = {
-  top: "40%",
-  left: "33%",
-  maxWidth: "40%",
-  align: "left" as "left" | "center" | "right",
+  top: "50%",
+  left: "50%",
+  maxWidth: "68%",
+  align: "center" as "left" | "center" | "right",
 };
 
 /** Hero 圖片位移與縮放 */
@@ -192,7 +192,7 @@ function QuickDock({ lang }: { lang: Lang }) {
             return (
               <a
                 key={id}
-                href={`#${id}`} // 錨點連結不需加 lang
+                href={`#${id}`}
                 className="group inline-flex items-center gap-2 rounded-full border border-white/25 bg-transparent hover:bg-white/10 text-white px-3.5 py-2 text-sm transition-colors"
               >
                 {IconEl}
@@ -210,7 +210,6 @@ function QuickDock({ lang }: { lang: Lang }) {
 export default async function FinanceAdvisoryPage({
   searchParams,
 }: {
-  // ✅ (2) 允許 Promise 並先 await 再取得 lang
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
   const sp =
@@ -218,10 +217,8 @@ export default async function FinanceAdvisoryPage({
       ? await (searchParams as Promise<{ lang?: string }>)
       : (searchParams as { lang?: string } | undefined);
 
-  // ✅ (3) 使用 resolveLang 解析語言參數
   const lang = resolveLang(sp?.lang);
 
-  // ✅ (4) 查詢時帶入 lang
   const data = await sfetch<FinanceAdvisoryData>(financeAdvisoryDetailBySlug, {
     slug: FIXED_SLUG,
     lang,
@@ -234,62 +231,6 @@ export default async function FinanceAdvisoryPage({
       zh: "財務與會計顧問・海外發展支援服務",
       en: "Financial & Accounting Advisory / Overseas Expansion Support",
     }[lang];
-
-  /* ------------ Localized UI labels ------------ */
-  function dict(localLang: Lang) {
-    if (localLang === "jp")
-      return {
-        breadcrumb: "ホーム / サービス / 海外居住・移住支援",
-        heroHeading: "海外居住・移住サポート",
-        bg: "背景",
-        challenges: "課題",
-        services: "サービス内容",
-        flow: "サービスの流れ",
-        fees: "料金（参考）",
-        defaultCTA: "お問い合わせはこちら",
-        bottomHeading: "最適な移住プランで、海外生活の第一歩を",
-        feeSideHeading: "まずは無料相談",
-        feeSideNote:
-          "案件の内容や条件により料金が異なります。ご状況を伺った上でお見積りをご提示します。",
-        tagTailored: "個別見積",
-        tagQuickReply: "迅速返答",
-      };
-    if (localLang === "zh")
-      return {
-        breadcrumb: "首頁 / 服務內容 / 海外居住移居支援",
-        heroHeading: "海外居住／移居支援",
-        bg: "背景",
-        challenges: "挑戰",
-        services: "服務內容",
-        flow: "服務流程",
-        fees: "費用參考",
-        defaultCTA: "Contact Us 聯絡我們",
-        bottomHeading: "用最合適的移居方案，安心展開海外生活",
-        feeSideHeading: "先進行免費諮詢",
-        feeSideNote:
-          "費用會依據目的與條件不同而調整。了解您的情況後，我們會提供客製化報價。",
-        tagTailored: "客製報價",
-        tagQuickReply: "快速回覆",
-      };
-    return {
-      breadcrumb: "Home / Services / Overseas Residence & Relocation",
-      heroHeading: "Overseas Residence and Relocation Support",
-      bg: "Background",
-      challenges: "Challenges",
-      services: "Services",
-      flow: "Service Flow",
-      fees: "Fees",
-      defaultCTA: "Contact Us",
-      bottomHeading:
-        "Start your next chapter abroad with the right relocation plan",
-      feeSideHeading: "Start with a free consult",
-      feeSideNote:
-        "Pricing varies by purpose and requirements. Tell us your situation and we will prepare a tailored quote.",
-      tagTailored: "Tailored quote",
-      tagQuickReply: "Quick reply",
-    };
-  }
-  const labels = dict(lang);
 
   return (
     <div className="relative min-h-screen" style={{ backgroundColor: BRAND_BLUE }}>
@@ -319,11 +260,10 @@ export default async function FinanceAdvisoryPage({
 
       {/* 導覽列 */}
       <div className="relative z-20">
-        {/* ✅ (4) lang 傳入子元件 */}
         <NavigationServer lang={lang} />
       </div>
 
-      {/* ===== Hero 文字 ===== */}
+      {/* ===== Hero 文字：置中於可見區域 ===== */}
       <header
         className="relative z-10 w-full"
         style={{ minHeight: HERO_TUNE.minH, marginTop: `-${NAV_H}px`, paddingTop: `${NAV_H}px` }}
@@ -333,6 +273,7 @@ export default async function FinanceAdvisoryPage({
           style={{
             top: HERO_TEXT_TUNE.top,
             left: HERO_TEXT_TUNE.left,
+            transform: "translate(-50%, -50%)", // 置中關鍵
             maxWidth: HERO_TEXT_TUNE.maxWidth,
             textAlign: HERO_TEXT_TUNE.align,
             color: BRAND_BLUE,
@@ -341,23 +282,7 @@ export default async function FinanceAdvisoryPage({
           <h1 className="text-3xl md:text-5xl font-semibold tracking-tight leading-tight">
             {renderTitleNoWrap(title, lang)}
           </h1>
-          <p className="mt-4 text-base md:text-lg leading-relaxed opacity-95">
-            {lang === "jp" && "国際財務アドバイザリーで企業の成長を支援"}
-            {lang === "zh" && "國際財務顧問，助力企業全球成長"}
-            {lang === "en" && "Global Financial Advisory for Business Growth"}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {/* 錨點連結不需加 lang */}
-            <Link
-              href="#services"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#1C3D5A] text-white hover:bg-[#24496C] px-4 py-2.5 text-sm font-medium transition-colors"
-            >
-              <Lucide.ListChecks className="size-4" />
-              {lang === "jp" && "サービス内容を見る"}
-              {lang === "zh" && "查看服務內容"}
-              {lang === "en" && "View Services"}
-            </Link>
-          </div>
+          {/* 已移除：副標與按鈕 */}
         </div>
       </header>
 
@@ -408,7 +333,6 @@ export default async function FinanceAdvisoryPage({
           >
             <Bullets items={data?.fees?.items ?? []} />
             <div className="mt-5">
-              {/* ✅ (5) 站內連結補上 ?lang */}
               <Link
                 href={`/contact?lang=${lang}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 hover:bg-white/20 px-4 py-2.5 text-sm font-medium transition-colors text-white"
@@ -436,10 +360,9 @@ export default async function FinanceAdvisoryPage({
             </h3>
 
             <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
-              {/* ✅ (5) 站內連結補上 ?lang */}
               <Link
                 href={`/contact?lang=${lang}`}
-                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
+                className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg白色 hover:bg-white/90"
                 style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
               >
                 {(() => {
@@ -449,7 +372,6 @@ export default async function FinanceAdvisoryPage({
                 })()}
               </Link>
 
-              {/* 外部連結不需要加 lang */}
               <a
                 href="mailto:info@twconnects.com"
                 className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold text-white"

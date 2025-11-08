@@ -195,9 +195,9 @@ function VisaCategories({
         <table className="w-full text-left text-[15px]">
           <thead className="bg-white/10">
             <tr>
-              <th className="py-3.5 pl-5 pr-3 font-semibold">{colCat}</th>
-              <th className="py-3.5 px-3 font-semibold">{colType}</th>
-              <th className="py-3.5 pl-3 pr-5 font-semibold">{colDesc}</th>
+              <th className="py-3.5 pl-5 pr-3 font-semibold"> {colCat} </th>
+              <th className="py-3.5 px-3 font-semibold"> {colType} </th>
+              <th className="py-3.5 pl-3 pr-5 font-semibold"> {colDesc} </th>
             </tr>
           </thead>
           <tbody>
@@ -350,7 +350,7 @@ export default async function VisaResidencyStaticPage({
           {/* 疊加漸層 */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-[#0f2334]/25 to-[rgba(28,61,90,0.92)]" />
 
-          {/* 文字區 */}
+          {/* 文字區：只保留主標題且在可見區域置中 */}
           <div
             className="absolute z-10"
             style={{
@@ -361,12 +361,6 @@ export default async function VisaResidencyStaticPage({
               textAlign: HERO_TEXT_TUNE.align,
             }}
           >
-            <div className="mb-4 flex justify-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/12 border border-white/18 px-4 py-1 text-xs md:text-sm">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/80" />
-                {labels.breadcrumb}
-              </div>
-            </div>
             <h1
               className="font-bold tracking-tight drop-shadow-sm"
               style={{
@@ -376,17 +370,6 @@ export default async function VisaResidencyStaticPage({
             >
               {title}
             </h1>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              {visaBadges.map((b, i) => (
-                <span
-                  key={i}
-                  className="text-sm md:text-base bg-white/12 border border-white/18 px-3 py-1 rounded-full"
-                >
-                  {b}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -411,7 +394,7 @@ export default async function VisaResidencyStaticPage({
             </a>
           )}
           {(services.length > 0 || incubationTrack.length > 0) && (
-            <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 hover:bg-white/10 transition">
+            <a href="#sv" className="px-4 py-2 rounded-full border border白色/18 hover:bg白色/10 transition">
               {labels.services}
             </a>
           )}

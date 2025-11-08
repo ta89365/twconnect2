@@ -123,7 +123,7 @@ function ExampleDisclosure({ ex, idx }: { ex: UboExample; idx: number }) {
       <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/15 text-white grid place-items-center text-sm">{idx}</div>
-          <h3 className="text-lg md:text-xl text白 font-semibold">{ex.titleZhCn || `示例 ${idx}`}</h3>
+          <h3 className="text-lg md:text-xl text-white font-semibold">{ex.titleZhCn || `示例 ${idx}`}</h3>
         </div>
         <Lucide.ChevronDown className="size-5 text-white/80 transition-transform group-open:rotate-180" />
       </summary>
@@ -210,7 +210,6 @@ export default async function Page() {
   const hero = doc.heroImage;
 
   return (
-    // 整體底色更淡：從深藍過度到品牌藍（低不透明度）
     <div className={`min-h-screen flex flex-col ${notoSC.className} bg-gradient-to-b from-[#0E1B27] to-[#1C3D5A]/70`}>
       <Nav lang={PAGE_LANG} />
 
@@ -226,14 +225,11 @@ export default async function Page() {
               sizes="100vw"
               className="object-cover opacity-90"
             />
-            {/* 遮罩很淺：僅在底部加 25%，中段只 5% */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#1C3D5A]/25 to-[#1C3D5A]/50" />
           </>
         ) : null}
 
-        {/* Hero 內容容器放大，避免撐不下 */}
         <div className="relative z-10 w-full max-w-[1200px] mx-auto">
-
           <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
             {doc.heroTitleZhCn || "实质受益人（UBO）判定指南"}
           </h1>
@@ -241,7 +237,6 @@ export default async function Page() {
             <p className="mt-3 md:mt-4 text-base md:text-lg text-white/90">{doc.heroSubtitleZhCn}</p>
           ) : null}
 
-          {/* 自適應網格：auto-fit + minmax(320px, 1fr)，每張卡至少 320px 且單行不換行 */}
           <div className="mt-8 grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
             <StatCardOneLine icon={<Lucide.BookCheck className="size-5" />} text="3+ 条｜核心规范与要点" />
             <StatCardOneLine icon={<Lucide.Network className="size-5" />} text="多层回溯｜跨层股权判定逻辑" />
@@ -267,33 +262,26 @@ export default async function Page() {
             {doc.legalBasisZhCn ? (
               <section id="sec-law">
                 <SectionTitle icon={<Lucide.Scroll className="size-5" />} title="二、法规依据" />
-                <div className="grid md:grid-cols-2 gap-5">
-                  <Card>
-                    <div className="flex items-start gap-3">
-                      <Lucide.FileText className="size-5 text-white/90 shrink-0 mt-0.5" />
-                      <div className="space-y-3">
-                        <PortableText value={doc.legalBasisZhCn as TypedObject[]} components={ptComponents as any} />
-                      </div>
+                {/* 只保留綠框卡片並拉滿寬度 */}
+                <Card>
+                  <div className="flex items-start gap-3">
+                    <Lucide.FileText className="size-5 text-white/90 shrink-0 mt-0.5" />
+                    <div className="space-y-3">
+                      <PortableText value={doc.legalBasisZhCn as TypedObject[]} components={ptComponents as any} />
                     </div>
-                  </Card>
-                  <Card>
-                    <div className="flex items-start gap-3">
-                      <Lucide.Lightbulb className="size-5 text-white/90 shrink-0 mt-0.5" />
-                      <p className={`${TEXT_SOFT}`}>整理「条文要点」与「审查着眼」两栏，有助于加速文件准备。</p>
-                    </div>
-                  </Card>
-                </div>
+                  </div>
+                </Card>
               </section>
             ) : null}
 
-            {doc.ownershipThresholdZhCn || doc.controlCriteriaZhCn ? (
+            {(doc.ownershipThresholdZhCn || doc.controlCriteriaZhCn) ? (
               <section id="sec-criteria">
                 <SectionTitle icon={<Lucide.Funnel className="size-5" />} title="三、持股比例与控制能力标准" />
                 <div className="grid md:grid-cols-2 gap-5">
                   {doc.ownershipThresholdZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.Percent className="size-5 text白/90 shrink-0 mt-0.5" />
+                        <Lucide.Percent className="size-5 text-white/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">持股比例门槛</h3>
                           <PortableText value={doc.ownershipThresholdZhCn as TypedObject[]} components={ptComponents as any} />
@@ -304,7 +292,7 @@ export default async function Page() {
                   {doc.controlCriteriaZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.SlidersHorizontal className="size-5 text白/90 shrink-0 mt-0.5" />
+                        <Lucide.SlidersHorizontal className="size-5 text-white/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">控制能力判断</h3>
                           <PortableText value={doc.controlCriteriaZhCn as TypedObject[]} components={ptComponents as any} />
@@ -316,14 +304,14 @@ export default async function Page() {
               </section>
             ) : null}
 
-            {doc.layeredCalculationZhCn || doc.uboFocusZhCn ? (
+            {(doc.layeredCalculationZhCn || doc.uboFocusZhCn) ? (
               <section id="sec-method">
                 <SectionTitle icon={<Lucide.GitBranch className="size-5" />} title="四、计算方式与 UBO 焦点" />
                 <div className="grid md:grid-cols-2 gap-5">
                   {doc.layeredCalculationZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.GitCommitVertical className="size-5 text白/90 shrink-0 mt-0.5" />
+                        <Lucide.GitCommitVertical className="size-5 text-white/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">多层回溯计算</h3>
                           <PortableText value={doc.layeredCalculationZhCn as TypedObject[]} components={ptComponents as any} />
@@ -334,7 +322,7 @@ export default async function Page() {
                   {doc.uboFocusZhCn ? (
                     <Card>
                       <div className="flex items-start gap-3">
-                        <Lucide.Target className="size-5 text白/90 shrink-0 mt-0.5" />
+                        <Lucide.Target className="size-5 text-white/90 shrink-0 mt-0.5" />
                         <div className="space-y-3">
                           <h3 className="text-white font-semibold">审查焦点</h3>
                           <PortableText value={doc.uboFocusZhCn as TypedObject[]} components={ptComponents as any} />
@@ -380,7 +368,7 @@ export default async function Page() {
               </section>
             ) : null}
 
-            {doc.conclusionZhCn || doc.contact ? (
+            {(doc.conclusionZhCn || doc.contact) ? (
               <section id="sec-end">
                 <SectionTitle icon={<Lucide.MessageSquare className="size-5" />} title="七、结语与联系" />
                 <div className="grid md:grid-cols-3 gap-5">

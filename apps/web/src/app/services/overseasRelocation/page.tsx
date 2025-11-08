@@ -229,35 +229,14 @@ export default async function OverseasRelocationPage({
           {/* 漸層遮罩 */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#1C3D5A]/75" />
 
-          {/* Hero 文字：絕對定位 */}
+          {/* Hero 文字：只留主標題，且在可見區域置中 */}
           <div className="absolute inset-0">
             <div
-              className={`${CONTAINER_W} ${CONTAINER_X} h-full mx-auto flex items-end justify-center text-center pb-14 md:pb-20`}
+              className={`${CONTAINER_W} ${CONTAINER_X} h-full mx-auto grid place-items-center`}
             >
-              <div>
-                <div className="mb-4 flex justify-center">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/12 border border-white/18 px-4 py-1 text-xs md:text-sm">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-white/80" />
-                    {t.breadcrumb}
-                  </div>
-                </div>
-
-                <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">
-                  {title}
-                </h1>
-
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-                  <LangBadge lang={lang} />
-                  <Link
-                    href={`/contact${lang ? `?lang=${lang}` : ""}`}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-1.5 text-sm font-semibold shadow-sm hover:bg-white transition"
-                    style={{ color: BRAND_BLUE }}
-                  >
-                    <Lucide.Mail className="h-4 w-4" />
-                    {ctaLabel}
-                  </Link>
-                </div>
-              </div>
+              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-center drop-shadow-sm">
+                {title}
+              </h1>
             </div>
           </div>
 

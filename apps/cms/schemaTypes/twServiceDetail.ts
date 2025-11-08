@@ -1,4 +1,3 @@
-// apps/cms/schemaTypes/twServiceDetail.ts
 import { defineField, defineType, defineArrayMember } from "sanity";
 
 /** ---------- Locale helpers ---------- */
@@ -33,7 +32,7 @@ const localeStringArray = (name: string, title: string) =>
     type: "object",
     fields: [
       defineField({ name: "jp", title: "Japanese", type: "array", of: [defineArrayMember({ type: "string" })] }),
-      defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] }),
+      defineField({ name: "zh", title: "Chinese (Traditional)", type: "array", of: [defineArrayMember({ type: "string" })] } ),
       defineField({ name: "en", title: "English", type: "array", of: [defineArrayMember({ type: "string" })] }),
     ],
   });
@@ -55,7 +54,6 @@ const commonRowFields = [
   localeText("notes", "Notes (Optional)", 3),
 ];
 
-/** ---------- Document ---------- */
 export default defineType({
   name: "twServiceDetail",
   title: "Taiwan Market Entry Detail",
@@ -63,18 +61,27 @@ export default defineType({
   fields: [
     defineField({
       name: "title",
-      title: "Service Title",
+      title: "Service Title (Legacy EN)",
       type: "string",
-      description: "English title used on page and to generate the slug.",
+      description: "Legacy English title used for slug. New multi-language fields below are preferred.",
       validation: (Rule) => Rule.required().min(2),
     }),
+    defineField({ name: "titleJp", title: "Title (JP)", type: "string" }),
+    defineField({ name: "titleZh", title: "Title (ZH)", type: "string" }),
+    defineField({ name: "titleEn", title: "Title (EN)", type: "string" }),
+
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
-      options: { source: "title", maxLength: 100 },
+      options: {
+        // ✅ 改成函式
+        source: (doc: any) => doc.titleEn || doc.titleZh || doc.titleJp || doc.title || "service",
+        maxLength: 100,
+      },
       validation: (Rule) => Rule.required(),
     }),
+
     defineField({
       name: "coverImage",
       title: "Hero Image",
@@ -83,10 +90,8 @@ export default defineType({
       fields: [defineField({ name: "alt", title: "Alt Text", type: "string" })],
     }),
 
-    /** ---------- Section heading: 料金（参考） / 費用（參考） / Fees (Reference) ---------- */
+    // ===== 其餘欄位保持你的版本 =====
     localeString("feesSectionTitle", "Fees Section Title"),
-
-    /** ---------- Originals kept ---------- */
     localeText("background", "Background", 4),
 
     defineField({
@@ -167,65 +172,43 @@ export default defineType({
       ],
     }),
 
-    /** ---------- New Fees Tables (structured by sections) ---------- */
-
-    // I. Subsidiary plans (Light / Standard / Premium)
     defineField({
       name: "subsidiaryPlans",
       title: "I. Subsidiary Establishment Support – Plans",
       type: "array",
-      of: [defineArrayMember({ type: "object", name: "planRow", title: "Plan Row", fields: planRowFields,
-        preview: { select: { jp: "plan.jp", zh: "plan.zh", en: "plan.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Unnamed Plan)" }) },
-      })],
+      of: [defineArrayMember({ type: "object", name: "planRow", title: "Plan Row", fields: planRowFields })],
     }),
-
-    // II. Branch Office Establishment Support (rows)
     defineField({
       name: "branchSupport",
       title: "II. Branch Office Establishment Support",
       type: "array",
-      of: [defineArrayMember({ type: "object", name: "branchRow", title: "Branch Row", fields: commonRowFields,
-        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Branch Row)" }) },
-      })],
+      of: [defineArrayMember({ type: "object", name: "branchRow", title: "Branch Row", fields: commonRowFields })],
     }),
-
-    // III. Representative Office Establishment Support (rows)
     defineField({
       name: "repOfficeSupport",
       title: "III. Representative Office Establishment Support",
       type: "array",
-      of: [defineArrayMember({ type: "object", name: "repOfficeRow", title: "Representative Office Row", fields: commonRowFields,
-        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Rep Office Row)" }) },
-      })],
+      of: [defineArrayMember({ type: "object", name: "repOfficeRow", title: "Representative Office Row", fields: commonRowFields })],
     }),
-
-    // IV. Accounting & Tax Support (rows)
     defineField({
       name: "accountingTaxSupport",
       title: "IV. Accounting & Tax Support",
       type: "array",
-      of: [defineArrayMember({ type: "object", name: "accountingTaxRow", title: "Accounting / Tax Row", fields: commonRowFields,
-        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Accounting/Tax Row)" }) },
-      })],
+      of: [defineArrayMember({ type: "object", name: "accountingTaxRow", title: "Accounting / Tax Row", fields: commonRowFields })],
     }),
-
-    // V. Value-Added Services (rows)
     defineField({
       name: "valueAddedServices",
       title: "V. Value-Added Services (Optional)",
       type: "array",
-      of: [defineArrayMember({ type: "object", name: "valueAddedRow", title: "Value-Added Row", fields: commonRowFields,
-        preview: { select: { jp: "name.jp", zh: "name.zh", en: "name.en" }, prepare: ({ jp, zh, en }) => ({ title: jp || zh || en || "(Value-Added Row)" }) },
-      })],
+      of: [defineArrayMember({ type: "object", name: "valueAddedRow", title: "Value-Added Row", fields: commonRowFields })],
     }),
 
-    /** ---------- CTA ---------- */
     localeString("ctaLabel", "CTA Button Label"),
     defineField({ name: "ctaLink", title: "CTA Link", type: "url" }),
   ],
 
   preview: {
-    select: { title: "title", media: "coverImage" },
+    select: { title: "titleZh", media: "coverImage" },
     prepare({ title, media }) {
       return { title: title || "(Untitled Service)", media };
     },

@@ -26,23 +26,26 @@ function normalizeLang(input?: string | null): Exclude<Lang, "zh-cn"> {
   return "jp";
 }
 
-/** 內建多語（不走 Sanity）。 */
+/** 內建多語（不走 Sanity） */
 function resolveCopy(lang: Exclude<Lang, "zh-cn">) {
   const dict = {
     jp: {
       heading: "サービス内容",
       subheading: "― 専門アドバイザリーチームが台湾進出や国際ビジネス展開の第一歩を支援 ―",
       cta: "詳細を見る",
+      bottomCta: "会社概要を見る", // ← 按照圖片
     },
     zh: {
       heading: "服務內容",
       subheading: "— 專業顧問團隊支援您邁出進軍臺灣與國際業務拓展的第一步 —",
       cta: "查看詳情",
+      bottomCta: "公司概要", // ← 按照圖片
     },
     en: {
       heading: "Services",
       subheading: "— Our advisory team supports your first steps into Taiwan and global expansion —",
       cta: "Learn More",
+      bottomCta: "Company Overview", // ← 按照圖片
     },
   } as const;
 
@@ -72,23 +75,19 @@ function addLangQuery(href: string, lang: Exclude<Lang, "zh-cn">): string {
 
 export default function ServiceSection({
   items,
-  lang, // 可選；若未傳，將以 URL ?lang 為主
+  lang,
   heading,
   subheading,
   ctaText,
 }: {
   items: ServiceItem[];
   lang?: Lang;
-  /** 傳入則覆蓋內建多語 */
   heading?: string;
-  /** 傳入則覆蓋內建多語 */
   subheading?: string;
-  /** 傳入則覆蓋內建多語 */
   ctaText?: string;
 }) {
   if (!items?.length) return null;
 
-  // ✅ 以 URL ?lang 優先，其次 props.lang，最後預設 jp
   const sp = useSearchParams();
   const urlLang = normalizeLang(sp?.get("lang"));
   const effectiveLang = normalizeLang(lang ?? urlLang);
@@ -101,9 +100,11 @@ export default function ServiceSection({
     return addLangQuery(href, effectiveLang);
   };
 
+  // ✅ 永遠導向 /company，並加語言參數
+  const finalBottomHref = addLangQuery("/company", effectiveLang);
+
   return (
     <section className="relative overflow-hidden bg-[#1C3D5A] py-16 sm:py-20">
-      {/* subtle radial glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
       </div>
@@ -128,7 +129,6 @@ export default function ServiceSection({
                 href={finalHref}
                 className="group relative flex flex-col overflow-hidden rounded-2xl bg-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]"
               >
-                {/* image */}
                 {it.imageUrl ? (
                   <div className="relative aspect-[16/9] w-full">
                     <Image
@@ -143,7 +143,6 @@ export default function ServiceSection({
                   <div className="aspect-[16/9] w-full bg-slate-700" />
                 )}
 
-                {/* body */}
                 <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
                   <h3 className="text-base font-semibold leading-snug text-white">
                     {it.title}
@@ -152,14 +151,13 @@ export default function ServiceSection({
                     {it.desc}
                   </p>
 
-                  {/* CTA */}
-                  <div className="mt-4">
+                  <div className="mt-auto pt-4">
                     <span
                       className="
-                        inline-flex items-center justify-center rounded-xl
-                        px-4 py-2 text-sm font-semibold shadow
+                        inline-flex h-10 items-center justify-center rounded-xl
+                        px-4 text-sm font-semibold shadow
                         transition-colors duration-200
-                        text-[#FFFFFF] bg-[#4A90E2] hover:bg-[#5AA2F0]
+                        text-white bg-[#4A90E2] hover:bg-[#5AA2F0]
                       "
                     >
                       {ctaText ?? copy.cta}
@@ -169,6 +167,18 @@ export default function ServiceSection({
               </Link>
             );
           })}
+        </div>
+
+        {/* 置中的大 CTA */}
+        <div className="mt-10 flex justify-center">
+          <Link
+            href={finalBottomHref}
+            className="inline-flex items-center rounded-xl px-6 py-3 text-sm sm:text-base font-medium transition
+                      text-white bg-[#4A90E2] hover:bg-[#5AA2F0]
+                      focus:outline-none focus:ring-2 focus:ring-[#5AA2F0] focus:ring-offset-2 focus:ring-offset-[#1C3D5A]"
+          >
+            {copy.bottomCta}
+          </Link>
         </div>
       </div>
     </section>

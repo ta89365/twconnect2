@@ -1,420 +1,447 @@
 // File: apps/web/src/components/ContactForm.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
-import TimezoneSelect from "@/components/TimezoneSelect";
+import * as React from "react";
 
-type Lang = "jp" | "zh" | "en";
+/* ========== Types & i18n ========== */
+export type Lang = "jp" | "zh" | "en";
 
-const I18N: Record<
-  Lang,
-  {
-    label: {
-      name: string;
-      email: string;
-      phone: string;
-      subject: string;
-      summary: string;
-      preferredContact: string;
-      preferredTime1: string;
-      preferredTime2: string;
-      timezone: string;
-      attachments: string;
-      consent: string;
-      send: string;
-      sending: string;
-      success: string;
-      failPrefix: string;
-      pleaseSelect: string;
-    };
-    placeholder: {
-      name?: string;
-      email?: string;
-      phone?: string;
-      subject?: string;
-      summary?: string;
-      preferredContact?: string;
-      timezone?: string;
-    };
-    hint: {
-      selectDateTime: string;
-    };
-  }
-> = {
-  zh: {
-    label: {
-      name: "姓名",
-      email: "電子郵件",
-      phone: "電話",
-      subject: "主旨",
-      summary: "需求摘要",
-      preferredContact: "偏好聯絡方式",
-      preferredTime1: "第一備選時段",
-      preferredTime2: "第二備選時段",
-      timezone: "時區",
-      attachments: "附件",
-      consent: "我同意隱私權政策",
-      send: "送出",
-      sending: "傳送中…",
-      success: "已送出，請留意信箱。",
-      failPrefix: "送出失敗：",
-      pleaseSelect: "請選擇",
+function tLabel(key: string, lang: Lang): string {
+  const dict: Record<string, { zh: string; jp: string; en: string }> = {
+    Name: { zh: "您的姓名", jp: "お名前", en: "Your Name" },
+    Email: { zh: "Email", jp: "メールアドレス", en: "Email" },
+    Phone: { zh: "聯絡電話", jp: "電話番号", en: "Phone" },
+    Company: { zh: "公司名稱", jp: "会社名", en: "Company" },
+    Subject: { zh: "主旨", jp: "件名", en: "Subject" },
+    "Please select": { zh: "請選擇", jp: "選択してください", en: "Please select" },
+    "Preferred language": { zh: "偏好聯絡語言", jp: "希望言語", en: "Preferred language" },
+    Chinese: { zh: "繁體中文", jp: "中国語", en: "Chinese" },
+    Japanese: { zh: "日文", jp: "日本語", en: "Japanese" },
+    English: { zh: "英文", jp: "英語", en: "English" },
+    "Preferred contact": { zh: "希望連絡方法", jp: "希望連絡方法", en: "Preferred Contact" },
+    Summary: { zh: "需求摘要", jp: "概要", en: "Summary" },
+    Attachment: { zh: "附件", jp: "添付ファイル", en: "Attachment" },
+    Send: { zh: "送出", jp: "送信", en: "Send" },
+    "First preferred time": { zh: "第一備選時段", jp: "第1希望日時", en: "First preferred time" },
+    "Second preferred time": { zh: "第二備選時段", jp: "第2希望日時", en: "Second preferred time" },
+    "Attachment hint default": {
+      zh: "資料附件 PDF／Excel／圖片（上限 10MB）",
+      jp: "資料添付 PDF／Excel／画像（10MB まで）",
+      en: "Attachments PDF / Excel / Images (up to 10MB)",
     },
-    placeholder: {
-      name: "王小明",
-      email: "name@example.com",
-      phone: "0900-000-000",
-      subject: "我要諮詢的主題",
-      summary: "請描述您的需求與背景…",
-      preferredContact: "Email / Phone / LINE",
-      timezone: "例如 Asia/Taipei",
-    },
-    hint: {
-      selectDateTime: "請選擇日期與時間",
-    },
-  },
-  jp: {
-    label: {
-      name: "お名前",
-      email: "メールアドレス",
-      phone: "電話番号",
-      subject: "件名",
-      summary: "ご相談内容",
-      preferredContact: "ご希望の連絡方法",
-      preferredTime1: "第1希望日時",
-      preferredTime2: "第2希望日時",
-      timezone: "タイムゾーン",
-      attachments: "添付ファイル",
-      consent: "プライバシーポリシーに同意します",
-      send: "送信",
-      sending: "送信中…",
-      success: "送信しました。メールをご確認ください。",
-      failPrefix: "送信に失敗しました：",
-      pleaseSelect: "選択してください",
-    },
-    placeholder: {
-      name: "山田 太郎",
-      email: "name@example.com",
-      phone: "090-0000-0000",
-      subject: "ご相談の件名",
-      summary: "背景とご要望をご記入ください…",
-      preferredContact: "Email / Phone / LINE",
-      timezone: "例：Asia/Tokyo",
-    },
-    hint: {
-      selectDateTime: "日付と時刻を選択してください",
-    },
-  },
-  en: {
-    label: {
-      name: "Name",
-      email: "Email",
-      phone: "Phone",
-      subject: "Subject",
-      summary: "Summary",
-      preferredContact: "Preferred Contact",
-      preferredTime1: "First preferred time",
-      preferredTime2: "Second preferred time",
-      timezone: "Time zone",
-      attachments: "Attachments",
-      consent: "I agree to the privacy policy",
-      send: "Send",
-      sending: "Sending…",
-      success: "Submitted. Please check your inbox.",
-      failPrefix: "Failed: ",
-      pleaseSelect: "Please select",
-    },
-    placeholder: {
-      name: "Jane Doe",
-      email: "name@example.com",
-      phone: "+1 555 000 0000",
-      subject: "What you want to discuss",
-      summary: "Describe your needs and background…",
-      preferredContact: "Email / Phone / LINE",
-      timezone: "e.g. America/Chicago",
-    },
-    hint: {
-      selectDateTime: "Select date and time",
-    },
-  },
-};
-
-function useI18n(lang: Lang) {
-  return useMemo(() => I18N[lang] ?? I18N.zh, [lang]);
+  };
+  return dict[key]?.[lang] ?? key;
 }
 
-function fmtDT(v: string, lang: Lang) {
-  if (!v) return "";
-  try {
-    const d = new Date(v);
-    return d.toLocaleString(
-      lang === "jp" ? "ja-JP" : lang === "zh" ? "zh-TW" : "en-US",
-      { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }
-    );
-  } catch {
-    return v;
-  }
+/* ========== 驗證錯誤訊息 ========== */
+function errMsgRequired(lang: Lang) {
+  return lang === "jp"
+    ? "このフィールドに入力してください。"
+    : lang === "en"
+    ? "Please fill out this field."
+    : "請填寫此欄位。";
+}
+function errMsgEmail(lang: Lang) {
+  return lang === "jp"
+    ? "有効なメールアドレスを入力してください。"
+    : lang === "en"
+    ? "Please enter a valid email address."
+    : "請輸入有效的 Email。";
+}
+function errMsgSelect(lang: Lang) {
+  return lang === "jp"
+    ? "いずれかを選択してください。"
+    : lang === "en"
+    ? "Please select an option."
+    : "請選擇一項。";
+}
+function errMsgRadio(lang: Lang) {
+  return lang === "jp"
+    ? "いずれかを選択してください。"
+    : lang === "en"
+    ? "Please choose one option."
+    : "請選擇一個選項。";
+}
+function errMsgConsent(lang: Lang) {
+  return lang === "jp"
+    ? "同意が必要です。"
+    : lang === "en"
+    ? "Consent is required."
+    : "請勾選同意。";
+}
+function policyTextByLang(lang: Lang) {
+  if (lang === "jp")
+    return "入力いただいた情報は連絡・相談のみに使用し、第三者に共有しません。";
+  if (lang === "en")
+    return "The information you provide will be used only for communication and inquiry purposes, and will not be shared with third parties.";
+  return "您提供的資訊僅作聯繫與諮詢用途，我們將妥善保護，不會提供予第三方。";
 }
 
-export default function ContactForm({ lang = "zh" }: { lang?: Lang }) {
-  const t = useI18n(lang);
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
-  const [err, setErr] = useState<string>("");
+/* ========== validation props ========== */
+function validationProps<
+  T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+>(kind: "text" | "email" | "select" | "textarea" | "checkbox", lang: Lang) {
+  return {
+    onInvalid: (e: React.FormEvent<T>) => {
+      const el = e.currentTarget;
+      if ("setCustomValidity" in el) el.setCustomValidity("");
 
-  // 顯示於覆蓋層的日期文字
-  const [t1Disp, setT1Disp] = useState("");
-  const [t2Disp, setT2Disp] = useState("");
+      if (kind === "checkbox") {
+        if ("setCustomValidity" in el) el.setCustomValidity(errMsgConsent(lang));
+        return;
+      }
+      const validity = (
+        el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      ).validity;
 
-  // 防溢出：加 box-border + min/max width
-  const inputBase =
-    "box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 h-12 text-[15px] leading-none " +
-    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
-  const textAreaBase =
-    "box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] " +
-    "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition min-h-[140px] resize-y";
-  const labelBase = "block text-sm font-medium";
-  const sectionGap = "space-y-4 sm:space-y-5";
+      if (validity?.valueMissing) {
+        if ("setCustomValidity" in el)
+          el.setCustomValidity(
+            kind === "select" ? errMsgSelect(lang) : errMsgRequired(lang)
+          );
+        return;
+      }
+      if (kind === "email" && validity?.typeMismatch) {
+        if ("setCustomValidity" in el)
+          el.setCustomValidity(errMsgEmail(lang));
+        return;
+      }
+      if ("setCustomValidity" in el) el.setCustomValidity("");
+    },
+    onInput: (e: React.FormEvent<T>) => {
+      const el = e.currentTarget;
+      if ("setCustomValidity" in el) el.setCustomValidity("");
+    },
+  };
+}
 
-  // datetime 欄位：隱藏原生字樣，改由覆蓋層顯示；提高高度留空給第二行提示
-  const dtInputBase =
-    inputBase.replace("h-12", "h-16") +
-    " appearance-none text-transparent caret-transparent placeholder:text-transparent pt-2 pb-6";
+/* ========== Styles ========== */
+const inputBase =
+  "peer box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 h-12 text-[15px] " +
+  "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
+const textareaBase =
+  "peer box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] min-h-[130px] " +
+  "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
 
-  function resetDisplays() {
-    setT1Disp("");
-    setT2Disp("");
-  }
+/* ========== Fields ========== */
+export function InputField(props: {
+  label: string;
+  name: string;
+  lang: Lang;
+  type?: React.HTMLInputTypeAttribute;
+  required?: boolean;
+  placeholder?: string;
+}) {
+  const { label, name, type = "text", required, lang, placeholder } = props;
+  const vProps =
+    type === "email"
+      ? validationProps<HTMLInputElement>("email", lang)
+      : validationProps<HTMLInputElement>("text", lang);
+  const inline = type === "email" ? errMsgEmail(lang) : errMsgRequired(lang);
+  return (
+    <label className="grid min-w-0 max-w-full gap-1.5">
+      <span className="text-sm font-medium text-gray-900">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <input
+        type={type}
+        name={name}
+        required={required}
+        placeholder={placeholder ?? ""}
+        className={inputBase}
+        {...vProps}
+      />
+      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
+        {inline}
+      </span>
+    </label>
+  );
+}
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setStatus("loading");
-    setErr("");
+export function TextareaField(props: {
+  label: string;
+  name: string;
+  lang: Lang;
+  required?: boolean;
+  placeholder?: string;
+}) {
+  const { label, name, required, lang, placeholder } = props;
+  return (
+    <label className="grid min-w-0 max-w-full gap-1.5">
+      <span className="text-sm font-medium text-gray-900">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <textarea
+        name={name}
+        required={required}
+        placeholder={placeholder ?? ""}
+        className={textareaBase}
+        {...validationProps<HTMLTextAreaElement>("textarea", lang)}
+      />
+      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
+        {errMsgRequired(lang)}
+      </span>
+    </label>
+  );
+}
 
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    fd.set("lang", lang);
+export function SelectField(props: {
+  label: string;
+  name: string;
+  lang: Lang;
+  required?: boolean;
+  defaultValue?: string;
+  children: React.ReactNode;
+}) {
+  const { label, name, lang, required, defaultValue, children } = props;
+  return (
+    <label className="grid min-w-0 max-w-full gap-1.5">
+      <span className="text-sm font-medium text-gray-900">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        required={required}
+        className={inputBase}
+        {...validationProps<HTMLSelectElement>("select", lang)}
+      >
+        {children}
+      </select>
+      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
+        {errMsgSelect(lang)}
+      </span>
+    </label>
+  );
+}
 
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        body: fd,
-        headers: { Accept: "application/json" },
-      });
-
-      const loc = res.headers.get("Location") || res.headers.get("location") || "";
-      if (res.status === 303 && typeof window !== "undefined") {
-        try {
-          const url = new URL(loc || "/contact", window.location.origin);
-          const submitted = url.searchParams.get("submitted");
-          const errMsg = url.searchParams.get("error") || "";
-          if (submitted === "1") {
-            setStatus("ok");
-            form.reset();
-            resetDisplays();
-            return;
-          }
-          if (submitted === "0") {
-            setStatus("err");
-            setErr(errMsg || "MAIL_FAILED");
-            return;
-          }
-        } catch {
-          setStatus("ok");
-          form.reset();
-          resetDisplays();
-          return;
+export function RadioGroupField(props: {
+  label: string;
+  name: string;
+  lang: Lang;
+  options: string[];
+  required?: boolean;
+}) {
+  const { label, name, lang, options, required } = props;
+  const hiddenId = React.useId();
+  return (
+    <div className="grid min-w-0 max-w-full gap-1.5">
+      <span className="text-sm font-medium text-gray-900">
+        {label}
+        {required ? " *" : ""}
+      </span>
+      <input
+        id={hiddenId}
+        className="peer sr-only"
+        tabIndex={-1}
+        required={required}
+        value=""
+        onInvalid={(e) =>
+          (e.currentTarget as HTMLInputElement).setCustomValidity(
+            errMsgRadio(lang)
+          )
         }
-      }
+        onInput={(e) =>
+          (e.currentTarget as HTMLInputElement).setCustomValidity("")
+        }
+      />
+      <div
+        className="flex flex-wrap items-center gap-3"
+        onChange={() => {
+          const h = document.getElementById(hiddenId) as HTMLInputElement | null;
+          if (h) {
+            h.value = "ok";
+            h.setCustomValidity("");
+          }
+        }}
+      >
+        {(options ?? []).map((op, i) => (
+          <label key={`rg-${name}-${i}`} className="flex items-center gap-2">
+            <input
+              type="radio"
+              name={name}
+              value={op}
+              className="h-4 w-4 text-[#1C3D5A] focus:ring-[#1C3D5A]"
+            />
+            <span className="text-sm text-gray-900">{op}</span>
+          </label>
+        ))}
+      </div>
+      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-invalid:visible">
+        {errMsgRadio(lang)}
+      </span>
+    </div>
+  );
+}
 
-      const ct = res.headers.get("content-type") || "";
-      if (ct.includes("application/json")) {
-        const data = await res.json();
-        if (!res.ok || !data?.ok) throw new Error(data?.error || "SEND_FAILED");
-        setStatus("ok");
-        form.reset();
-        resetDisplays();
-        return;
-      }
+export function ConsentCheckbox({ lang }: { lang: Lang }) {
+  return (
+    <label className="grid min-w-0 gap-2">
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          name="consent"
+          value="yes"
+          required
+          className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1C3D5A] focus:ring-[#1C3D5A]"
+          {...validationProps<HTMLInputElement>("checkbox", lang)}
+        />
+        <div className="text-sm text-gray-700">
+          {policyTextByLang(lang)}
+        </div>
+      </div>
+      <span className="mt-1 h-4 text-xs text-red-600 invisible [input:invalid+div+&]:visible">
+        {errMsgConsent(lang)}
+      </span>
+    </label>
+  );
+}
 
-      if (res.ok) {
-        setStatus("ok");
-        form.reset();
-        resetDisplays();
-        return;
-      }
-
-      throw new Error(`HTTP ${res.status}`);
-    } catch (e: any) {
-      setStatus("err");
-      setErr(e?.message ?? "SEND_FAILED");
+/* ========== 主表單 ========== */
+export default function ContactForm({
+  lang = "zh",
+  subjectOptions,
+  preferredContactOptions,
+  summaryHint,
+  datetimeHint,
+  attachmentHint,
+}: {
+  lang?: Lang;
+  subjectOptions?: string[];
+  preferredContactOptions?: string[];
+  summaryHint?: string | null;
+  datetimeHint?: string | null;
+  attachmentHint?: string | null;
+}) {
+  const [tz, setTz] = React.useState<string>("");
+  React.useEffect(() => {
+    try {
+      setTz(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+    } catch {
+      setTz("");
     }
-  }
+  }, []);
+
+  const subjectOps = Array.isArray(subjectOptions) ? subjectOptions : [];
+  const contactOps = Array.isArray(preferredContactOptions)
+    ? preferredContactOptions
+    : [];
 
   return (
-    <form onSubmit={onSubmit} encType="multipart/form-data" className={`max-w-xl ${sectionGap}`} noValidate>
+    <form
+      action="/api/contact"
+      method="post"
+      encType="multipart/form-data"
+      className="space-y-4 overflow-x-clip rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
+    >
       <input type="hidden" name="lang" value={lang} />
+      <input type="hidden" name="timezone" value={tz} />
 
-      <div>
-        <label className={labelBase}>{t.label.name}</label>
-        <input
-          name="name"
-          className={inputBase}
-          placeholder={t.placeholder.name}
+      {/* 第一列 */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <InputField label={tLabel("Name", lang)} name="name" lang={lang} required />
+        <InputField
+          label={tLabel("Email", lang)}
+          name="email"
+          type="email"
+          lang={lang}
           required
-          autoComplete="name"
-          inputMode="text"
+          placeholder="name@example.com"
         />
       </div>
 
+      {/* 第二列 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className={labelBase}>{t.label.email}</label>
-          <input
-            type="email"
-            name="email"
-            className={inputBase}
-            placeholder={t.placeholder.email}
-            required
-            autoComplete="email"
-            inputMode="email"
-          />
-        </div>
-        <div>
-          <label className={labelBase}>{t.label.phone}</label>
-          <input
-            name="phone"
-            className={inputBase}
-            placeholder={t.placeholder.phone}
-            autoComplete="tel"
-            inputMode="tel"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className={labelBase}>{t.label.subject}</label>
-        <input
-          name="subject"
-          className={inputBase}
-          placeholder={t.placeholder.subject}
+        <InputField
+          label={tLabel("Phone", lang)}
+          name="phone"
+          lang={lang}
           required
-          autoComplete="off"
+          placeholder={
+            lang === "en"
+              ? "+1 555 000 0000"
+              : lang === "jp"
+              ? "090-0000-0000"
+              : "0900-000-000"
+          }
         />
+        <InputField label={tLabel("Company", lang)} name="company" lang={lang} />
       </div>
 
-      <div>
-        <label className={labelBase}>{t.label.summary}</label>
-        <textarea
-          name="summary"
-          className={textAreaBase}
-          rows={6}
-          placeholder={t.placeholder.summary}
-          required
-        />
-      </div>
+      {/* 件名（Subject） */}
+      <SelectField
+        label={tLabel("Subject", lang)}
+        name="subject"
+        lang={lang}
+        required
+        defaultValue=""
+      >
+        <option value="">{tLabel("Please select", lang)}</option>
+        {subjectOps.map((s, i) => (
+          <option key={`sub-${i}`} value={s}>
+            {s}
+          </option>
+        ))}
+      </SelectField>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className={labelBase}>{t.label.preferredContact}</label>
-          <input
-            name="preferredContact"
-            className={inputBase}
-            placeholder={t.placeholder.preferredContact}
-            autoComplete="off"
-          />
-        </div>
+      {/* 希望語言 */}
+      <SelectField
+        label={tLabel("Preferred language", lang)}
+        name="preferredLanguage"
+        lang={lang}
+        required
+        defaultValue={lang}
+      >
+        <option value="zh">{tLabel("Chinese", lang)}</option>
+        <option value="jp">{tLabel("Japanese", lang)}</option>
+        <option value="en">{tLabel("English", lang)}</option>
+      </SelectField>
 
-        {/* 第一備選時段：覆蓋顯示層避免溢出 */}
-        <div className="relative w-full min-w-0 overflow-hidden">
-          <label className={labelBase}>{t.label.preferredTime1}</label>
-          <input
-            type="datetime-local"
-            name="preferredTime1"
-            className={`${dtInputBase} pr-10`}
-            aria-label={t.label.preferredTime1}
-            inputMode="numeric"
-            onChange={(e) => setT1Disp(fmtDT(e.currentTarget.value, lang))}
-          />
-          <span className="pointer-events-none absolute left-3 right-10 top-9 line-clamp-1 text-[15px] text-gray-900">
-            {t1Disp}
-          </span>
-          <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs text-gray-500">
-            {t.hint.selectDateTime}
-          </span>
-        </div>
-      </div>
+      {/* 希望連絡方法 */}
+      <RadioGroupField
+        label={tLabel("Preferred contact", lang)}
+        name="preferredContact"
+        lang={lang}
+        options={contactOps}
+        required
+      />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {/* 第二備選時段：覆蓋顯示層避免溢出 */}
-        <div className="relative w-full min-w-0 overflow-hidden">
-          <label className={labelBase}>{t.label.preferredTime2}</label>
-          <input
-            type="datetime-local"
-            name="preferredTime2"
-            className={`${dtInputBase} pr-10`}
-            aria-label={t.label.preferredTime2}
-            inputMode="numeric"
-            onChange={(e) => setT2Disp(fmtDT(e.currentTarget.value, lang))}
-          />
-          <span className="pointer-events-none absolute left-3 right-10 top-9 line-clamp-1 text-[15px] text-gray-900">
-            {t2Disp}
-          </span>
-          <span className="pointer-events-none absolute left-3 bottom-2 max-w-[calc(100%-1.5rem)] truncate text-xs text-gray-500">
-            {t.hint.selectDateTime}
-          </span>
-        </div>
+      {/* 概要 */}
+      <TextareaField
+        label={tLabel("Summary", lang)}
+        name="summary"
+        lang={lang}
+        placeholder={summaryHint ?? ""}
+      />
 
-        {/* ✅ TimezoneSelect 保持 light 外觀 */}
-        <div>
-          <label className={labelBase}>{t.label.timezone}</label>
-          <div className="mt-1">
-            <TimezoneSelect name="timezone" variant="light" />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label className={labelBase}>{t.label.attachments}</label>
+      {/* 附件 */}
+      <div className="grid min-w-0 gap-1.5">
+        <span className="text-sm font-medium text-gray-900">
+          {tLabel("Attachment", lang)}
+        </span>
         <input
           type="file"
           name="attachments"
           multiple
           className="mt-1 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1C3D5A] file:px-3 file:py-2 file:text-white"
         />
+        <span className="mt-1 text-xs text-gray-500">
+          {attachmentHint ?? tLabel("Attachment hint default", lang)}
+        </span>
       </div>
 
-      <div className="flex items-start gap-2">
-        <input
-          id="consent"
-          type="checkbox"
-          name="consent"
-          value="yes"
-          required
-          className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1C3D5A] focus:ring-[#1C3D5A]"
-        />
-        <label htmlFor="consent" className="text-sm leading-6">
-          {t.label.consent}
-        </label>
-      </div>
+      <ConsentCheckbox lang={lang} />
 
       <div className="pt-1">
         <button
           type="submit"
-          disabled={status === "loading"}
-          className="h-12 w-full rounded-2xl bg-[#1C3D5A] px-5 font-medium text-white transition hover:opacity-95 disabled:opacity-70 sm:w-auto"
+          className="h-12 w-full rounded-2xl bg-[#1C3D5A] px-5 font-medium text-white transition hover:opacity-95 sm:w-auto"
         >
-          {status === "loading" ? t.label.sending : t.label.send}
+          {tLabel("Send", lang)}
         </button>
-      </div>
-
-      <div aria-live="polite" className="min-h-[1.25rem]">
-        {status === "ok" && <p className="text-sm text-green-600">{t.label.success}</p>}
-        {status === "err" && (
-          <p className="text-sm text-red-600">
-            {t.label.failPrefix}
-            {err}
-          </p>
-        )}
       </div>
     </form>
   );
