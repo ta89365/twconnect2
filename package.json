@@ -12,16 +12,22 @@
     "preflight": "pnpm typecheck && pnpm lint && pnpm -C apps/cms run check:sanity && pnpm build:all",
     "preflight:fast": "pnpm typecheck && pnpm lint && pnpm -C apps/cms run check:sanity && pnpm build:all"
   },
-  "dependencies": {
-    "@portabletext/types": "^2.0.15",
-    "lucide-react": "^0.546.0"
-  },
   "pnpm": {
     "overrides": {
+      "@twconnect/cms>react": "18.3.1",
+      "@twconnect/cms>react-dom": "18.3.1",
       "@twconnect/cms>@types/react": "18.3.26",
       "@twconnect/cms>@types/react-dom": "18.3.7",
+
+      "web>react": "19.1.0",
+      "web>react-dom": "19.1.0",
       "web>@types/react": "19.2.2",
-      "web>@types/react-dom": "19.2.2"
-    }
+      "web>@types/react-dom": "19.2.2",
+
+      "web>@sanity/client": "7.12.0",
+      "web>next-sanity": "11.6.2"
+    },
+    "public-hoist-pattern": ["@sanity/*", "groq", "@portabletext/*"],
+    "shamefully-hoist": true
   }
 }
