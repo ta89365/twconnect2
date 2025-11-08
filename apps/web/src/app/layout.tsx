@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import QuickConsult from "@/components/QuickConsult"; // ★ 新增：全域掛載諮詢按鈕
+import QuickConsult from "@/components/QuickConsult"; // ← 用包裝元件，不直接用 Suspense
 
 // === Google Fonts ===
 const geistSans = Geist({
@@ -18,19 +18,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TW Connect | Cross-border Advisory",
   description: "Take your first step into Taiwan, Japan, and the US with confidence.",
-  icons: {
-    icon: "/favicon.ico",
-  },
+  icons: { icon: "/favicon.ico" },
 };
 
 // === Root Layout ===
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    // 預設語系（可之後整合 i18n）
     <html lang="ja">
       <body
         suppressHydrationWarning
@@ -46,14 +41,14 @@ export default function RootLayout({
       >
         {children}
 
-        {/* ★ 全站固定顯示的諮詢按鈕（桌機右上、手機右下） */}
+        {/* 由 Client 包裝元件在用戶端負責 Suspense 與 useSearchParams 安全性 */}
         <QuickConsult
           targetId="contact"
           anchorSelector='[data-lang-switcher="true"]'
           followAnchor={false}
           position="top-right"
-          topAdjustRem={-0.325}     // 桌機微上移 10px
-          matchAnchorWidth={true}   // 桌機與語言切換寬度一致
+          topAdjustRem={-0.325}
+          matchAnchorWidth={true}
         />
       </body>
     </html>
