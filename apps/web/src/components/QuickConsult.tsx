@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 type Lang = "jp" | "zh" | "en";
 
@@ -47,11 +47,16 @@ export default function QuickConsult({
   rightAdjustRem = 0,
   matchAnchorWidth = true,
   widthAdjustRem = 0,
-  hideAtRatio = 0.85,   // ↑ 到這個比例才隱藏
-  showAtRatio = 0.55,   // ↓ 低於這個比例才重新顯示
+  hideAtRatio = 0.85, // ↑ 到這個比例才隱藏
+  showAtRatio = 0.55, // ↓ 低於這個比例才重新顯示
 }: Props) {
   const sp = useSearchParams();
+  const pathname = usePathname();
   const activeLang = (lang ?? normalizeLang(sp?.get("lang"))) as Lang;
+
+  const isHome = pathname === "/" || pathname === ""; // 僅首頁做捲動
+  const langQuery = activeLang ? `?lang=${activeLang}` : "";
+  const contactHref = `/contact${langQuery}`;
 
   const label = useMemo(
     () => ({ jp: "今すぐ相談", zh: "立刻諮詢", en: "Consult Now" }[activeLang]),
@@ -78,12 +83,12 @@ export default function QuickConsult({
     ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
     : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
 
-  // ===== 使用「遲滯」避免在表單中段忽隱忽現 =====
+  // ===== 使用「遲滯」避免在表單中段忽隱忽現（僅在首頁偵測聯絡表單）=====
   useEffect(() => {
+    if (!isHome) return;
     const target = document.getElementById(targetId);
     if (!target) return;
 
-    // 冷卻避免極短時間內連續切換（可選）
     let cooldown = false;
     const COOLDOWN_MS = 120;
 
@@ -106,7 +111,6 @@ export default function QuickConsult({
           setTimeout(() => (cooldown = false), COOLDOWN_MS);
           return;
         }
-        // 介於 showAtRatio ~ hideAtRatio 之間不變更狀態，避免抖動
       },
       {
         root: null,
@@ -117,7 +121,7 @@ export default function QuickConsult({
 
     io.observe(target);
     return () => io.disconnect();
-  }, [targetId, hideAtRatio, showAtRatio, hiddenNearTarget]);
+  }, [isHome, targetId, hideAtRatio, showAtRatio, hiddenNearTarget]);
 
   // 對齊語言列位置（桌機）
   useEffect(() => {
@@ -133,7 +137,7 @@ export default function QuickConsult({
       if (el) {
         const rect = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
-        let rightPx = parseFloat(cs.right);
+        let rightPx = parseFloat((cs as any).right);
         if (!Number.isFinite(rightPx)) rightPx = window.innerWidth - rect.right;
 
         const rightRem = rightPx / baseFont + rightAdjustRem;
@@ -169,14 +173,23 @@ export default function QuickConsult({
     initialPinned.rightRem,
   ]);
 
+  // 只有首頁且找得到 target 時才阻止預設並平滑捲動
   const onGo = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const el =
-      document.getElementById(targetId) ||
-      (document.querySelector('[data-contact-anchor="true"]') as HTMLElement | null);
-    if (!el) return;
-    e.preventDefault();
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = isHome
+      ? document.getElementById(targetId) ||
+        (document.querySelector('[data-contact-anchor="true"]') as HTMLElement | null)
+      : null;
+
+    if (isHome && el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    // 非首頁不攔截，讓 <a> 直接前往 /contact?lang=...
+    // 首頁但找不到錨點亦不攔截，走 href fallback
   };
+
+  // href：首頁 -> 錨點；其他頁 -> /contact?lang=...
+  const href = isHome ? `#${targetId}` : contactHref;
 
   return (
     <div
@@ -194,14 +207,14 @@ export default function QuickConsult({
       }}
     >
       <a
-        href={`#${targetId}`}
+        href={href}
         onClick={onGo}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onFocus={() => setHovered(true)}
         onBlur={() => setHovered(false)}
         aria-label={label}
-        aria-controls={targetId}
+        aria-controls={isHome ? targetId : undefined}
         role="button"
         className="flex items-center justify-between px-3 py-2 text-[13px] font-medium select-none rounded-xl outline-none shadow-lg backdrop-blur-md transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgba(28,61,90,0.35)]"
         style={{
