@@ -18,7 +18,7 @@ type Props = {
   current?: Lang;
   offsetY?: number;
   offsetRight?: number;
-  behavior?: "fixed" | "static";
+  behavior?: "fixed" | "static"; // static = 跟著頁面滾動，fixed = 固定在視窗
   className?: string;
 };
 
@@ -36,9 +36,7 @@ export default function LanguageSwitcher({
   const BRAND_BLUE_RGB = "28,61,90"; // #1C3D5A
   const OP = { border: 0.30, active: 0.08, divider: 0.22, text: 0.98, dot: 0.95 };
 
-  // ⬇ 統一寬度（再窄一點）
   const WIDTH_REM = 8.6;
-
   const [hoverKey, setHoverKey] = useState<Lang | null>(null);
 
   const rawUrlLang = searchParams?.get("lang");
@@ -64,10 +62,13 @@ export default function LanguageSwitcher({
       ? { position: "fixed", top: `${offsetY}rem`, right: `${offsetRight}rem` }
       : { position: "absolute", top: `${offsetY}rem`, right: `${offsetRight}rem` };
 
+  const isFixed = behavior === "fixed";
+
   return (
     <div
       data-lang-switcher="true"
       data-mobile-fab="lang"
+      data-fixed-mobile={isFixed ? "true" : "false"}
       className={[
         "z-[80] flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none",
         className,
@@ -112,10 +113,12 @@ export default function LanguageSwitcher({
           </button>
         );
       })}
-      {/* 手機版覆寫：只影響寬度 <= 768px，桌機完全不變 */}
+
+      {/* 手機行為：只有 data-fixed-mobile="true" 才固定，否則跟桌機一樣是 static/absolute，會隨頁面滾走 */}
       <style jsx>{`
         @media (max-width: 768px) {
-          [data-mobile-fab="lang"] {
+          /* 僅當你把 behavior="fixed" 傳入時才固定成 FAB */
+          [data-mobile-fab="lang"][data-fixed-mobile="true"] {
             position: fixed !important;
             top: auto !important;
             left: auto !important;
@@ -125,7 +128,7 @@ export default function LanguageSwitcher({
             z-index: 40 !important; /* 低於行動導覽抽屜 */
           }
           [data-mobile-fab="lang"] button {
-            padding: 0.375rem 0.75rem; /* 更精巧 */
+            padding: 0.375rem 0.75rem;
             font-size: 13px;
           }
         }
