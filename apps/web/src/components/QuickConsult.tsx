@@ -13,10 +13,14 @@ type Props = {
   anchorSelector?: string | null;
   followAnchor?: boolean;
   position?: "top-right" | "bottom-right";
-  topAdjustRem?: number;       // 額外上移或下移
+  topAdjustRem?: number;
   rightAdjustRem?: number;
-  matchAnchorWidth?: boolean;  // 是否同步語言列寬度
-  widthAdjustRem?: number;     // 微調寬度
+  matchAnchorWidth?: boolean;
+  widthAdjustRem?: number;
+  /** 多少可見比例時隱藏（遲滯上界） */
+  hideAtRatio?: number;
+  /** 多少可見比例時顯示（遲滯下界） */
+  showAtRatio?: number;
 };
 
 const BRAND_BLUE_RGB = "28,61,90"; // #1C3D5A
@@ -43,6 +47,8 @@ export default function QuickConsult({
   rightAdjustRem = 0,
   matchAnchorWidth = true,
   widthAdjustRem = 0,
+  hideAtRatio = 0.85,   // ↑ 到這個比例才隱藏
+  showAtRatio = 0.55,   // ↓ 低於這個比例才重新顯示
 }: Props) {
   const sp = useSearchParams();
   const activeLang = (lang ?? normalizeLang(sp?.get("lang"))) as Lang;
@@ -54,7 +60,7 @@ export default function QuickConsult({
 
   const [hovered, setHovered] = useState(false);
 
-  // ★ 初始就給預設位置，避免水合前 top/right 為 undefined
+  // 初始定位，避免水合前 top/right 為 undefined
   const initialPinned = {
     topRem: offsetY + topAdjustRem,
     rightRem: offsetRight + rightAdjustRem,
@@ -72,22 +78,48 @@ export default function QuickConsult({
     ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
     : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
 
-  // 接近 contact 區塊時淡出
+  // ===== 使用「遲滯」避免在表單中段忽隱忽現 =====
   useEffect(() => {
     const target = document.getElementById(targetId);
     if (!target) return;
+
+    // 冷卻避免極短時間內連續切換（可選）
+    let cooldown = false;
+    const COOLDOWN_MS = 120;
+
     const io = new IntersectionObserver(
       (entries) => {
-        const isVisible = entries.some((e) => e.isIntersecting);
-        setHiddenNearTarget(isVisible);
+        const e = entries[0];
+        const ratio = e?.intersectionRatio ?? 0;
+
+        if (cooldown) return;
+
+        if (!hiddenNearTarget && ratio >= hideAtRatio) {
+          setHiddenNearTarget(true);
+          cooldown = true;
+          setTimeout(() => (cooldown = false), COOLDOWN_MS);
+          return;
+        }
+        if (hiddenNearTarget && ratio <= showAtRatio) {
+          setHiddenNearTarget(false);
+          cooldown = true;
+          setTimeout(() => (cooldown = false), COOLDOWN_MS);
+          return;
+        }
+        // 介於 showAtRatio ~ hideAtRatio 之間不變更狀態，避免抖動
       },
-      { rootMargin: "0px 0px -40% 0px", threshold: [0, 0.01] }
+      {
+        root: null,
+        rootMargin: "0px",
+        threshold: [0, 0.25, 0.5, showAtRatio, 0.7, hideAtRatio, 1],
+      }
     );
+
     io.observe(target);
     return () => io.disconnect();
-  }, [targetId]);
+  }, [targetId, hideAtRatio, showAtRatio, hiddenNearTarget]);
 
-  // 對齊語言列位置（桌機用）
+  // 對齊語言列位置（桌機）
   useEffect(() => {
     let el: HTMLElement | null = null;
     try {
@@ -110,12 +142,10 @@ export default function QuickConsult({
 
         setPinned({ topRem, rightRem, widthRem });
       } else {
-        // 沒有錨點就使用預設
         setPinned(initialPinned);
       }
     }
 
-    // 先算一次，確保水合後立即有值
     compute();
 
     if (!followAnchor) return;
@@ -152,16 +182,15 @@ export default function QuickConsult({
     <div
       data-quick-consult="true"
       className={[
-        "fixed z-[90] pointer-events-auto transition-all duration-200", // ★ 提高 z-index，避免被頁面卡片覆蓋
+        "fixed z-[100] pointer-events-auto transition-all duration-200",
         hiddenNearTarget ? "opacity-0 translate-y-1 pointer-events-none" : "opacity-100 translate-y-0",
       ].join(" ")}
-      // ★ 有 pinned 就用 pinned，否則用 initialPinned 當 fallback
       style={{
         top:
           position === "top-right"
-            ? `calc(${(pinned?.topRem ?? initialPinned.topRem)}rem + env(safe-area-inset-top, 0px))`
+            ? `calc(${pinned?.topRem ?? initialPinned.topRem}rem + env(safe-area-inset-top, 0px))`
             : undefined,
-        right: `calc(${(pinned?.rightRem ?? initialPinned.rightRem)}rem + env(safe-area-inset-right, 0px))`,
+        right: `calc(${pinned?.rightRem ?? initialPinned.rightRem}rem + env(safe-area-inset-right, 0px))`,
       }}
     >
       <a
@@ -191,7 +220,7 @@ export default function QuickConsult({
         />
       </a>
 
-      {/* 手機版覆寫：只影響寬度 <= 768px，桌機完全不變 */}
+      {/* 手機版覆寫：<= 768px */}
       <style jsx>{`
         @media (max-width: 768px) {
           [data-quick-consult="true"] {
@@ -200,7 +229,7 @@ export default function QuickConsult({
             left: auto !important;
             right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
             bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
-            z-index: 90 !important;
+            z-index: 100 !important;
           }
           [data-quick-consult="true"] a {
             width: 3rem;
