@@ -5,14 +5,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QuickConsult from "@/components/QuickConsult";
 
-// 新增：Consent Provider 與 Banner（Client 組件）
-// 這兩個檔案依照我先前提供的路徑：
-// apps/web/src/components/ConsentProvider.tsx
-// apps/web/src/components/CookieBanner.tsx
+// Client components（可能使用 next/navigation hooks）
 import ConsentProvider from "@/components/ConsentProvider";
 import CookieBanner from "@/components/CookieBanner";
 
-// 可選：初始化 dataLayer，未裝 GTM 也不會出錯
 import Script from "next/script";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -24,7 +20,7 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.ico" },
 };
 
-// 用「預設」變數名稱，讓各 page 以 --page-bg 覆寫
+// 預設 CSS 變數
 const defaultCssVars = {
   ["--default-page-bg" as any]: "#ffffff",
   ["--default-page-fg" as any]: "#0b1324",
@@ -34,9 +30,8 @@ const defaultCssVars = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ja" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
-        {/* 初始化 dataLayer，避免首屏事件遺失。之後接 GTM 會用到 */}
         <Script id="init-datalayer" strategy="afterInteractive">
           {`window.dataLayer = window.dataLayer || [];`}
         </Script>
@@ -50,24 +45,29 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           text-[var(--page-fg,var(--default-foreground,#0b1324))]
         `}
       >
-        <ConsentProvider>
-          {children}
+        {/* 任何可能使用 next/navigation hooks 的 client 區塊都放進 Suspense */}
+        <React.Suspense fallback={null}>
+          <ConsentProvider>
+            {children}
 
-          {/* Cookie 同意橫條，語言將自動讀取 ?lang= */}
-          <CookieBanner />
+            <React.Suspense fallback={null}>
+              {/* Cookie 同意橫幅（讀取 ?lang= 等） */}
+              <CookieBanner />
+            </React.Suspense>
 
-          {/* 既有的諮詢快捷列保持不變 */}
-          <React.Suspense fallback={null}>
-            <QuickConsult
-              targetId="contact"
-              anchorSelector='[data-lang-switcher="true"]'
-              followAnchor={false}
-              position="top-right"
-              topAdjustRem={-0.325}
-              matchAnchorWidth={true}
-            />
-          </React.Suspense>
-        </ConsentProvider>
+            <React.Suspense fallback={null}>
+              {/* 諮詢快捷列 */}
+              <QuickConsult
+                targetId="contact"
+                anchorSelector='[data-lang-switcher="true"]'
+                followAnchor={false}
+                position="top-right"
+                topAdjustRem={-0.325}
+                matchAnchorWidth={true}
+              />
+            </React.Suspense>
+          </ConsentProvider>
+        </React.Suspense>
       </body>
     </html>
   );
