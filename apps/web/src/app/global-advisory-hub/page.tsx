@@ -163,7 +163,6 @@ export default async function Page({
   const F = data.serviceFlow;
   const FF = data.feesFinancial;
   const FO = data.feesOverseas;
-  const CTA = data.cta;
 
   const CHALLENGE_ICONS = [
     "alert-triangle",
@@ -277,17 +276,21 @@ export default async function Page({
 
       <Divider />
 
-      {/* ============================ Challenges ============================ */}
+      {/* ============================ Challenges（倒三角排列） ============================ */}
       <section className={TUNE.sectionPadY}>
         <div className="mx-auto max-w-[1200px] px-6">
           <SectionHeading
             kicker={lang === "zh" ? "我們解決的問題" : lang === "jp" ? "解決する課題" : "What We Solve"}
             title={C?.sectionTitle || (lang === "zh" ? "挑戰" : lang === "jp" ? "課題" : "Challenges")}
           />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {(C?.items || []).map((t, i) => {
-              const numberLabel =
-                lang === "zh" ? `重點 ${i + 1}` : lang === "jp" ? `ポイント ${i + 1}` : `Point ${i + 1}`;
+
+          {(() => {
+            const items = C?.items || [];
+            const top = items.slice(0, 3);
+            const bottom = items.slice(3);
+
+            const Card = (t: string, i: number) => {
+              const numberLabel = lang === "zh" ? `重點 ${i + 1}` : lang === "jp" ? `ポイント ${i + 1}` : `Point ${i + 1}`;
               const iconName = CHALLENGE_ICONS[i % CHALLENGE_ICONS.length];
               return (
                 <div key={i} className={`${TUNE.card} p-4`}>
@@ -298,8 +301,31 @@ export default async function Page({
                   <p className="text-white/85 leading-7">{t}</p>
                 </div>
               );
-            })}
-          </div>
+            };
+
+            return (
+              <div className="space-y-4">
+                {/* 第一排：最多三張，桌機三欄 */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {top.map((t, idx) => Card(t, idx))}
+                </div>
+
+                {/* 第二排：其餘卡片；桌機置中，形成倒三角視覺 */}
+                {bottom.length > 0 && (
+                  <div
+                    className={[
+                      // 手機與平板：一到兩欄自然換行
+                      "grid gap-4 md:grid-cols-2",
+                      // 桌機：兩欄並置中，讓它在三欄第一排下方形成倒三角
+                      "lg:grid-cols-2 lg:max-w-[800px] lg:mx-auto",
+                    ].join(" ")}
+                  >
+                    {bottom.map((t, idx) => Card(t, idx + top.length))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -452,16 +478,13 @@ export default async function Page({
               {FF?.disclaimer ? <p className="text-white/90 leading-7">{FF.disclaimer}</p> : null}
               {FF?.body ? <p className="mt-2.5 text-white/80 leading-7">{FF.body}</p> : null}
 
-              {/* 套餐 */}
               {Array.isArray(FF?.packages) && FF.packages.length > 0 ? (
                 <div className="mt-4 space-y-3">
                   {FF.packages.map((p, idx) => (
                     <div key={idx} className="rounded-xl border border-white/15 bg-white/10 p-4">
                       <div className="mb-1.5 flex items-center justify-between">
                         <div className="font-semibold">{p.name}</div>
-                        {p.priceNote ? (
-                          <span className="text-sm text-white/80">{p.priceNote}</span>
-                        ) : null}
+                        {p.priceNote ? <span className="text-sm text-white/80">{p.priceNote}</span> : null}
                       </div>
                       {Array.isArray(p.features) && p.features.length > 0 ? (
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-white/85">
@@ -488,16 +511,13 @@ export default async function Page({
               {FO?.disclaimer ? <p className="text-white/90 leading-7">{FO.disclaimer}</p> : null}
               {FO?.body ? <p className="mt-2.5 text-white/80 leading-7">{FO.body}</p> : null}
 
-              {/* 套餐 */}
               {Array.isArray(FO?.packages) && FO.packages.length > 0 ? (
                 <div className="mt-4 space-y-3">
                   {FO.packages.map((p, idx) => (
                     <div key={idx} className="rounded-xl border border-white/15 bg-white/10 p-4">
                       <div className="mb-1.5 flex items-center justify-between">
                         <div className="font-semibold">{p.name}</div>
-                        {p.priceNote ? (
-                          <span className="text-sm text-white/80">{p.priceNote}</span>
-                        ) : null}
+                        {p.priceNote ? <span className="text-sm text-white/80">{p.priceNote}</span> : null}
                       </div>
                       {Array.isArray(p.features) && p.features.length > 0 ? (
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-white/85">
@@ -513,7 +533,6 @@ export default async function Page({
             </article>
           </div>
 
-          {/* 可選 CTA 行為：若任一區塊開啟 showContactCta，顯示統一 CTA 列 */}
           {(FF?.showContactCta || FO?.showContactCta) && (
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link

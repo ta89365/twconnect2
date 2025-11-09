@@ -5,6 +5,16 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QuickConsult from "@/components/QuickConsult";
 
+// 新增：Consent Provider 與 Banner（Client 組件）
+// 這兩個檔案依照我先前提供的路徑：
+// apps/web/src/components/ConsentProvider.tsx
+// apps/web/src/components/CookieBanner.tsx
+import ConsentProvider from "@/components/ConsentProvider";
+import CookieBanner from "@/components/CookieBanner";
+
+// 可選：初始化 dataLayer，未裝 GTM 也不會出錯
+import Script from "next/script";
+
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
@@ -25,6 +35,12 @@ const defaultCssVars = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        {/* 初始化 dataLayer，避免首屏事件遺失。之後接 GTM 會用到 */}
+        <Script id="init-datalayer" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];`}
+        </Script>
+      </head>
       <body
         suppressHydrationWarning
         style={defaultCssVars}
@@ -34,18 +50,24 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           text-[var(--page-fg,var(--default-foreground,#0b1324))]
         `}
       >
-        {children}
+        <ConsentProvider>
+          {children}
 
-        <React.Suspense fallback={null}>
-          <QuickConsult
-            targetId="contact"
-            anchorSelector='[data-lang-switcher="true"]'
-            followAnchor={false}
-            position="top-right"
-            topAdjustRem={-0.325}
-            matchAnchorWidth={true}
-          />
-        </React.Suspense>
+          {/* Cookie 同意橫條，語言將自動讀取 ?lang= */}
+          <CookieBanner />
+
+          {/* 既有的諮詢快捷列保持不變 */}
+          <React.Suspense fallback={null}>
+            <QuickConsult
+              targetId="contact"
+              anchorSelector='[data-lang-switcher="true"]'
+              followAnchor={false}
+              position="top-right"
+              topAdjustRem={-0.325}
+              matchAnchorWidth={true}
+            />
+          </React.Suspense>
+        </ConsentProvider>
       </body>
     </html>
   );
