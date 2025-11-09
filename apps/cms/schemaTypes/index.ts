@@ -17,6 +17,7 @@ import twServiceDetail from "./twServiceDetail";
 import visaResidencySupport from "./visaResidencySupport";
 import overseasRelocationSupport from "./overseasRelocationSupport";
 import financeAdvisoryDetail from "./financeAdvisoryDetail";
+import globalAdvisoryHub from "./globalAdvisoryHub"; // ✅ 新增 Global Advisory Hub
 import companyStrengthsAndFAQ from "./companyStrengthsAndFAQ";
 
 // News & Column
@@ -61,7 +62,7 @@ import contactPage from "./documents/contactPage";
 export const schemaTypes = [
   /* ========== Global and Visual Settings ========== */
   siteSettings,
-  ...siteSettingsTypes, // <-- 新增：包含 footerLink 等共用型別
+  ...siteSettingsTypes, // footerLink 等共用型別
   hero,
 
   /* ========== Services and Business Sections ========== */
@@ -76,6 +77,7 @@ export const schemaTypes = [
   visaResidencySupport,
   overseasRelocationSupport,
   financeAdvisoryDetail,
+  globalAdvisoryHub,            // ✅ 新增並放在 Our Strength 之前
   companyStrengthsAndFAQ,
 
   /* ========== News and Column System ========== */
