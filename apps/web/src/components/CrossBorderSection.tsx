@@ -88,8 +88,14 @@ export default function CrossBorderSection({
 }) {
   const bg = data?.bgUrl ? urlFor(data.bgUrl) : null;
 
+  // === 臨時關閉左右卡片（不刪 Code）===
+  const DISABLE_TWIN_CARDS = true;
+
+  // 放大與置中：當禁用卡片時，預設置中；否則沿用 tune 設定
   const align =
-    tune?.containerAlign === "right"
+    DISABLE_TWIN_CARDS
+      ? { wrapper: "items-center text-center", inner: "items-center" }
+      : tune?.containerAlign === "right"
       ? { wrapper: "items-end text-right", inner: "items-end" }
       : tune?.containerAlign === "center"
       ? { wrapper: "items-center text-center", inner: "items-center" }
@@ -116,9 +122,11 @@ export default function CrossBorderSection({
       ? addLangQuery(data.rightPillar.href, lang)
       : data?.rightPillar?.href ?? "";
 
-  const showTwinCards =
+  const showTwinCardsOriginal =
     (data?.leftPillar && (data.leftPillar.title || (data.leftPillar.items || []).length > 0)) ||
     (data?.rightPillar && (data.rightPillar.title || (data.rightPillar.items || []).length > 0));
+
+  const showTwinCards = showTwinCardsOriginal && !DISABLE_TWIN_CARDS;
 
   return (
     <section
@@ -141,31 +149,44 @@ export default function CrossBorderSection({
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.35),transparent_35%,rgba(0,0,0,0.55))]" />
       </div>
 
-      {/* 內容層 */}
-      <div className={`mx-auto w-full max-w-[1200px] px-6 pt-20 md:pt-24 pb-14 flex flex-col gap-4 ${align.inner}`} style={overallTranslate}>
+      {/* 內容層：禁用卡片時放大主文案與 CTA */}
+      <div
+        className={`mx-auto w-full ${DISABLE_TWIN_CARDS ? "max-w-[980px]" : "max-w-[1200px]"} px-6 pt-24 md:pt-28 pb-16 flex flex-col gap-5 ${align.inner}`}
+        style={overallTranslate}
+      >
         {data?.heading && (
-          <h2 className="text-3xl md:text-5xl font-semibold leading-tight tracking-tight text-white drop-shadow-sm" style={posStyle("heading")}>
+          <h2
+            className={`${DISABLE_TWIN_CARDS ? "text-[clamp(2rem,6vw,3.25rem)] md:text-6xl" : "text-3xl md:text-5xl"} font-semibold leading-tight tracking-tight text-white drop-shadow-sm`}
+            style={posStyle("heading")}
+          >
             {data.heading}
           </h2>
         )}
+
         {data?.lead1 && (
-          <div className="inline-block rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-base text-white/95 backdrop-blur" style={posStyle("lead1")}>
+          <div
+            className={`inline-block rounded-2xl border border-white/15 bg-white/10 ${DISABLE_TWIN_CARDS ? "px-6 py-3.5 text-lg md:text-xl" : "px-5 py-3 text-base"} text-white/95 backdrop-blur`}
+            style={posStyle("lead1")}
+          >
             {data.lead1}
           </div>
         )}
+
         {data?.lead2 && (
-          <div className="inline-block rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/85 backdrop-blur-sm" style={posStyle("lead2")}>
+          <div
+            className={`inline-block rounded-2xl border border-white/15 bg-white/10 ${DISABLE_TWIN_CARDS ? "px-5 py-2.5 text-base md:text-lg" : "px-4 py-2 text-sm"} text-white/85 backdrop-blur-sm`}
+            style={posStyle("lead2")}
+          >
             {data.lead2}
           </div>
         )}
 
-        {/* 左右雙卡：中間留塔身保護區；右欄更寬 */}
+        {/* 左右雙卡（保留但暫不渲染） */}
         {showTwinCards && (
           <div
             className={[
               "mt-6 w-full grid gap-4 sm:gap-5 md:gap-6 lg:gap-8",
               "grid-cols-1",
-              // 右側加寬：md 起 1fr | 保護區 | 1.2fr；lg 起 1.3fr；xl 起 1.4fr
               "md:grid-cols-[1fr_220px_1.2fr]",
               "lg:grid-cols-[1fr_260px_1.3fr]",
               "xl:grid-cols-[1fr_300px_1.4fr]",
@@ -205,7 +226,7 @@ export default function CrossBorderSection({
               </article>
             ) : <div />}
 
-            {/* 中間保護區：避免壓到東京鐵塔 */}
+            {/* 中間保護區 */}
             <div className="hidden md:block" aria-hidden="true" />
 
             {/* Right card（加寬） */}
@@ -246,11 +267,11 @@ export default function CrossBorderSection({
 
         {/* 放大 CTA（維持） */}
         {(data?.ctaText && data?.ctaHref) || (data?.cta2Text && data?.cta2Href) ? (
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4" style={posStyle("cta")}>
+          <div className={`mt-${DISABLE_TWIN_CARDS ? "10" : "8"} flex flex-wrap items-center justify-center gap-4`} style={posStyle("cta")}>
             {data?.ctaText && data?.ctaHref ? (
               <Link
                 href={ctaHrefFinal}
-                className="inline-flex items-center justify-center rounded-2xl px-6 md:px-7 lg:px-8 py-3.5 md:py-4 text-base md:text-lg font-semibold shadow-lg"
+                className={`inline-flex items-center justify-center rounded-2xl ${DISABLE_TWIN_CARDS ? "px-7 md:px-8 py-4 md:py-5 text-lg md:text-xl" : "px-6 md:px-7 lg:px-8 py-3.5 md:py-4 text-base md:text-lg"} font-semibold shadow-lg`}
                 style={{ backgroundColor: "#ffffff", color: BRAND_BLUE, boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}
               >
                 {data.ctaText}
@@ -259,7 +280,7 @@ export default function CrossBorderSection({
             {data?.cta2Text && data?.cta2Href ? (
               <Link
                 href={cta2HrefFinal}
-                className="inline-flex items-center justify-center rounded-2xl px-6 md:px-7 lg:px-8 py-3.5 md:py-4 text-base md:text-lg font-semibold text-white"
+                className={`inline-flex items-center justify-center rounded-2xl ${DISABLE_TWIN_CARDS ? "px-7 md:px-8 py-4 md:py-5 text-lg md:text-xl" : "px-6 md:px-7 lg:px-8 py-3.5 md:py-4 text-base md:text-lg"} font-semibold text-white`}
                 style={{ border: "1px solid rgba(255,255,255,0.28)", backgroundColor: "rgba(255,255,255,0.10)", boxShadow: "0 8px 24px rgba(0,0,0,0.18)" }}
               >
                 {data.cta2Text}

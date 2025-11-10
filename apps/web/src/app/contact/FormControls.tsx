@@ -271,7 +271,7 @@ export function ConsentCheckbox(props: { lang: Lang }) {
         <input
           type="checkbox"
           name="consent"
-          value="yes"
+          value="Yes"
           required
           className="mt-1 h-4 w-4 accent-white"
           {...validationProps<HTMLInputElement>("checkbox", lang)}

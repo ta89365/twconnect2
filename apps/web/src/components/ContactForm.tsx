@@ -330,6 +330,9 @@ export default function ContactForm({
     ? preferredContactOptions
     : [];
 
+  // 只有 Sanity 有提供聯絡方式選項才顯示該欄位
+  const hasPreferredContact = contactOps.length > 0;
+
   return (
     <form
       action="/api/contact"
@@ -400,14 +403,16 @@ export default function ContactForm({
         <option value="en">{tLabel("English", lang)}</option>
       </SelectField>
 
-      {/* 希望連絡方法 */}
-      <RadioGroupField
-        label={tLabel("Preferred contact", lang)}
-        name="preferredContact"
-        lang={lang}
-        options={contactOps}
-        required
-      />
+      {/* 希望連絡方法：Sanity 未回傳則不顯示也不要求必填 */}
+      {hasPreferredContact && (
+        <RadioGroupField
+          label={tLabel("Preferred contact", lang)}
+          name="preferredContact"
+          lang={lang}
+          options={contactOps}
+          required
+        />
+      )}
 
       {/* 概要 */}
       <TextareaField

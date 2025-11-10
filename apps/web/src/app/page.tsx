@@ -1,4 +1,7 @@
 // apps/web/src/app/page.tsx
+// 🔔 提醒：右側「諮詢快捷」按鈕是掛在 layout.tsx。
+// 請到 layout.tsx 將 <QuickConsult position="bottom-right" ... /> 設為右下角。
+
 import HeroBanner from "@/components/hero-banner";
 import type { Tune } from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
@@ -169,7 +172,8 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     <main id="top" className="bg-background text-foreground overflow-x-hidden">
       {await (NavigationServer as any)({ lang: spRaw?.lang as string })}
 
-      <div className="relative" style={{ height: 0 }}>
+      {/* 手機板不顯示 LanguageSwitcher；桌機顯示 */}
+      <div className="relative hidden md:block" style={{ height: 0 }}>
         <LanguageSwitcher
           current={contentLang}
           behavior="static"
@@ -187,13 +191,19 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
       <div><CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} lang={contentLang} /></div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
-      <div><AboutSection data={about ?? null} lang={contentLang} /></div>
-      <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
+
+      {/* About 區塊暫時停用，但保留程式碼與 import */}
+      {false && (
+        <div>
+          <AboutSection data={about ?? null} lang={contentLang} />
+          <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
+        </div>
+      )}
 
       {/* News 區塊 */}
       <div><NewsSection lang={contentLang} items={homeNewsItems ?? []} /></div>
 
-      {/* ✅ 新增分隔線：新聞與聯絡表單之間，使用不折疊的內距容器 */}
+      {/* 新聞與聯絡表單之間的分隔線（保留） */}
       <div className="relative py-2" style={{ backgroundColor: "#1C3D5A" }}>
         <SectionDivider className="m-0" />
       </div>
@@ -250,7 +260,7 @@ function NewsSection({
             <div className="mt-6 sm:mt-8">
               <Link
                 href={addLangQuery("/news", lang)}
-                className="inline-flex items-center justify-center rounded-full px-5 sm:px-6 py-2.5 sm:py-3 text-sm md:text-base font-semibold shadow-md text-white bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-400 hover:to-blue-300 transition-colors"
+                className="inline-flex items-center justify-center rounded-full px-5 sm:px-6 py-2.5 sm:py-3 text-sm md:text-base font-semibold shadow-md text-white bg-[#1f2454] hover:bg-[#2b3068] transition-colors"
               >
                 {t.cta}
               </Link>

@@ -27,6 +27,18 @@ function esc(s: unknown) {
   return String(s ?? "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]!));
 }
 
+/** 簡碼 ↔ 全名（可本地化顯示） */
+type LangCode = "zh" | "jp" | "en";
+const LANG_FULLNAME: Record<LangCode, { en: string; zh: string; jp: string }> = {
+  zh: { en: "Chinese", zh: "中文", jp: "中国語" },
+  jp: { en: "Japanese", zh: "日文", jp: "日本語" },
+  en: { en: "English", zh: "英文", jp: "英語" },
+};
+/** 將語言簡碼轉為全名；displayLang 控制顯示語系 */
+function langFullName(code: LangCode, displayLang: LangCode): string {
+  return LANG_FULLNAME[code]?.[displayLang] ?? code;
+}
+
 function ptToPlainText(val: unknown): string {
   if (!val) return "";
   if (typeof val === "string") return val;
@@ -49,7 +61,7 @@ function ptToPlainText(val: unknown): string {
   return "";
 }
 
-/** 模板插值：{{}} 會 escape，{{{}}} 不 escape */
+/** 模板插值：{{}} escape，{{{}}} 不 escape */
 function renderTemplate(tpl: string, ctx: Record<string, any>): string {
   if (!tpl) return "";
   return tpl
@@ -81,8 +93,18 @@ function defaultSubject(lang: string) {
   return "我們已收到您的表單";
 }
 
+/** 語言白名單正規化 */
+function normalizeLang(input: string, fallback: LangCode = "zh"): LangCode {
+  const k = String(input ?? "").toLowerCase();
+  if (k === "zh" || k === "jp" || k === "en") return k as LangCode;
+  return fallback;
+}
+
 export async function POST(req: Request) {
-  let lang = "zh";
+  // 頁面語言 vs. 郵件語言
+  let siteLang: LangCode = "zh";
+  let msgLang: LangCode = "zh";
+
   try {
     // ===== 讀取請求 =====
     const ct = req.headers.get("content-type") ?? "";
@@ -97,15 +119,18 @@ export async function POST(req: Request) {
       for (const [k, v] of Object.entries(json)) form.set(k, v as any);
     }
 
+    // ===== 語言欄位 =====
+    siteLang = normalizeLang(String(form.get("lang") ?? "zh"), "zh"); // UI 回跳用
+    const preferredLanguageRaw = String(form.get("preferredLanguage") ?? "");
+    msgLang = normalizeLang(preferredLanguageRaw || siteLang, siteLang);      // 郵件語系用
+
     // ===== 基本欄位 =====
-    lang = String(form.get("lang") ?? "zh");
     const name = String(form.get("name") ?? "");
     const email = String(form.get("email") ?? "");
     const phone = String(form.get("phone") ?? "");
     const company = String(form.get("company") ?? "");
     const subject = String(form.get("subject") ?? "Contact form");
     const summary = String(form.get("summary") ?? "");
-    const preferredContact = String(form.get("preferredContact") ?? "");
     const consent = String(form.get("consent") ?? "");
     const timezone = String(form.get("timezone") ?? "");
 
@@ -132,7 +157,7 @@ export async function POST(req: Request) {
     const isoNow = now.toISOString();
     const year = String(now.getFullYear());
 
-    // ===== 管理者通知信：移除 Preferred Time 與 第1/第2希望；保留 Time Zone =====
+    // ===== 管理者通知信（語言顯示為英文全名）=====
     const adminSubject = `${MailEnv.MAIL_SUBJECT_PREFIX} ${subject}`.trim();
     const adminHtml = `
       <div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;background-color:#f7f9fc;padding:32px;color:#333;">
@@ -144,15 +169,15 @@ export async function POST(req: Request) {
           <div style="padding:24px 28px;font-size:14px;">
             <table style="width:100%;border-collapse:collapse;">
               <tbody>
-                <tr><td style="padding:6px 0;width:170px;color:#555;font-weight:600;">Subject</td><td>${esc(subject)}</td></tr>
+                <tr><td style="padding:6px 0;width:200px;color:#555;font-weight:600;">Subject</td><td>${esc(subject)}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Name</td><td>${esc(name)}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Company</td><td>${esc(company)}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Email</td><td><a href="mailto:${esc(email)}" style="color:#1C3D5A;text-decoration:none;">${esc(email)}</a></td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Phone</td><td>${esc(phone)}</td></tr>
-                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Preferred Contact</td><td>${esc(preferredContact)}</td></tr>
+                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Preferred Language</td><td>${esc(langFullName(msgLang, "en"))}</td></tr>
+                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Site Language</td><td>${esc(langFullName(siteLang, "en"))}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Time Zone</td><td>${esc(timezone)}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Consent</td><td>${esc(consent)}</td></tr>
-                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Lang</td><td>${esc(lang)}</td></tr>
               </tbody>
             </table>
             <div style="margin:24px 0;border-top:1px solid #e3e6ec;"></div>
@@ -173,28 +198,39 @@ export async function POST(req: Request) {
       attachments,
     });
 
-    // ===== 寄給填表人：移除 Time Zone、Consent、Lang =====
-    const ctx = { lang, name, email, phone, company, subject, summary, preferredContact, year, lineLink: "https://line.me/ti/p/@030qreji" };
+    // ===== 自動回覆（語言顯示為該信件語系的全名）=====
+    const ctx = {
+      lang: msgLang,
+      name,
+      email,
+      phone,
+      company,
+      subject,
+      summary,
+      preferredLanguageFull: langFullName(msgLang, msgLang), // 顯示本地化的全名
+      year,
+      lineLink: "https://line.me/ti/p/@030qreji",
+    };
 
-    const replySubject = `${MailEnv.MAIL_SUBJECT_PREFIX} ${defaultSubject(lang)}`.trim();
+    const replySubject = `${MailEnv.MAIL_SUBJECT_PREFIX} ${defaultSubject(msgLang)}`.trim();
 
     const detailsSubmitter = `
-      <p>${lang === "jp" ? "ご入力内容（抜粋）：" : lang === "en" ? "Summary of your submission:" : "您提供的資料摘要如下："}</p>
+      <p>${msgLang === "jp" ? "ご入力内容（抜粋）：" : msgLang === "en" ? "Summary of your submission:" : "您提供的資料摘要如下："}</p>
       <p>
-        ${lang === "jp" ? "ご用件" : lang === "en" ? "Subject" : "主旨"}：{{subject}}<br/>
-        ${lang === "jp" ? "会社名" : lang === "en" ? "Company" : "公司"}：{{company}}<br/>
-        ${lang === "jp" ? "ご氏名" : lang === "en" ? "Name" : "姓名"}：{{name}}<br/>
+        ${msgLang === "jp" ? "ご用件" : msgLang === "en" ? "Subject" : "主旨"}：{{subject}}<br/>
+        ${msgLang === "jp" ? "会社名" : msgLang === "en" ? "Company" : "公司"}：{{company}}<br/>
+        ${msgLang === "jp" ? "ご氏名" : msgLang === "en" ? "Name" : "姓名"}：{{name}}<br/>
         Email：{{email}}<br/>
-        ${lang === "jp" ? "お電話" : "Phone"}：{{phone}}<br/>
-        ${lang === "jp" ? "ご希望の連絡方法" : lang === "en" ? "Preferred contact" : "首選聯絡方式"}：{{preferredContact}}
+        ${msgLang === "jp" ? "お電話" : "Phone"}：{{phone}}<br/>
+        ${msgLang === "jp" ? "ご希望の言語" : msgLang === "en" ? "Preferred language" : "希望聯絡語言"}：{{preferredLanguageFull}}
       </p>
       <div>
-        <h4 style="margin:0 0 6px;color:#1C3D5A;">${lang === "jp" ? "メッセージ概要" : lang === "en" ? "Message Summary" : "訊息摘要"}</h4>
+        <h4 style="margin:0 0 6px;color:#1C3D5A;">${msgLang === "jp" ? "メッセージ概要" : msgLang === "en" ? "Message Summary" : "訊息摘要"}</h4>
         <p style="white-space:pre-wrap;margin:0;">{{summary}}</p>
       </div>
-      <p style="margin-top:12px;">${lang === "jp"
+      <p style="margin-top:12px;">${msgLang === "jp"
         ? "お急ぎの場合は LINE からもお問い合わせください："
-        : lang === "en"
+        : msgLang === "en"
         ? "If you need urgent assistance, contact us via LINE:"
         : "若需加速處理，歡迎透過 LINE 聯繫我們：" }<br/>
         <a href="{{{lineLink}}}" target="_blank">{{{lineLink}}}</a>
@@ -205,13 +241,13 @@ export async function POST(req: Request) {
     const headerZH = `<p>感謝您的來信，我們將在 <strong>1–2 個工作日</strong>內回覆您。</p>`;
 
     const replyHtmlBlock =
-      (lang === "jp" ? headerJP : lang === "en" ? headerEN : headerZH) + detailsSubmitter;
+      (msgLang === "jp" ? headerJP : msgLang === "en" ? headerEN : headerZH) + detailsSubmitter;
 
     const replyHtml = `
       <div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;background:#f7f9fc;padding:32px;color:#333;">
         <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06);">
           <div style="background:#1C3D5A;padding:20px 28px;">
-            <h2 style="margin:0;color:#fff;font-weight:600;font-size:18px;">${esc(localizedBannerTitle(lang))}</h2>
+            <h2 style="margin:0;color:#fff;font-weight:600;font-size:18px;">${esc(localizedBannerTitle(msgLang))}</h2>
           </div>
           <div style="padding:24px 28px;font-size:14px;line-height:1.7;">
             ${renderTemplate(replyHtmlBlock, ctx)}
@@ -231,11 +267,11 @@ export async function POST(req: Request) {
       });
     }
 
-    // ===== redirect =====
+    // ===== Redirect：保留 UI 語言 =====
     const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
     const url = new URL("/contact", base);
     url.searchParams.set("submitted", "1");
-    url.searchParams.set("lang", lang);
+    url.searchParams.set("lang", siteLang);
     return NextResponse.redirect(url.toString(), { status: 303 });
 
   } catch (err: any) {
@@ -244,7 +280,7 @@ export async function POST(req: Request) {
     const url = new URL("/contact", base);
     url.searchParams.set("submitted", "0");
     url.searchParams.set("error", String(err?.message || "MAIL_FAILED"));
-    url.searchParams.set("lang", lang);
+    url.searchParams.set("lang", siteLang); // 失敗亦保留 UI 語言
     return NextResponse.redirect(url.toString(), { status: 303 });
   }
 }

@@ -69,7 +69,7 @@ export default async function ContactSection({
                 href={lineHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#4A90E2] px-6 font-medium text-white transition hover:bg-[#5AA2F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
+                className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#1f2454] px-6 font-medium text-white transition hover:bg-[#2b3068] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
               >
                 {btnLabel[lang].line}
               </a>
@@ -77,7 +77,7 @@ export default async function ContactSection({
             {mailHref && (
               <a
                 href={mailHref}
-                className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#4A90E2] px-6 font-medium text-white transition hover:bg-[#5AA2F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
+                className="inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#1f2454] px-6 font-medium text-white transition hover:bg-[#2b3068] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
               >
                 {btnLabel[lang].mail}
               </a>

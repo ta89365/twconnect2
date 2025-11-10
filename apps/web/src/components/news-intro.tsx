@@ -123,12 +123,12 @@ export default async function NewsIntro({
             <Link
               href={ctaHref}
               className="inline-flex items-center rounded-lg px-5 py-3 font-medium text-white transition-colors"
-              style={{ backgroundColor: "#4A90E2", color: "#FFFFFF" }}
+              style={{ backgroundColor: "#1f2454", color: "#FFFFFF" }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0";
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#2b3068";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2";
+                (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#1f2454";
               }}
             >
               {t.cta}
@@ -187,12 +187,12 @@ export default async function NewsIntro({
           <Link
             href={ctaHref}
             className="inline-flex items-center rounded-lg px-5 py-3 font-medium text-white transition-colors"
-            style={{ backgroundColor: "#4A90E2", color: "#FFFFFF" }}
+            style={{ backgroundColor: "#1f2454", color: "#FFFFFF" }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#5AA2F0";
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#2b3068";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#4A90E2";
+              (e.currentTarget as HTMLAnchorElement).style.backgroundColor = "#1f2454";
             }}
           >
             {copy[lang].cta}

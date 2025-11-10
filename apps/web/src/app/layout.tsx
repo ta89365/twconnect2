@@ -5,7 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QuickConsult from "@/components/QuickConsult";
 
-// Client components（可能使用 next/navigation hooks）
+// Client components
 import ConsentProvider from "@/components/ConsentProvider";
 import CookieBanner from "@/components/CookieBanner";
 
@@ -20,7 +20,6 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.ico" },
 };
 
-// 預設 CSS 變數
 const defaultCssVars = {
   ["--default-page-bg" as any]: "#ffffff",
   ["--default-page-fg" as any]: "#0b1324",
@@ -45,25 +44,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           text-[var(--page-fg,var(--default-foreground,#0b1324))]
         `}
       >
-        {/* 任何可能使用 next/navigation hooks 的 client 區塊都放進 Suspense */}
         <React.Suspense fallback={null}>
           <ConsentProvider>
             {children}
 
             <React.Suspense fallback={null}>
-              {/* Cookie 同意橫幅（讀取 ?lang= 等） */}
               <CookieBanner />
             </React.Suspense>
 
             <React.Suspense fallback={null}>
-              {/* 諮詢快捷列 */}
+              {/* 右下角固定 + 角落 1rem / 0.9rem */}
               <QuickConsult
                 targetId="contact"
-                anchorSelector='[data-lang-switcher="true"]'
+                position="bottom-right"
+                offsetY={1}        // 距底 1rem
+                offsetRight={0.9}  // 距右 0.9rem
                 followAnchor={false}
-                position="top-right"
-                topAdjustRem={-0.325}
-                matchAnchorWidth={true}
+                matchAnchorWidth={false}
               />
             </React.Suspense>
           </ConsentProvider>

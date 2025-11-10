@@ -205,6 +205,14 @@ function TheadBlue({ cols }: { cols: string[] }) {
     </thead>
   );
 }
+/** 透過 colgroup 強制每張表格欄寬一致，避免不同表格位移 */
+function TableColgroup({ widthsPct }: { widthsPct: number[] }) {
+  return (
+    <colgroup>
+      {widthsPct.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}
+    </colgroup>
+  );
+}
 
 /* ---------- 安全轉型 helper ---------- */
 function toArray(v?: string[] | string | null): string[] {
@@ -238,7 +246,7 @@ export default async function TaiwanServicePage({
     serviceFlow?: string[] | null;
     scheduleExample?: ScheduleBlock[] | null;
 
-    // ★ 新增：五個表格的多語標題（由 GROQ 回傳已選語系字串）
+    // 五個表格的小標題（已依語系回傳）
     subsidiaryTitle?: string | null;
     branchTitle?: string | null;
     repOfficeTitle?: string | null;
@@ -323,7 +331,6 @@ export default async function TaiwanServicePage({
   const hasSchedules = schedules.length > 0;
 
   const labels = {
-    breadcrumb: t(lang, { jp: "ホーム / サービス / 台湾進出支援", zh: "首頁 / 服務內容 / 台灣進出支援", en: "Home / Services / Taiwan Market Entry" } as any),
     quickNav: {
       bg: t(lang, { jp: "背景", zh: "背景", en: "Background" } as any),
       ch: t(lang, { jp: "サービス課題", zh: "挑戰", en: "Challenges" } as any),
@@ -336,15 +343,9 @@ export default async function TaiwanServicePage({
       } as any),
       fe: t(lang, { jp: "料金（参考）", zh: "費用參考", en: "Fees (Reference)" } as any),
     },
-    bottomCTAHeading: t(lang, {
-      jp: "最適な進出戦略で、台湾での新しい一歩を",
-      zh: "用最合適的進出策略，安心展開在台事業",
-      en: "Start your next chapter in Taiwan with the right market entry plan",
-    } as any),
-    contactBtn: t(lang, { jp: "お問い合わせはこちら", zh: "聯絡我們", en: "Contact Us" } as any),
   };
 
-  // ★ 五個表格小標題：優先使用 Sanity，否則回退到預設三語
+  // 五個表格小標題：優先使用 Sanity，否則回退到預設三語
   const tableTitles = {
     subsidiary: data.subsidiaryTitle ?? t(lang, {
       jp: "子会社設立サポート",
@@ -372,6 +373,25 @@ export default async function TaiwanServicePage({
       en: "Value-Added Services",
     } as any),
   };
+
+  // ====== 欄位標題在此集中定義（多語） ======
+  const hdr = {
+    plan: t(lang, { jp: "プラン", zh: "方案", en: "Plan" } as any),
+    serviceDetails: t(lang, { jp: "サービス内容", zh: "服務內容", en: "Service Details" } as any),
+    idealFor: t(lang, { jp: "対象", zh: "適合對象", en: "Ideal For" } as any),
+    feeJpy: t(lang, { jp: "料金（JPY）", zh: "費用（JPY）", en: "Fee (JPY)" } as any),
+    // 舊備援表格
+    category: t(lang, { jp: "カテゴリ", zh: "類別", en: "Category" } as any),
+    service: t(lang, { jp: "サービス", zh: "服務項目", en: "Service" } as any),
+    fee: t(lang, { jp: "料金 JPY", zh: "費用 JPY", en: "Fee JPY" } as any),
+    notes: t(lang, { jp: "備考", zh: "備註", en: "Notes" } as any),
+  };
+
+  // 欄寬：使用 colgroup 讓四張表完全一致
+// 欄寬：使用 colgroup 讓四張表完全一致
+const widthsSubsidiary = [18, 45, 20, 15]; // Plan / Details / Ideal / Fee
+// 原: const widthsCommon = [55, 25, 20];
+const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後：服務內容不再留太多白、右側更寬）
 
   const pickIconForChallenge = createUniqueIconPicker();
   const pickIconForService = createUniqueIconPicker();
@@ -420,31 +440,31 @@ export default async function TaiwanServicePage({
       >
         <div className="max-w-6xl mx-auto flex h-full flex-wrap items-center justify-center gap-2 px-4 md:px-6">
           {hasBackground && (
-            <a href="#bg" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a href="#bg" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
               <ClipboardList className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.bg}</span>
             </a>
           )}
           {(hasChallenges || hasServices) && (
-            <a href="#ch" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a href="#ch" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
               <Scale className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.ch}</span>
             </a>
           )}
           {hasFlow && (
-            <a href="#fl" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a href="#fl" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
               <ClipboardList className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.sc}</span>
             </a>
           )}
           {hasSchedules && (
-            <a href="#sc" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a href="#sc" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
               <Clock className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.sc}</span>
             </a>
           )}
           {hasFees && (
-            <a href="#fe" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a href="#fe" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
               <FileText className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.fe}</span>
             </a>
@@ -501,7 +521,7 @@ export default async function TaiwanServicePage({
                             )}
                           </div>
 
-                          <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg-white hover:shadow-md transition min-h-[56px]">
+                          <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg白 hover:shadow-md transition min-h-[56px]">
                             {sv ? (
                               <>
                                 {pickIconForService(sv)}
@@ -542,7 +562,7 @@ export default async function TaiwanServicePage({
               </>
             )}
 
-            {/* 流程：合併標題；移除每行「步驟 n」小字 */}
+            {/* 流程 */}
             {hasFlow && (
               <>
                 <section id="fl" style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }} className="mb-10 md:mb-14">
@@ -553,7 +573,7 @@ export default async function TaiwanServicePage({
                         <div className="absolute w-7 h-7 -start-[22px] mt-1.5 rounded-full bg-[#1C3D5A] text-white grid place-items-center text-xs font-bold ring-2 ring-white">
                           {idx + 1}
                         </div>
-                        <div className="bg-white rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
+                        <div className="bg白 rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
                           <div className="text-neutral-900">{step}</div>
                         </div>
                       </li>
@@ -572,7 +592,7 @@ export default async function TaiwanServicePage({
 
                   <div className="mt-6 grid gap-5 grid-cols-1">
                     {schedules.map((blk: ScheduleBlock, idx: number) => (
-                      <div key={`sched-${idx}`} className="rounded-2xl border border-neutral-200 bg-white p-5 md:p-6 hover:shadow-md transition">
+                      <div key={`sched-${idx}`} className="rounded-2xl border border-neutral-200 bg白 p-5 md:p-6 hover:shadow-md transition">
                         {blk.title && (
                           <div className="mb-4 flex items-center gap-2">
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A]">
@@ -602,12 +622,13 @@ export default async function TaiwanServicePage({
                   <div className="mt-6">
                     <SubTitle>{tableTitles.subsidiary}</SubTitle>
                     <TableShell>
-                      <table className="min-w-full text-sm">
-                        <TheadBlue cols={["Plan", "Service Details", "Ideal For", "Fee (JPY)"]} />
+                      <table className="min-w-full text-sm table-fixed">
+                        <TableColgroup widthsPct={widthsSubsidiary} />
+                        <TheadBlue cols={[hdr.plan, hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
                         <tbody>
                           {subsidiaryPlans.map((row, i) => (
                             <tr key={`sp-${i}`} className="border-t border-neutral-200 align-top">
-                              <td className="px-5 py-4 font-semibold text-neutral-900">{row.plan ?? ""}</td>
+                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.plan ?? ""}</td>
                               <td className="px-5 py-4">
                                 <ul className="space-y-1">
                                   {(row.services ?? []).map((s, idx) => (
@@ -619,8 +640,8 @@ export default async function TaiwanServicePage({
                                 </ul>
                                 {row.notes && <p className="mt-2 text-xs text-neutral-600">{row.notes}</p>}
                               </td>
-                              <td className="px-5 py-4 text-neutral-800">{row.who ?? ""}</td>
-                              <td className="px-5 py-4 font-semibold text-neutral-900">{row.feeJpy ?? ""}</td>
+                              <td className="px-5 py-4 text-neutral-800 break-words">{row.who ?? ""}</td>
+                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -629,13 +650,15 @@ export default async function TaiwanServicePage({
                   </div>
                 )}
 
+                {/* 後面四張表格：標題與欄位完全一致 */}
                 {/* II. Branch */}
                 {branchSupport.length > 0 && (
                   <div className="mt-10">
                     <SubTitle>{tableTitles.branch}</SubTitle>
                     <TableShell>
-                      <table className="min-w-full text-sm">
-                        <TheadBlue cols={["Service Details", "Ideal For", "Fee (JPY)"]} />
+                      <table className="min-w-full text-sm table-fixed">
+                        <TableColgroup widthsPct={widthsCommon} />
+                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
                         <tbody>
                           {branchSupport.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
@@ -643,19 +666,19 @@ export default async function TaiwanServicePage({
                             return (
                               <tr key={`br-${i}`} className="border-t border-neutral-200 align-top">
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
                                       <li key={k} className="flex items-start gap-2">
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span>{d}</span>
+                                        <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600">{row.notes}</p>}
+                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
                               </tr>
                             );
                           })}
@@ -670,8 +693,9 @@ export default async function TaiwanServicePage({
                   <div className="mt-10">
                     <SubTitle>{tableTitles.rep}</SubTitle>
                     <TableShell>
-                      <table className="min-w-full text-sm">
-                        <TheadBlue cols={["Service Details", "Ideal For", "Fee (JPY)"]} />
+                      <table className="min-w-full text-sm table-fixed">
+                        <TableColgroup widthsPct={widthsCommon} />
+                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
                         <tbody>
                           {repOfficeSupport.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
@@ -679,19 +703,19 @@ export default async function TaiwanServicePage({
                             return (
                               <tr key={`ro-${i}`} className="border-t border-neutral-200 align-top">
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
                                       <li key={k} className="flex items-start gap-2">
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span>{d}</span>
+                                        <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600">{row.notes}</p>}
+                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
                               </tr>
                             );
                           })}
@@ -706,8 +730,9 @@ export default async function TaiwanServicePage({
                   <div className="mt-10">
                     <SubTitle>{tableTitles.accounting}</SubTitle>
                     <TableShell>
-                      <table className="min-w-full text-sm">
-                        <TheadBlue cols={["Service Details", "Ideal For", "Fee (JPY)"]} />
+                      <table className="min-w-full text-sm table-fixed">
+                        <TableColgroup widthsPct={widthsCommon} />
+                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
                         <tbody>
                           {accountingTaxSupport.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
@@ -715,19 +740,19 @@ export default async function TaiwanServicePage({
                             return (
                               <tr key={`at-${i}`} className="border-t border-neutral-200 align-top">
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
                                       <li key={k} className="flex items-start gap-2">
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span>{d}</span>
+                                        <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600">{row.notes}</p>}
+                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
                               </tr>
                             );
                           })}
@@ -742,8 +767,9 @@ export default async function TaiwanServicePage({
                   <div className="mt-10">
                     <SubTitle>{tableTitles.valueAdded}</SubTitle>
                     <TableShell>
-                      <table className="min-w-full text-sm">
-                        <TheadBlue cols={["Service Details", "Ideal For", "Fee (JPY)"]} />
+                      <table className="min-w-full text-sm table-fixed">
+                        <TableColgroup widthsPct={widthsCommon} />
+                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
                         <tbody>
                           {valueAddedServices.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
@@ -751,19 +777,19 @@ export default async function TaiwanServicePage({
                             return (
                               <tr key={`va-${i}`} className="border-t border-neutral-200 align-top">
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
                                       <li key={k} className="flex items-start gap-2">
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span>{d}</span>
+                                        <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600">{row.notes}</p>}
+                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
                               </tr>
                             );
                           })}
@@ -775,14 +801,14 @@ export default async function TaiwanServicePage({
 
                 {/* 舊 flat fallback */}
                 {!hasFeesNew && feesFlat.length > 0 && (
-                  <div className="mt-6 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+                  <div className="mt-6 overflow-x-auto rounded-2xl border border-neutral-200 bg白">
                     <table className="min-w-full text-sm">
                       <thead className="bg-[#1C3D5A] text-white">
                         <tr>
-                          <th className="text-left px-5 py-3 font-semibold">{t(lang, { jp: "カテゴリ", zh: "類別", en: "Category" } as any)}</th>
-                          <th className="text-left px-5 py-3 font-semibold">{t(lang, { jp: "サービス", zh: "服務項目", en: "Service" } as any)}</th>
-                          <th className="text-left px-5 py-3 font-semibold">{t(lang, { jp: "料金 JPY", zh: "費用 JPY", en: "Fee JPY" } as any)}</th>
-                          <th className="text-left px-5 py-3 font-semibold">{t(lang, { jp: "備考", zh: "備註", en: "Notes" } as any)}</th>
+                          <th className="text-left px-5 py-3 font-semibold">{hdr.category}</th>
+                          <th className="text-left px-5 py-3 font-semibold">{hdr.service}</th>
+                          <th className="text-left px-5 py-3 font-semibold">{hdr.fee}</th>
+                          <th className="text-left px-5 py-3 font-semibold">{hdr.notes}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -817,7 +843,7 @@ export default async function TaiwanServicePage({
             >
               {t(lang, { jp: "お問い合わせはこちら", zh: "聯絡我們", en: "Contact Us" } as any)}
             </a>
-            <a href="mailto:info@twconnects.com" className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition">
+            <a href="mailto:info@twconnects.com" className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg白/15 transition">
               info@twconnects.com
             </a>
           </div>

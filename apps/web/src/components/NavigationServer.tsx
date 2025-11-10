@@ -1,4 +1,3 @@
-// File: apps/web/src/components/NavigationServer.tsx
 import Navigation from "@/components/navigation";
 import { sfetch } from "@/lib/sanity/fetch";
 import { siteSettingsByLang } from "@/lib/queries/siteSettings";

@@ -33,19 +33,19 @@ function resolveCopy(lang: Exclude<Lang, "zh-cn">) {
       heading: "サービス内容",
       subheading: "― 専門アドバイザリーチームが台湾進出や国際ビジネス展開の第一歩を支援 ―",
       cta: "詳細を見る",
-      bottomCta: "会社概要を見る", // ← 按照圖片
+      bottomCta: "会社概要を見る",
     },
     zh: {
       heading: "服務內容",
       subheading: "— 專業顧問團隊支援您邁出進軍臺灣與國際業務拓展的第一步 —",
       cta: "查看詳情",
-      bottomCta: "公司概要", // ← 按照圖片
+      bottomCta: "公司概要",
     },
     en: {
       heading: "Services",
       subheading: "— Our advisory team supports your first steps into Taiwan and global expansion —",
       cta: "Learn More",
-      bottomCta: "Company Overview", // ← 按照圖片
+      bottomCta: "Company Overview",
     },
   } as const;
 
@@ -100,7 +100,6 @@ export default function ServiceSection({
     return addLangQuery(href, effectiveLang);
   };
 
-  // ✅ 永遠導向 /company，並加語言參數
   const finalBottomHref = addLangQuery("/company", effectiveLang);
 
   return (
@@ -157,7 +156,7 @@ export default function ServiceSection({
                         inline-flex h-10 items-center justify-center rounded-xl
                         px-4 text-sm font-semibold shadow
                         transition-colors duration-200
-                        text-white bg-[#4A90E2] hover:bg-[#5AA2F0]
+                        text-white bg-[#1f2454] hover:bg-[#2b3068]
                       "
                     >
                       {ctaText ?? copy.cta}
@@ -174,8 +173,8 @@ export default function ServiceSection({
           <Link
             href={finalBottomHref}
             className="inline-flex items-center rounded-xl px-6 py-3 text-sm sm:text-base font-medium transition
-                      text-white bg-[#4A90E2] hover:bg-[#5AA2F0]
-                      focus:outline-none focus:ring-2 focus:ring-[#5AA2F0] focus:ring-offset-2 focus:ring-offset-[#1C3D5A]"
+                      text-white bg-[#1f2454] hover:bg-[#2b3068]
+                      focus:outline-none focus:ring-2 focus:ring-[#2b3068] focus:ring-offset-2 focus:ring-offset-[#1C3D5A]"
           >
             {copy.bottomCta}
           </Link>

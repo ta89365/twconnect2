@@ -371,47 +371,15 @@ export default async function Page() {
             {(doc.conclusionZhCn || doc.contact) ? (
               <section id="sec-end">
                 <SectionTitle icon={<Lucide.MessageSquare className="size-5" />} title="七、结语与联系" />
-                <div className="grid md:grid-cols-3 gap-5">
-                  <Card className="md:col-span-2">
+                {/* 刪除右側聯絡卡片；左側卡片改為全寬，與上方卡片切齊 */}
+                <div className="grid gap-5">
+                  <Card className="w-full">
                     {doc.conclusionZhCn ? (
                       <PortableText value={doc.conclusionZhCn as TypedObject[]} components={ptComponents as any} />
                     ) : (
                       <p className={`${TEXT_SOFT}`}>如需更多信息，欢迎与我们联系。</p>
                     )}
                   </Card>
-                  {doc.contact ? (
-                    <Card>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-white font-semibold">
-                          <Lucide.LifeBuoy className="size-5" />
-                          联系我们
-                        </div>
-                        {doc.contact.email ? (
-                          <p className={`${TEXT_SOFT}`}>
-                            <span className="inline-flex items-center gap-2">
-                              <Lucide.Mail className="size-4" />
-                              <a className="underline" href={`mailto:${doc.contact.email}`}>
-                                {doc.contact.email}
-                              </a>
-                            </span>
-                          </p>
-                        ) : null}
-                        {doc.contact.lineId ? (
-                          <p className={`${TEXT_SOFT}`}>
-                            <span className="inline-flex items-center gap-2">
-                              <Lucide.MessageCircle className="size-4" />
-                              LINE：<span className="font-mono">{doc.contact.lineId}</span>
-                            </span>
-                          </p>
-                        ) : null}
-                        {doc.contact.contactNoteZhCn ? (
-                          <div className="pt-2 border-t border-white/15">
-                            <PortableText value={doc.contact.contactNoteZhCn as TypedObject[]} components={ptComponents as any} />
-                          </div>
-                        ) : null}
-                      </div>
-                    </Card>
-                  ) : null}
                 </div>
               </section>
             ) : null}
