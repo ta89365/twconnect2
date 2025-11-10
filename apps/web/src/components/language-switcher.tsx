@@ -20,8 +20,6 @@ type Props = {
   offsetRight?: number;
   behavior?: "fixed" | "static"; // static = 絕對定位在父層；fixed = 固定在視窗
   className?: string;
-  /** 手機上若任一 selector 代表選單開啟，就暫時隱藏語言切換（桌機不受影響） */
-  hideWhenSelectors?: string[];
 };
 
 export default function LanguageSwitcher({
@@ -30,13 +28,6 @@ export default function LanguageSwitcher({
   offsetRight = 1.25,
   behavior = "fixed",
   className = "",
-  hideWhenSelectors = [
-    'nav[aria-expanded="true"]',
-    '[data-mobile-nav="open"]',
-    '[data-nav-open="true"]',
-    '[data-drawer="open"]',
-    '[aria-modal="true"][role="dialog"][data-nav="true"]',
-  ],
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -71,57 +62,28 @@ export default function LanguageSwitcher({
       ? { position: "fixed", top: `${offsetY}rem`, right: `${offsetRight}rem` }
       : { position: "absolute", top: `${offsetY}rem`, right: `${offsetRight}rem` };
 
-  // 手機偵測是否開啟行動選單：開啟時隱藏，桌機一律顯示
+  // 僅監聽 <html data-mobile-nav="open|closed">，由導覽列負責設定
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const check = () => {
-      try {
-        for (const sel of hideWhenSelectors) {
-          const el = document.querySelector(sel) as HTMLElement | null;
-          if (!el) continue;
-          const ariaExpanded = el.getAttribute("aria-expanded");
-          const dataOpen =
-            el.getAttribute("data-open") ||
-            el.getAttribute("data-state") ||
-            el.getAttribute("data-nav-open") ||
-            el.getAttribute("data-mobile-nav") ||
-            el.getAttribute("data-drawer");
-          const hasOpenAttr = (el as any).open === true;
-          if (
-            ariaExpanded === "true" ||
-            dataOpen === "true" ||
-            el.getAttribute("data-mobile-nav") === "open" ||
-            el.getAttribute("data-drawer") === "open" ||
-            hasOpenAttr
-          ) {
-            return true;
-          }
-        }
-      } catch {}
-      return false;
-    };
-
-    const update = () => setMobileMenuOpen(check());
+    const el = document.documentElement; // <html>
+    const update = () => setMobileMenuOpen(el.getAttribute("data-mobile-nav") === "open");
     update();
-
     const mo = new MutationObserver(update);
-    mo.observe(document.body, { attributes: true, childList: true, subtree: true });
+    mo.observe(el, { attributes: true, attributeFilter: ["data-mobile-nav"] });
     window.addEventListener("resize", update, { passive: true });
     return () => {
       mo.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [hideWhenSelectors]);
+  }, []);
 
-  // 手機開啟選單時隱藏；桌機不受影響
+  // 手機開啟選單時隱藏；桌機一律顯示
   const mobileHideClass = mobileMenuOpen ? "hidden md:block" : "";
 
   return (
     <div
       data-lang-switcher="true"
       className={[
-        // 改成 inline-flex，並用 max-content 寬度，讓容器自動收斂到內容
         "z-[80] inline-flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none",
         mobileHideClass,
         className,
@@ -159,17 +121,9 @@ export default function LanguageSwitcher({
             style={{ backgroundColor: btnBg, color: btnColor }}
           >
             <span className="truncate">{it.label}</span>
-            <span
-              aria-hidden="true"
-              className="h-2 w-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: dotBg }}
-            />
+            <span aria-hidden="true" className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotBg }} />
             {idx !== items.length - 1 && (
-              <span
-                aria-hidden
-                className="absolute left-0 right-0"
-                style={{ bottom: -0.5, height: 1, backgroundColor: dividerColor }}
-              />
+              <span aria-hidden className="absolute left-0 right-0" style={{ bottom: -0.5, height: 1, backgroundColor: dividerColor }} />
             )}
           </button>
         );

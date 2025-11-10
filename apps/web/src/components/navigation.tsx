@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 type Lang = "jp" | "zh" | "zh-cn" | "en";
@@ -84,6 +84,15 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
   const [accordion, setAccordion] = useState<Record<number, boolean>>({});
   const toggleAccordion = (i: number) => setAccordion((p) => ({ ...p, [i]: !p[i] }));
 
+  // ⬇️ 當行動選單開/關時，同步狀態到 <html data-mobile-nav="open|closed">
+  useEffect(() => {
+    const html = document.documentElement;
+    html.setAttribute("data-mobile-nav", mobileOpen ? "open" : "closed");
+    return () => {
+      html.setAttribute("data-mobile-nav", "closed");
+    };
+  }, [mobileOpen]);
+
   // === 全站統一樣式 ===
   const desktopItemBase =
     "text-slate-100 hover:text-sky-200 text-[15px] leading-6 transition-colors inline-flex items-center gap-1 font-medium";
@@ -109,7 +118,7 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
         {/* spacer 把導覽推到最右 */}
         <div className="flex-1" />
 
-        {/* 右：主選單 */}
+        {/* 右：主選單（桌機） */}
         <nav aria-label="Main" className="hidden md:flex pr-3 md:pr-4">
           <ul className="flex items-center gap-8 whitespace-nowrap justify-end">
             {augmented.map((it, i) => {
@@ -180,7 +189,10 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
 
       {/* 手機抽屜 */}
       <div className={`md:hidden fixed inset-0 z-50 transition-all duration-200 ${mobileOpen ? "pointer-events-auto" : "pointer-events-none"}`}>
-        <div className={`absolute inset-0 bg-black/40 transition-opacity ${mobileOpen ? "opacity-100" : "opacity-0"}`} onClick={() => setMobileOpen(false)} />
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity ${mobileOpen ? "opacity-100" : "opacity-0"}`}
+          onClick={() => setMobileOpen(false)}
+        />
         <div
           className={`absolute right-0 top-0 h-full w-[82%] max-w-[380px] transition-transform ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
           style={{ backgroundColor: BRAND_BLUE, color: "#fff" }}
@@ -192,9 +204,18 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
               </div>
               <span className="font-medium text-white">{brandNameForLang}</span>
             </Link>
-            <button type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)} className="rounded-md p-2 text-white hover:bg-white/10">
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-md p-2 text-white hover:bg-white/10"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414 5.707 15.707a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
           </div>
@@ -217,19 +238,41 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
                         {it.label}
                       </Link>
                       {hasChildren && (
-                        <button type="button" onClick={() => toggleAccordion(i)} className="px-3 py-3 text-white hover:text-sky-200">
-                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${expanded ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
+                        <button
+                          type="button"
+                          onClick={() => toggleAccordion(i)}
+                          className="px-3 py-3 text-white hover:text-sky-200"
+                          aria-expanded={expanded}
+                          aria-controls={`nav-acc-${i}`}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-5 w-5 transition-transform ${expanded ? "rotate-180" : ""}`}
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </button>
                       )}
                     </div>
                     {hasChildren && (
-                      <div className={`grid transition-all duration-200 ease-in-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                      <div
+                        id={`nav-acc-${i}`}
+                        className={`grid transition-all duration-200 ease-in-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                      >
                         <ul className="overflow-hidden">
                           {(it.children ?? []).map((c, cidx) => (
                             <li key={`${c.href ?? "child"}-m-${cidx}`}>
-                              <Link href={normalizeHref(c.href)} className="block pl-6 pr-3 py-2 text-[14px] text-white/90 hover:bg白/10 rounded-md" onClick={() => setMobileOpen(false)}>
+                              <Link
+                                href={normalizeHref(c.href)}
+                                className="block pl-6 pr-3 py-2 text-[14px] text-white/90 hover:bg-white/10 rounded-md"
+                                onClick={() => setMobileOpen(false)}
+                              >
                                 {c.label}
                               </Link>
                             </li>
