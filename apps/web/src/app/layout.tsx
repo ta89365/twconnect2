@@ -53,7 +53,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </React.Suspense>
 
             <React.Suspense fallback={null}>
-              {/* 右下角固定 + 角落 1rem / 0.9rem */}
+              {/* 右下角固定 */}
               <QuickConsult
                 targetId="contact"
                 position="bottom-right"

@@ -6,10 +6,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 type Lang = "jp" | "zh" | "en";
 
 type Props = {
-  /** 與邊界的距離（rem）。top-right 表示距頂，bottom-right 表示距底。 */
-  offsetY?: number;
-  /** 與右邊距離（rem） */
-  offsetRight?: number;
+  offsetY?: number;        // top-right: 距頂；bottom-right: 距底
+  offsetRight?: number;    // 距右
   targetId?: string;
   lang?: Lang;
   anchorSelector?: string | null;
@@ -36,18 +34,16 @@ function normalizeLang(input?: string | null): Lang {
 }
 
 export default function QuickConsult({
-  // 注意：這裡的預設值只用作「上邊距」的情境。
-  // 右下角時會在程式內把預設調成 1rem。
-  offsetY = 8,
-  offsetRight = 0.75,
+  offsetY = 1,           // 右下角預設貼底 1rem
+  offsetRight = 0.9,     // 距右 0.9rem
   targetId = "contact",
   lang,
   anchorSelector = '[data-lang-switcher="true"]',
   followAnchor = false,
-  position = "top-right",
+  position = "bottom-right",
   topAdjustRem = 0,
   rightAdjustRem = 0,
-  matchAnchorWidth = true,
+  matchAnchorWidth = false,
   widthAdjustRem = 0,
   hideAtRatio = 0.85,
   showAtRatio = 0.55,
@@ -67,10 +63,9 @@ export default function QuickConsult({
 
   const [hovered, setHovered] = useState(false);
 
-  // 根據 position 決定貼邊距離的預設：右下角預設 1rem，比較符合「貼角落」預期
-  const effectiveOffsetY = position === "bottom-right" ? 1 : offsetY;
+  // 根據 position 決定貼邊距離
+  const effectiveOffsetY = position === "bottom-right" ? offsetY : Math.max(offsetY, 1);
 
-  // 初始定位：topRem 代表「距離該邊的距離」（top-right=距頂，bottom-right=距底）
   const initialPinned = {
     topRem: effectiveOffsetY + topAdjustRem,
     rightRem: offsetRight + rightAdjustRem,
@@ -88,7 +83,7 @@ export default function QuickConsult({
     ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
     : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
 
-  // 使用遲滯避免靠近表單時忽隱忽現
+  // 避免在表單中段忽隱忽現
   useEffect(() => {
     if (!isHome) return;
     const target = document.getElementById(targetId);
@@ -124,7 +119,7 @@ export default function QuickConsult({
     return () => io.disconnect();
   }, [isHome, targetId, hideAtRatio, showAtRatio, hiddenNearTarget]);
 
-  // 只在「右上角模式」才跟隨語言列
+  // 右上角模式才跟隨語言列
   useEffect(() => {
     if (position !== "top-right") {
       setPinned(initialPinned);
@@ -202,17 +197,10 @@ export default function QuickConsult({
         hiddenNearTarget ? "opacity-0 translate-y-1 pointer-events-none" : "opacity-100 translate-y-0",
       ].join(" ")}
       style={{
-        // 明確避免被其他樣式覆蓋：非當前定位方向一律給 auto
-        top:
-          position === "top-right"
-            ? `calc(${pinned?.topRem ?? initialPinned.topRem}rem + env(safe-area-inset-top, 0px))`
-            : "auto",
-        bottom:
-          position === "bottom-right"
-            ? `calc(${pinned?.topRem ?? initialPinned.topRem}rem + env(safe-area-inset-bottom, 0px))`
-            : "auto",
+        top: position === "top-right" ? `calc(${pinned.topRem}rem + env(safe-area-inset-top, 0px))` : "auto",
+        bottom: position === "bottom-right" ? `calc(${pinned.topRem}rem + env(safe-area-inset-bottom, 0px))` : "auto",
         left: "auto",
-        right: `calc(${pinned?.rightRem ?? initialPinned.rightRem}rem + env(safe-area-inset-right, 0px))`,
+        right: `calc(${pinned.rightRem}rem + env(safe-area-inset-right, 0px))`,
       }}
     >
       <a
@@ -231,7 +219,7 @@ export default function QuickConsult({
           color,
           border,
           boxShadow: shadow,
-          width: pinned?.widthRem ? `${pinned.widthRem}rem` : undefined,
+          // 不強制調整寬高，讓手機與桌機樣式一致
         }}
       >
         <span className="truncate text-left">{label}</span>
@@ -241,30 +229,6 @@ export default function QuickConsult({
           style={{ backgroundColor: hovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},0.9)` }}
         />
       </a>
-
-      {/* 手機版覆寫：<= 768px */}
-      <style jsx>{`
-        @media (max-width: 768px) {
-          [data-quick-consult="true"] {
-            position: fixed !important;
-            top: auto !important;
-            left: auto !important;
-            right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
-            bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
-            z-index: 100 !important;
-          }
-          [data-quick-consult="true"] a {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 9999px;
-            padding: 0 !important;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-          }
-        }
-      `}</style>
     </div>
   );
 }

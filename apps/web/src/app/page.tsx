@@ -1,11 +1,7 @@
 // apps/web/src/app/page.tsx
-// 🔔 提醒：右側「諮詢快捷」按鈕是掛在 layout.tsx。
-// 請到 layout.tsx 將 <QuickConsult position="bottom-right" ... /> 設為右下角。
-
 import HeroBanner from "@/components/hero-banner";
 import type { Tune } from "@/components/hero-banner";
 import LanguageSwitcher from "@/components/language-switcher";
-// QuickConsult 移至 layout.tsx 全域掛載
 import ChallengesSection from "@/components/ChallengesSection";
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
@@ -82,8 +78,8 @@ function SectionDivider({ className = "" }: { className?: string }) {
 }
 
 const MONTH_EN = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
 ];
 function formatDateDeterministic(lang: "jp" | "zh" | "en", iso: string) {
   const [yyyy, mm, dd] = iso.split("-");
@@ -172,8 +168,8 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     <main id="top" className="bg-background text-foreground overflow-x-hidden">
       {await (NavigationServer as any)({ lang: spRaw?.lang as string })}
 
-      {/* 手機板不顯示 LanguageSwitcher；桌機顯示 */}
-      <div className="relative hidden md:block" style={{ height: 0 }}>
+      {/* 語言切換：維持先前桌機定位（static + relative 容器），手機預設顯示，開啟行動選單時自動隱藏 */}
+      <div className="relative" style={{ height: 0 }}>
         <LanguageSwitcher
           current={contentLang}
           behavior="static"
@@ -203,12 +199,10 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
       {/* News 區塊 */}
       <div><NewsSection lang={contentLang} items={homeNewsItems ?? []} /></div>
 
-      {/* 新聞與聯絡表單之間的分隔線（保留） */}
       <div className="relative py-2" style={{ backgroundColor: "#1C3D5A" }}>
         <SectionDivider className="m-0" />
       </div>
 
-      {/* Contact 表單 */}
       <div id="contact" data-contact-anchor="true" className="scroll-mt-[84px]">
         {await (ContactSection as any)({ data: contact ?? null, lang: contentLang })}
       </div>
