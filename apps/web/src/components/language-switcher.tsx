@@ -1,6 +1,7 @@
+// apps/web/src/components/language-switcher.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Lang = "zh" | "zh-cn" | "jp" | "en";
@@ -18,7 +19,8 @@ type Props = {
   current?: Lang;
   offsetY?: number;
   offsetRight?: number;
-  behavior?: "fixed" | "static"; // static = 絕對定位在父層；fixed = 固定在視窗
+  /** static = 相對父層絕對定位；fixed = 固定在視窗 */
+  behavior?: "fixed" | "static";
   className?: string;
 };
 
@@ -37,7 +39,6 @@ export default function LanguageSwitcher({
   const OP = { border: 0.30, active: 0.08, divider: 0.22, text: 0.98, dot: 0.95 };
 
   const [hoverKey, setHoverKey] = useState<Lang | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const rawUrlLang = searchParams?.get("lang");
   const activeLang = normalizeLang(rawUrlLang ?? current);
@@ -62,30 +63,12 @@ export default function LanguageSwitcher({
       ? { position: "fixed", top: `${offsetY}rem`, right: `${offsetRight}rem` }
       : { position: "absolute", top: `${offsetY}rem`, right: `${offsetRight}rem` };
 
-  // 僅監聽 <html data-mobile-nav="open|closed">，由導覽列負責設定
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const el = document.documentElement; // <html>
-    const update = () => setMobileMenuOpen(el.getAttribute("data-mobile-nav") === "open");
-    update();
-    const mo = new MutationObserver(update);
-    mo.observe(el, { attributes: true, attributeFilter: ["data-mobile-nav"] });
-    window.addEventListener("resize", update, { passive: true });
-    return () => {
-      mo.disconnect();
-      window.removeEventListener("resize", update);
-    };
-  }, []);
-
-  // 手機開啟選單時隱藏；桌機一律顯示
-  const mobileHideClass = mobileMenuOpen ? "hidden md:block" : "";
-
   return (
     <div
       data-lang-switcher="true"
       className={[
+        // 寬度依內容自動收斂
         "z-[80] inline-flex flex-col overflow-hidden rounded-xl backdrop-blur-md shadow-lg select-none",
-        mobileHideClass,
         className,
       ].join(" ")}
       style={{
@@ -128,6 +111,15 @@ export default function LanguageSwitcher({
           </button>
         );
       })}
+
+      {/* 只在「手機」且 <html data-mobile-nav="open"> 才隱藏語言切換；桌機一律顯示 */}
+      <style jsx global>{`
+        @media (max-width: 767.98px) {
+          html[data-mobile-nav="open"] [data-lang-switcher="true"] {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
