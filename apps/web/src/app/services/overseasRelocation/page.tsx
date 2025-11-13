@@ -1,4 +1,4 @@
-// C:\Users\ta893\twconnect2\apps\web\src\app\services\overseasRelocation\page.tsx
+// C:\Users\ta893\twconnect2\apps\web\src\app\services\overseasRelocation\page.tsx 
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import * as Lucide from "lucide-react";
@@ -257,22 +257,22 @@ export default async function OverseasRelocationPage({
             </a>
           )}
           {hasChallenges && (
-            <a href="#ch" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+            <a href="#ch" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg白e/10 transition">
               {t.challenges}
             </a>
           )}
           {hasServices && (
-            <a href="#sv" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+            <a href="#sv" className="px-4 py-2 rounded-full border border白/18 text-sm hover:bg白e/10 transition">
               {t.services}
             </a>
           )}
           {hasFlow && (
-            <a href="#fl" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+            <a href="#fl" className="px-4 py-2 rounded-full border border白/18 text-sm hover:bg白e/10 transition">
               {t.flow}
             </a>
           )}
           {hasFees && (
-            <a href="#fe" className="px-4 py-2 rounded-full border border-white/18 text-sm hover:bg-white/10 transition">
+            <a href="#fe" className="px-4 py-2 rounded-full border border白/18 text-sm hover:bg白e/10 transition">
               {t.fees}
             </a>
           )}
@@ -308,54 +308,8 @@ export default async function OverseasRelocationPage({
 
           {hasFees && (
             <Card id="fe" title={t.fees} icon={<Lucide.Receipt className="h-5 w-5" />}>
-              <div
-                className="relative rounded-xl p-5 md:p-6"
-                style={{
-                  backgroundImage: "radial-gradient(rgba(28,61,90,0.06) 1px, rgba(255,255,255,1) 1px)",
-                  backgroundSize: "12px 12px",
-                }}
-              >
-                <Lucide.Coins
-                  className="absolute -top-2 -right-2 h-14 w-14 md:h-16 md:w-16 text-[#1C3D5A]/10 pointer-events-none"
-                  aria-hidden
-                />
-
-                <BulletList items={fees} dot />
-
-                <aside className="mt-6 rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur px-4 py-4 shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-center md:gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                        <Lucide.MessageCircle className="h-5 w-5 text-[#1C3D5A]" />
-                        <span>{t.feeSideHeading}</span>
-                      </div>
-                      <p className="mt-2 text-sm leading-relaxed text-slate-700">{t.feeSideNote}</p>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A] text-xs px-2.5 py-1">
-                          <Lucide.BadgeCheck className="h-3.5 w-3.5" />
-                          {t.tagTailored}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A] text-xs px-2.5 py-1">
-                          <Lucide.Timer className="h-3.5 w-3.5" />
-                          {t.tagQuickReply}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 md:mt-0 md:ml-auto">
-                      <Link
-                        href={`/contact${lang ? `?lang=${lang}` : ""}`}
-                        className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-white text-sm font-semibold shadow-md hover:opacity-95 transition"
-                        style={{ backgroundColor: BRAND_BLUE }}
-                      >
-                        <Lucide.Mail className="h-4 w-4" />
-                        {ctaLabel}
-                      </Link>
-                    </div>
-                  </div>
-                </aside>
-              </div>
+              {/* 簡化為只顯示費用列表，刪除右側免費諮詢區塊，容器高度會自動縮短 */}
+              <BulletList items={fees} dot />
             </Card>
           )}
         </div>
@@ -472,7 +426,7 @@ function StepList({ steps }: { steps?: { stepNumber?: string; title?: string; de
 function LangBadge({ lang }: { lang: Lang }) {
   const label = lang === "jp" ? "日本語" : lang === "zh" ? "繁體中文" : "English";
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm ring-1 ring-black/5 text-slate-900">
+    <span className="inline-flex items-center gap-1 rounded-full bg白/80 px-2.5 py-1 text-xs font-medium shadow-sm ring-1 ring-black/5 text-slate-900">
       <Lucide.BadgeCheck className="h-3.5 w-3.5" />
       {label}
     </span>

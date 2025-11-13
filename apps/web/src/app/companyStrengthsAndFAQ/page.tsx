@@ -125,7 +125,6 @@ export default async function CompanyStrengthsAndFAQPage({
             <h2 id="strengths-heading" className="text-2xl font-semibold text-white">
               {labels.strengths}
             </h2>
-            <div className="text-sm text-slate-200/80">{data.strengthsCount ?? data.strengths?.length ?? 0}</div>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">

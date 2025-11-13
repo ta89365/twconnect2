@@ -229,7 +229,7 @@ function NewsSection({
 }) {
   const t = {
     jp: { title: "ニュースとコラム", sub: "最新のニュースと実務コラムをまとめてお届けします。", cta: "すべて見る" },
-    zh: { title: "新聞與專欄", sub: "最新新聞與深度專欄一次掌握。", cta: "查看全部" },
+    zh: { title: "新聞與專欄", sub: "最新新聞與深度專欄一次掌握。", cta: "更多內容" },
     en: { title: "News & Column", sub: "Latest updates and columns in one place.", cta: "See all" },
   }[lang];
 

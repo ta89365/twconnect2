@@ -33,6 +33,18 @@ function tLabel(key: string, lang: Lang): string {
   return dict[key]?.[lang] ?? key;
 }
 
+/* 額外：檔案上傳按鈕與狀態多語 */
+function fileButtonText(lang: Lang): string {
+  if (lang === "jp") return "ファイルを選択";
+  if (lang === "en") return "Choose Files";
+  return "選擇檔案";
+}
+function noFileText(lang: Lang): string {
+  if (lang === "jp") return "ファイルが選択されていません";
+  if (lang === "en") return "No file chosen";
+  return "尚未選擇檔案";
+}
+
 /* ========== 驗證錯誤訊息 ========== */
 function errMsgRequired(lang: Lang) {
   return lang === "jp"
@@ -316,14 +328,53 @@ export default function ContactForm({
   datetimeHint?: string | null;
   attachmentHint?: string | null;
 }) {
-  const [tz, setTz] = React.useState<string>("");
-  React.useEffect(() => {
+  const formRef = React.useRef<HTMLFormElement | null>(null);
+
+  // 上傳檔案顯示文字
+  const [fileText, setFileText] = React.useState<string>("");
+
+  function detectTimezone(): string {
     try {
-      setTz(Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+      const tz =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago";
+      return tz;
     } catch {
-      setTz("");
+      return "America/Chicago";
     }
+  }
+
+  function applyTimezoneToForm() {
+    const form = formRef.current;
+    if (!form) return;
+    const el = form.elements.namedItem("timezone") as HTMLInputElement | null;
+    if (el) {
+      el.value = detectTimezone();
+    }
+  }
+
+  // 掛載後先寫一次
+  React.useEffect(() => {
+    applyTimezoneToForm();
   }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      setFileText("");
+      return;
+    }
+    if (files.length === 1) {
+      setFileText(files[0].name);
+    } else {
+      if (lang === "jp") {
+        setFileText(`${files.length} 件のファイルを選択しました`);
+      } else if (lang === "en") {
+        setFileText(`${files.length} files selected`);
+      } else {
+        setFileText(`已選擇 ${files.length} 個檔案`);
+      }
+    }
+  };
 
   const subjectOps = Array.isArray(subjectOptions) ? subjectOptions : [];
   const contactOps = Array.isArray(preferredContactOptions)
@@ -335,13 +386,16 @@ export default function ContactForm({
 
   return (
     <form
+      ref={formRef}
       action="/api/contact"
       method="post"
       encType="multipart/form-data"
       className="space-y-4 overflow-x-clip rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
+      onSubmit={applyTimezoneToForm}
     >
       <input type="hidden" name="lang" value={lang} />
-      <input type="hidden" name="timezone" value={tz} />
+      {/* 初始值給 Chicago，實際送出前會被 applyTimezoneToForm 覆寫 */}
+      <input type="hidden" name="timezone" defaultValue="America/Chicago" />
 
       {/* 第一列 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -422,17 +476,26 @@ export default function ContactForm({
         placeholder={summaryHint ?? ""}
       />
 
-      {/* 附件 */}
+      {/* 附件：自訂按鈕＋多語文字 */}
       <div className="grid min-w-0 gap-1.5">
         <span className="text-sm font-medium text-gray-900">
           {tLabel("Attachment", lang)}
         </span>
-        <input
-          type="file"
-          name="attachments"
-          multiple
-          className="mt-1 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1C3D5A] file:px-3 file:py-2 file:text-white"
-        />
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <label className="inline-flex items-center rounded-xl bg-[#1C3D5A] px-3 py-2 text-sm font-medium text-white cursor-pointer">
+            {fileButtonText(lang)}
+            <input
+              type="file"
+              name="attachments"
+              multiple
+              className="sr-only"
+              onChange={handleFileChange}
+            />
+          </label>
+        <span className="text-xs text-gray-600 truncate max-w-full">
+            {fileText || noFileText(lang)}
+          </span>
+        </div>
         <span className="mt-1 text-xs text-gray-500">
           {attachmentHint ?? tLabel("Attachment hint default", lang)}
         </span>

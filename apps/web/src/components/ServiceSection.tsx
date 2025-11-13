@@ -38,7 +38,7 @@ function resolveCopy(lang: Exclude<Lang, "zh-cn">) {
     zh: {
       heading: "服務內容",
       subheading: "— 專業顧問團隊支援您邁出進軍臺灣與國際業務拓展的第一步 —",
-      cta: "查看詳情",
+      cta: "了解方案",
       bottomCta: "公司概要",
     },
     en: {

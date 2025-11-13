@@ -46,7 +46,9 @@ function resolveLang(sp?: string): Lang {
   if (k === "jp" || k === "ja" || k === "ja-jp") return "jp";
   return "jp";
 }
-function t(lang: Lang, dict: Record<Lang, string>) { return dict[lang]; }
+function t(lang: Lang, dict: Record<Lang, string>) {
+  return dict[lang];
+}
 
 export async function generateMetadata(props: {
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
@@ -65,8 +67,23 @@ export async function generateMetadata(props: {
 
 type ScheduleBlock = { title?: string | null; items?: string[] | null };
 type FeeRow = { category?: string | null; serviceName?: string | null; fee?: string | null; notes?: string | null };
-type SubsidiaryPlan = { plan?: string | null; services?: string[] | null; who?: string | null; feeJpy?: string | null; notes?: string | null };
-type FeeCommonRow = { name?: string | null; details?: string[] | string | null; idealFor?: string[] | string | null; feeJpy?: string | null; notes?: string | null };
+type SubsidiaryPlan = {
+  plan?: string | null;
+  services?: string[] | null;
+  who?: string | null;
+  feeJpy?: string | null;
+  notes?: string | null;
+};
+type FeeCommonRow = {
+  name?: string | null;
+  details?: string[] | string | null;
+  idealFor?: string[] | string | null;
+  feeJpy?: string | null;
+  notes?: string | null;
+};
+
+// 服務流程的每個步驟：支援新舊兩種型態
+type ServiceFlowStep = { title?: string | null; description?: string | null } | string | null;
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">{children}</h2>;
@@ -118,7 +135,7 @@ const ICON_POOL_KEYS = [
   "user-check",
 ] as const;
 
-type IconKey = typeof ICON_POOL_KEYS[number];
+type IconKey = (typeof ICON_POOL_KEYS)[number];
 
 const keywordRules: Array<{ re: RegExp; key: IconKey }> = [
   { re: /設立|登記|incorporation|register|registration|articles/i, key: "building-2" },
@@ -167,7 +184,9 @@ function ScheduleItem({ text }: { text: string }) {
       <span className="absolute left-[14px] top-1.5 h-3 w-3 rounded-full bg-[#1C3D5A]" aria-hidden />
       <div className="flex items-start gap-3">
         {week ? (
-          <span className="inline-flex select-none items-center rounded-full border border-[#1C3D5A]/25 bg-[#1C3D5A]/5 px-2 py-0.5 text-xs font-semibold text-[#1C3D5A] leading-6">第{week}週</span>
+          <span className="inline-flex select-none items-center rounded-full border border-[#1C3D5A]/25 bg-[#1C3D5A]/5 px-2 py-0.5 text-xs font-semibold text-[#1C3D5A] leading-6">
+            第{week}週
+          </span>
         ) : null}
         <span className="text-neutral-900">{body}</span>
       </div>
@@ -176,7 +195,11 @@ function ScheduleItem({ text }: { text: string }) {
 }
 function PriceBadge({ fee }: { fee?: string | null }) {
   if (!fee) return null;
-  return <div className="shrink-0 rounded-full bg-[#EAF2FB] text-[#1C3D5A] px-2.5 py-1 text-xs md:text-sm font-semibold">{fee}</div>;
+  return (
+    <div className="shrink-0 rounded-full bg-[#EAF2FB] text-[#1C3D5A] px-2.5 py-1 text-xs md:text-sm font-semibold">
+      {fee}
+    </div>
+  );
 }
 function Bullet({ children }: { children: React.ReactNode }) {
   return (
@@ -199,7 +222,9 @@ function TheadBlue({ cols }: { cols: string[] }) {
     <thead className="bg-[#1C3D5A] text-white">
       <tr>
         {cols.map((c, i) => (
-          <th key={i} className="text-left px-5 py-3 font-semibold">{c}</th>
+          <th key={i} className="text-left px-5 py-3 font-semibold">
+            {c}
+          </th>
         ))}
       </tr>
     </thead>
@@ -209,7 +234,9 @@ function TheadBlue({ cols }: { cols: string[] }) {
 function TableColgroup({ widthsPct }: { widthsPct: number[] }) {
   return (
     <colgroup>
-      {widthsPct.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}
+      {widthsPct.map((w, i) => (
+        <col key={i} style={{ width: `${w}%` }} />
+      ))}
     </colgroup>
   );
 }
@@ -229,9 +256,10 @@ export default async function TaiwanServicePage({
 }: {
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
-  const sp = searchParams && typeof (searchParams as any).then === "function"
-    ? await (searchParams as Promise<{ lang?: string }>)
-    : (searchParams as { lang?: string } | undefined);
+  const sp =
+    searchParams && typeof (searchParams as any).then === "function"
+      ? await (searchParams as Promise<{ lang?: string }>)
+      : (searchParams as { lang?: string } | undefined);
 
   const lang = resolveLang(sp?.lang);
 
@@ -243,7 +271,7 @@ export default async function TaiwanServicePage({
     background?: string | null;
     challenges?: string[] | null;
     services?: { items?: string[] | null; keywords?: string[] | null } | null;
-    serviceFlow?: string[] | null;
+    serviceFlow?: ServiceFlowStep[] | null;
     scheduleExample?: ScheduleBlock[] | null;
 
     // 五個表格的小標題（已依語系回傳）
@@ -275,23 +303,28 @@ export default async function TaiwanServicePage({
     jp?: string | null;
     zh?: string | null;
     en?: string | null;
-  }>(`
+  }>(
+    `
 *[_type in ["twServiceDetail","twService","service"] && slug.current == $slug][0]{
   "jp": coalesce(titleJp, title.jp),
   "zh": coalesce(titleZh, title.zh),
   "en": coalesce(titleEn, title.en)
 }
-  `, { slug: CANONICAL_SLUG });
+  `,
+    { slug: CANONICAL_SLUG }
+  );
 
-  const fallbackTitle = t(lang, { jp: "台湾進出支援", zh: "台灣進出支援", en: "Taiwan Market Entry Support" } as any);
+  const fallbackTitle = t(lang, {
+    jp: "台湾進出支援",
+    zh: "台灣進出支援",
+    en: "Taiwan Market Entry Support",
+  } as any);
   const preferByLang =
-    lang === "jp" ? titles?.jp :
-    lang === "zh" ? titles?.zh :
-    titles?.en;
+    lang === "jp" ? titles?.jp : lang === "zh" ? titles?.zh : titles?.en;
 
   const heroTitle =
     (preferByLang && String(preferByLang).trim()) ||
-    ((data.title ?? "").trim()) ||
+    (data.title ?? "").trim() ||
     fallbackTitle;
 
   const coverUrl = data.coverImage?.url ?? "";
@@ -303,7 +336,8 @@ export default async function TaiwanServicePage({
   const schedules = data.scheduleExample ?? [];
 
   const feesTitle =
-    data.feesSectionTitle ?? t(lang, { jp: "料金（参考）", zh: "費用（參考）", en: "Fees (Reference)" } as any);
+    data.feesSectionTitle ??
+    t(lang, { jp: "料金（参考）", zh: "費用（參考）", en: "Fees (Reference)" } as any);
   const subsidiaryPlans = data.subsidiaryPlans ?? [];
   const branchSupport = data.branchSupport ?? [];
   const repOfficeSupport = data.repOfficeSupport ?? [];
@@ -313,10 +347,11 @@ export default async function TaiwanServicePage({
 
   const hasFeesNew =
     subsidiaryPlans.length +
-    branchSupport.length +
-    repOfficeSupport.length +
-    accountingTaxSupport.length +
-    valueAddedServices.length > 0;
+      branchSupport.length +
+      repOfficeSupport.length +
+      accountingTaxSupport.length +
+      valueAddedServices.length >
+    0;
   const hasFees = hasFeesNew || feesFlat.length > 0;
 
   const ctaLink = data.ctaLink ?? "/contact";
@@ -327,7 +362,13 @@ export default async function TaiwanServicePage({
   const hasBackground = !!background;
   const hasChallenges = challenges.length > 0;
   const hasServices = services.length > 0 || keywords.length > 0;
-  const hasFlow = flow.length > 0;
+  const hasFlow = flow.some((step) => {
+    if (!step) return false;
+    if (typeof step === "string") return step.trim().length > 0;
+    const title = (step.title ?? "").trim();
+    const desc = (step.description ?? "").trim();
+    return !!(title || desc);
+  });
   const hasSchedules = schedules.length > 0;
 
   const labels = {
@@ -336,48 +377,80 @@ export default async function TaiwanServicePage({
       ch: t(lang, { jp: "サービス課題", zh: "挑戰", en: "Challenges" } as any),
       sv: t(lang, { jp: "サービス内容", zh: "服務內容", en: "Services" } as any),
       fl: t(lang, { jp: "サービスの流れ", zh: "服務流程", en: "Service Flow" } as any),
-      sc: t(lang, {
-        zh: "服務流程和時程範例",
-        en: "Service Process & Timeline Example",
-        jp: "サービスの流れとスケジュール例",
-      } as any),
+      sc: t(
+        lang,
+        {
+          zh: "服務流程和時程範例",
+          en: "Service Process & Timeline Example",
+          jp: "サービスの流れとスケジュール例",
+        } as any
+      ),
       fe: t(lang, { jp: "料金（参考）", zh: "費用參考", en: "Fees (Reference)" } as any),
     },
   };
 
   // 五個表格小標題：優先使用 Sanity，否則回退到預設三語
   const tableTitles = {
-    subsidiary: data.subsidiaryTitle ?? t(lang, {
-      jp: "子会社設立サポート",
-      zh: "子公司設立支援",
-      en: "Subsidiary Establishment Support",
-    } as any),
-    branch: data.branchTitle ?? t(lang, {
-      jp: "支店設立サポート",
-      zh: "分公司設立支援",
-      en: "Branch Office Establishment Support",
-    } as any),
-    rep: data.repOfficeTitle ?? t(lang, {
-      jp: "駐在員事務所設立サポート",
-      zh: "駐在辦事處設立支援",
-      en: "Representative Office Establishment Support",
-    } as any),
-    accounting: data.accountingTaxTitle ?? t(lang, {
-      jp: "会計・税務サポート",
-      zh: "會計與稅務支援",
-      en: "Accounting & Tax Support",
-    } as any),
-    valueAdded: data.valueAddedTitle ?? t(lang, {
-      jp: "付加価値サービス",
-      zh: "加值服務",
-      en: "Value-Added Services",
-    } as any),
+    subsidiary:
+      data.subsidiaryTitle ??
+      t(
+        lang,
+        {
+          jp: "子会社設立サポート",
+          zh: "子公司設立支援",
+          en: "Subsidiary Establishment Support",
+        } as any
+      ),
+    branch:
+      data.branchTitle ??
+      t(
+        lang,
+        {
+          jp: "支店設立サポート",
+          zh: "分公司設立支援",
+          en: "Branch Office Establishment Support",
+        } as any
+      ),
+    rep:
+      data.repOfficeTitle ??
+      t(
+        lang,
+        {
+          jp: "駐在員事務所設立サポート",
+          zh: "駐在辦事處設立支援",
+          en: "Representative Office Establishment Support",
+        } as any
+      ),
+    accounting:
+      data.accountingTaxTitle ??
+      t(
+        lang,
+        {
+          jp: "会計・税務サポート",
+          zh: "會計與稅務支援",
+          en: "Accounting & Tax Support",
+        } as any
+      ),
+    valueAdded:
+      data.valueAddedTitle ??
+      t(
+        lang,
+        {
+          jp: "付加価値サービス",
+          zh: "專業附加服務",
+          en: "Value-Added Services",
+        } as any
+      ),
   };
 
-  // ====== 欄位標題在此集中定義（多語） ======
+  // 欄位標題
   const hdr = {
     plan: t(lang, { jp: "プラン", zh: "方案", en: "Plan" } as any),
-    serviceDetails: t(lang, { jp: "サービス内容", zh: "服務內容", en: "Service Details" } as any),
+    serviceDetails: t(lang, {
+      jp: "サービス内容",
+      zh: "服務內容",
+      en: "Service Details",
+    } as any),
     idealFor: t(lang, { jp: "対象", zh: "適合對象", en: "Ideal For" } as any),
     feeJpy: t(lang, { jp: "料金（JPY）", zh: "費用（JPY）", en: "Fee (JPY)" } as any),
     // 舊備援表格
@@ -387,11 +460,9 @@ export default async function TaiwanServicePage({
     notes: t(lang, { jp: "備考", zh: "備註", en: "Notes" } as any),
   };
 
-  // 欄寬：使用 colgroup 讓四張表完全一致
-// 欄寬：使用 colgroup 讓四張表完全一致
-const widthsSubsidiary = [18, 45, 20, 15]; // Plan / Details / Ideal / Fee
-// 原: const widthsCommon = [55, 25, 20];
-const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後：服務內容不再留太多白、右側更寬）
+  // 欄寬設定
+  const widthsSubsidiary = [8, 12, 15, 13]; // Plan / Details / Ideal / Fee
+  const widthsCommon = [35, 32, 24]; // Details / Ideal / Fee
 
   const pickIconForChallenge = createUniqueIconPicker();
   const pickIconForService = createUniqueIconPicker();
@@ -440,33 +511,58 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
       >
         <div className="max-w-6xl mx-auto flex h-full flex-wrap items-center justify-center gap-2 px-4 md:px-6">
           {hasBackground && (
-            <a href="#bg" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a
+              href="#bg"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
               <ClipboardList className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
-              <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.bg}</span>
+              <span className="opacity-80 group-hover:opacity-100">
+                {labels.quickNav.bg}
+              </span>
             </a>
           )}
           {(hasChallenges || hasServices) && (
-            <a href="#ch" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a
+              href="#ch"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
               <Scale className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
-              <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.ch}</span>
+              <span className="opacity-80 group-hover:opacity-100">
+                {labels.quickNav.ch}
+              </span>
             </a>
           )}
           {hasFlow && (
-            <a href="#fl" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a
+              href="#fl"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
               <ClipboardList className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
-              <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.sc}</span>
+              <span className="opacity-80 group-hover:opacity-100">
+                {labels.quickNav.sc}
+              </span>
             </a>
           )}
           {hasSchedules && (
-            <a href="#sc" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a
+              href="#sc"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
               <Clock className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
-              <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.sc}</span>
+              <span className="opacity-80 group-hover:opacity-100">
+                {labels.quickNav.sc}
+              </span>
             </a>
           )}
           {hasFees && (
-            <a href="#fe" className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30">
+            <a
+              href="#fe"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
               <FileText className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
-              <span className="opacity-80 group-hover:opacity-100">{labels.quickNav.fe}</span>
+              <span className="opacity-80 group-hover:opacity-100">
+                {labels.quickNav.fe}
+              </span>
             </a>
           )}
         </div>
@@ -479,11 +575,21 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
             {/* 背景 */}
             {hasBackground && (
               <>
-                <section id="bg" style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }} className="mb-10 md:mb-14">
+                <section
+                  id="bg"
+                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  className="mb-10 md:mb-14"
+                >
                   <SectionTitle>{labels.quickNav.bg}</SectionTitle>
-                  <p className="mt-4 text-base md:text-lg leading-7 text-neutral-800 whitespace-pre-line">{background}</p>
+                  <p className="mt-4 text-base md:text-lg leading-7 text-neutral-800 whitespace-pre-line">
+                    {background}
+                  </p>
                 </section>
-                {(hasChallenges || hasServices || hasFlow || hasSchedules || hasFees) && <Separator />}
+                {(hasChallenges ||
+                  hasServices ||
+                  hasFlow ||
+                  hasSchedules ||
+                  hasFees) && <Separator />}
               </>
             )}
 
@@ -505,11 +611,16 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                   </div>
 
                   <ul className="mt-6 space-y-3">
-                    {Array.from({ length: Math.max(challenges.length, services.length) }).map((_, i) => {
+                    {Array.from({
+                      length: Math.max(challenges.length, services.length),
+                    }).map((_, i) => {
                       const ch = challenges[i];
                       const sv = services[i];
                       return (
-                        <li key={`pair-${i}`} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <li
+                          key={`pair-${i}`}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                        >
                           <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg-white hover:shadow-md transition min-h-[56px]">
                             {ch ? (
                               <>
@@ -539,7 +650,11 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                   {keywords.length > 0 && (
                     <div className="mt-6 md:mt-8">
                       <h3 className="text-lg font-medium mb-3 text-neutral-700">
-                        {t(lang, { jp: "キーワード", zh: "關鍵詞", en: "Keywords" } as any)}
+                        {t(lang, {
+                          jp: "キーワード",
+                          zh: "關鍵詞",
+                          en: "Keywords",
+                        } as any)}
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {keywords.map((kw: string, idx: number) => (
@@ -556,7 +671,12 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                   )}
                 </section>
 
-                <section id="sv" style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }} className="hidden" aria-hidden />
+                <section
+                  id="sv"
+                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  className="hidden"
+                  aria-hidden
+                />
 
                 {(hasFlow || hasSchedules || hasFees) && <Separator />}
               </>
@@ -565,19 +685,46 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
             {/* 流程 */}
             {hasFlow && (
               <>
-                <section id="fl" style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }} className="mb-10 md:mb-14">
+                <section
+                  id="fl"
+                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  className="mb-10 md:mb-14"
+                >
                   <SectionTitle>{labels.quickNav.sc}</SectionTitle>
                   <ol className="mt-6 relative ms-6 border-s-2 border-[#1C3D5A]/25">
-                    {flow.map((step: string, idx: number) => (
-                      <li key={`flow-${idx}`} className="mb-6 ms-4">
-                        <div className="absolute w-7 h-7 -start-[22px] mt-1.5 rounded-full bg-[#1C3D5A] text-white grid place-items-center text-xs font-bold ring-2 ring-white">
-                          {idx + 1}
-                        </div>
-                        <div className="bg白 rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
-                          <div className="text-neutral-900">{step}</div>
-                        </div>
-                      </li>
-                    ))}
+                    {flow.map((step: ServiceFlowStep, idx: number) => {
+                      let title = "";
+                      let desc = "";
+
+                      if (typeof step === "string") {
+                        title = step.trim();
+                      } else if (step) {
+                        title = (step.title ?? "").trim();
+                        desc = (step.description ?? "").trim();
+                      }
+
+                      if (!title && !desc) return null;
+
+                      return (
+                        <li key={`flow-${idx}`} className="mb-6 ms-4">
+                          <div className="absolute w-7 h-7 -start-[22px] mt-1.5 rounded-full bg-[#1C3D5A] text-white grid place-items-center text-xs font-bold ring-2 ring-white">
+                            {idx + 1}
+                          </div>
+                          <div className="bg白 rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
+                            {title && (
+                              <div className="text-neutral-900 font-semibold">
+                                {title}
+                              </div>
+                            )}
+                            {desc && (
+                              <p className="mt-1 text-sm md:text-base text-neutral-800">
+                                {desc}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ol>
                 </section>
                 {(hasSchedules || hasFees) && <Separator />}
@@ -587,22 +734,36 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
             {/* 時程 */}
             {hasSchedules && (
               <>
-                <section id="sc" style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }} className="mb-10 md:mb-14">
+                <section
+                  id="sc"
+                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  className="mb-10 md:mb-14"
+                >
                   <SectionTitle>{labels.quickNav.sc}</SectionTitle>
 
                   <div className="mt-6 grid gap-5 grid-cols-1">
                     {schedules.map((blk: ScheduleBlock, idx: number) => (
-                      <div key={`sched-${idx}`} className="rounded-2xl border border-neutral-200 bg白 p-5 md:p-6 hover:shadow-md transition">
+                      <div
+                        key={`sched-${idx}`}
+                        className="rounded-2xl border border-neutral-200 bg白 p-5 md:p-6 hover:shadow-md transition"
+                      >
                         {blk.title && (
                           <div className="mb-4 flex items-center gap-2">
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A]">
                               <Clock className="h-4 w-4" />
                             </span>
-                            <h3 className="text-lg md:text-xl font-semibold text-neutral-900">{blk.title}</h3>
+                            <h3 className="text-lg md:text-xl font-semibold text-neutral-900">
+                              {blk.title}
+                            </h3>
                           </div>
                         )}
                         <ol className="relative ms-1 space-y-3">
-                          {(blk.items ?? []).map((it: string, i: number) => <ScheduleItem key={`sched-item-${idx}-${i}`} text={it} />)}
+                          {(blk.items ?? []).map((it: string, i: number) => (
+                            <ScheduleItem
+                              key={`sched-item-${idx}-${i}`}
+                              text={it}
+                            />
+                          ))}
                         </ol>
                       </div>
                     ))}
@@ -614,7 +775,11 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
 
             {/* ====== 費用（表格樣式） ====== */}
             {hasFees && (
-              <section id="fe" style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }} className="mb-2 md:mb-4">
+              <section
+                id="fe"
+                style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                className="mb-2 md:mb-4"
+              >
                 <SectionTitle>{feesTitle}</SectionTitle>
 
                 {/* I. Subsidiary */}
@@ -624,24 +789,65 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                     <TableShell>
                       <table className="min-w-full text-sm table-fixed">
                         <TableColgroup widthsPct={widthsSubsidiary} />
-                        <TheadBlue cols={[hdr.plan, hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
+                        <thead className="bg-[#1C3D5A] text-white">
+                          <tr>
+                            <th className="text-left px-5 py-3 font-semibold">
+                              {hdr.plan}
+                            </th>
+                            <th className="text-left px-5 py-3 font-semibold">
+                              {hdr.serviceDetails}
+                            </th>
+                            <th className="text-left px-5 py-3 font-semibold hidden md:table-cell">
+                              {hdr.idealFor}
+                            </th>
+                            <th className="text-left px-5 py-3 font-semibold">
+                              {hdr.feeJpy}
+                            </th>
+                          </tr>
+                        </thead>
                         <tbody>
                           {subsidiaryPlans.map((row, i) => (
-                            <tr key={`sp-${i}`} className="border-t border-neutral-200 align-top">
-                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.plan ?? ""}</td>
+                            <tr
+                              key={`sp-${i}`}
+                              className="border-t border-neutral-200 align-top"
+                            >
+                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
+                                <div>{row.plan ?? ""}</div>
+                                {row.who && (
+                                  <div className="mt-2 text-xs text-neutral-700 md:hidden">
+                                    <span className="font-normal">
+                                      {hdr.idealFor}：
+                                    </span>
+                                    {row.who}
+                                  </div>
+                                )}
+                              </td>
                               <td className="px-5 py-4">
                                 <ul className="space-y-1">
                                   {(row.services ?? []).map((s, idx) => (
-                                    <li key={idx} className="flex items-start gap-2">
+                                    <li
+                                      key={idx}
+                                      className="flex items-start gap-2"
+                                    >
                                       <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                      <span className="text-neutral-900">{s}</span>
+                                      <span className="text-neutral-900">
+                                        {s}
+                                      </span>
                                     </li>
                                   ))}
                                 </ul>
-                                {row.notes && <p className="mt-2 text-xs text-neutral-600">{row.notes}</p>}
+                                {row.notes && (
+                                  <p className="mt-2 text-xs text-neutral-600">
+                                    {row.notes}
+                                  </p>
+                                )}
                               </td>
-                              <td className="px-5 py-4 text-neutral-800 break-words">{row.who ?? ""}</td>
-                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
+                              <td className="px-5 py-4 text-neutral-800 break-words hidden md:table-cell">
+                                {row.who ?? ""}
+                              </td>
+                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
+                                {row.feeJpy ?? ""}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -658,27 +864,45 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                     <TableShell>
                       <table className="min-w-full text-sm table-fixed">
                         <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
+                        <TheadBlue
+                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
+                        />
                         <tbody>
                           {branchSupport.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
                             const details = detailsArray(row.details);
                             return (
-                              <tr key={`br-${i}`} className="border-t border-neutral-200 align-top">
+                              <tr
+                                key={`br-${i}`}
+                                className="border-t border-neutral-200 align-top"
+                              >
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">
+                                    {row.name ?? ""}
+                                  </div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
-                                      <li key={k} className="flex items-start gap-2">
+                                      <li
+                                        key={k}
+                                        className="flex items-start gap-2"
+                                      >
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
                                         <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
+                                  {row.notes && (
+                                    <p className="mt-2 text-xs text-neutral-600 break-words">
+                                      {row.notes}
+                                    </p>
+                                  )}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">
+                                  {ideal}
+                                </td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
+                                  {row.feeJpy ?? ""}
+                                </td>
                               </tr>
                             );
                           })}
@@ -695,27 +919,45 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                     <TableShell>
                       <table className="min-w-full text-sm table-fixed">
                         <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
+                        <TheadBlue
+                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
+                        />
                         <tbody>
                           {repOfficeSupport.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
                             const details = detailsArray(row.details);
                             return (
-                              <tr key={`ro-${i}`} className="border-t border-neutral-200 align-top">
+                              <tr
+                                key={`ro-${i}`}
+                                className="border-t border-neutral-200 align-top"
+                              >
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">
+                                    {row.name ?? ""}
+                                  </div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
-                                      <li key={k} className="flex items-start gap-2">
+                                      <li
+                                        key={k}
+                                        className="flex items-start gap-2"
+                                      >
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
                                         <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
+                                  {row.notes && (
+                                    <p className="mt-2 text-xs text-neutral-600 break-words">
+                                      {row.notes}
+                                    </p>
+                                  )}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">
+                                  {ideal}
+                                </td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
+                                  {row.feeJpy ?? ""}
+                                </td>
                               </tr>
                             );
                           })}
@@ -732,27 +974,45 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                     <TableShell>
                       <table className="min-w-full text-sm table-fixed">
                         <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
+                        <TheadBlue
+                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
+                        />
                         <tbody>
                           {accountingTaxSupport.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
                             const details = detailsArray(row.details);
                             return (
-                              <tr key={`at-${i}`} className="border-t border-neutral-200 align-top">
+                              <tr
+                                key={`at-${i}`}
+                                className="border-t border-neutral-200 align-top"
+                              >
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">
+                                    {row.name ?? ""}
+                                  </div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
-                                      <li key={k} className="flex items-start gap-2">
+                                      <li
+                                        key={k}
+                                        className="flex items-start gap-2"
+                                      >
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
                                         <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
+                                  {row.notes && (
+                                    <p className="mt-2 text-xs text-neutral-600 break-words">
+                                      {row.notes}
+                                    </p>
+                                  )}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">
+                                  {ideal}
+                                </td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
+                                  {row.feeJpy ?? ""}
+                                </td>
                               </tr>
                             );
                           })}
@@ -769,27 +1029,45 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                     <TableShell>
                       <table className="min-w-full text-sm table-fixed">
                         <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]} />
+                        <TheadBlue
+                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
+                        />
                         <tbody>
                           {valueAddedServices.map((row, i) => {
                             const ideal = toArray(row.idealFor).join(" ／ ");
                             const details = detailsArray(row.details);
                             return (
-                              <tr key={`va-${i}`} className="border-t border-neutral-200 align-top">
+                              <tr
+                                key={`va-${i}`}
+                                className="border-t border-neutral-200 align-top"
+                              >
                                 <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">{row.name ?? ""}</div>
+                                  <div className="font-semibold text-neutral-900 break-words">
+                                    {row.name ?? ""}
+                                  </div>
                                   <ul className="mt-1.5 space-y-1">
                                     {details.map((d, k) => (
-                                      <li key={k} className="flex items-start gap-2">
+                                      <li
+                                        key={k}
+                                        className="flex items-start gap-2"
+                                      >
                                         <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
                                         <span className="break-words">{d}</span>
                                       </li>
                                     ))}
                                   </ul>
-                                  {row.notes && <p className="mt-2 text-xs text-neutral-600 break-words">{row.notes}</p>}
+                                  {row.notes && (
+                                    <p className="mt-2 text-xs text-neutral-600 break-words">
+                                      {row.notes}
+                                    </p>
+                                  )}
                                 </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">{ideal}</td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">{row.feeJpy ?? ""}</td>
+                                <td className="px-5 py-4 text-neutral-800 break-words">
+                                  {ideal}
+                                </td>
+                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
+                                  {row.feeJpy ?? ""}
+                                </td>
                               </tr>
                             );
                           })}
@@ -805,19 +1083,34 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
                     <table className="min-w-full text-sm">
                       <thead className="bg-[#1C3D5A] text-white">
                         <tr>
-                          <th className="text-left px-5 py-3 font-semibold">{hdr.category}</th>
-                          <th className="text-left px-5 py-3 font-semibold">{hdr.service}</th>
-                          <th className="text-left px-5 py-3 font-semibold">{hdr.fee}</th>
-                          <th className="text-left px-5 py-3 font-semibold">{hdr.notes}</th>
+                          <th className="text-left px-5 py-3 font-semibold">
+                            {hdr.category}
+                          </th>
+                          <th className="text-left px-5 py-3 font-semibold">
+                            {hdr.service}
+                          </th>
+                          <th className="text-left px-5 py-3 font-semibold">
+                            {hdr.fee}
+                          </th>
+                          <th className="text-left px-5 py-3 font-semibold">
+                            {hdr.notes}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {feesFlat.map((row: FeeRow, idx: number) => (
-                          <tr key={`fee-${idx}`} className="border-t border-neutral-200">
+                          <tr
+                            key={`fee-${idx}`}
+                            className="border-t border-neutral-200"
+                          >
                             <td className="px-5 py-3">{row.category ?? ""}</td>
-                            <td className="px-5 py-3">{row.serviceName ?? ""}</td>
+                            <td className="px-5 py-3">
+                              {row.serviceName ?? ""}
+                            </td>
                             <td className="px-5 py-3">{row.fee ?? ""}</td>
-                            <td className="px-5 py-3 text-neutral-700">{row.notes ?? ""}</td>
+                            <td className="px-5 py-3 text-neutral-700">
+                              {row.notes ?? ""}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -834,16 +1127,39 @@ const widthsCommon = [35, 32, 24];         // Details / Ideal / Fee（調整後�
       <section className="bg-[#0b2231] py-12 text-center">
         <div className="max-w-4xl mx-auto px-6">
           <h3 className="text-xl md:text-2xl font-semibold">
-            {t(lang, { jp: "最適な進出戦略で、台湾での新しい一歩を", zh: "用最合適的進出策略，安心展開在台事業", en: "Start your next chapter in Taiwan with the right market entry plan" } as any)}
+            {t(
+              lang,
+              {
+                jp: "最適な進出戦略で、台湾での新しい一歩を",
+                zh: "用最合適的進出策略，安心展開在台事業",
+                en: "Start your next chapter in Taiwan with the right market entry plan",
+              } as any
+            )}
           </h3>
           <div className="mt-5 flex items-center justify-center gap-3">
             <a
-              href={(ctaLink ?? "/contact").startsWith("/") ? `${ctaLink ?? "/contact"}${(ctaLink ?? "/contact").includes("?") ? "&" : "?"}lang=${lang}` : ctaLink ?? "/contact"}
+              href={
+                (ctaLink ?? "/contact").startsWith("/")
+                  ? `${ctaLink ?? "/contact"}${
+                      (ctaLink ?? "/contact").includes("?") ? "&" : "?"
+                    }lang=${lang}`
+                  : ctaLink ?? "/contact"
+              }
               className="inline-block bg-[#4A90E2] text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition"
             >
-              {t(lang, { jp: "お問い合わせはこちら", zh: "聯絡我們", en: "Contact Us" } as any)}
+              {t(
+                lang,
+                {
+                  jp: "お問い合わせはこちら",
+                  zh: "聯絡我們",
+                  en: "Contact Us",
+                } as any
+              )}
             </a>
-            <a href="mailto:info@twconnects.com" className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg白/15 transition">
+            <a
+              href="mailto:info@twconnects.com"
+              className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg白/15 transition"
+            >
               info@twconnects.com
             </a>
           </div>

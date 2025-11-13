@@ -37,7 +37,26 @@ export const twServiceDetailBySlug = groq`
     "keywords": coalesce(services.keywords[$lang], services.keywords.jp, services.keywords.zh, services.keywords.en)
   },
 
-  "serviceFlow":     coalesce(serviceFlow[$lang],     serviceFlow.jp,     serviceFlow.zh,     serviceFlow.en),
+  // 新版 serviceFlow：每個步驟有 title 與 description 兩行
+  "serviceFlow": coalesce(
+    serviceFlow[$lang][]{
+      title,
+      description
+    },
+    serviceFlow.jp[]{
+      title,
+      description
+    },
+    serviceFlow.zh[]{
+      title,
+      description
+    },
+    serviceFlow.en[]{
+      title,
+      description
+    }
+  ),
+
   "scheduleExample": coalesce(scheduleExample[$lang], scheduleExample.jp, scheduleExample.zh, scheduleExample.en),
 
   // ====== 新增：各表格多語標題（已選語系） ======

@@ -61,7 +61,14 @@ export default function QuickConsult({
     [activeLang]
   );
 
+  const backToTopLabel = useMemo(
+    () => ({ jp: "トップへ", zh: "回到頂端", en: "Back to top" }[activeLang]),
+    [activeLang]
+  );
+
   const [hovered, setHovered] = useState(false);
+  const [topHovered, setTopHovered] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // 根據 position 決定貼邊距離
   const effectiveOffsetY = position === "bottom-right" ? offsetY : Math.max(offsetY, 1);
@@ -80,6 +87,13 @@ export default function QuickConsult({
   const color = hovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},${OP.text})`;
   const border = hovered ? `1px solid rgba(${BRAND_BLUE_RGB},1)` : `1px solid rgba(${BRAND_BLUE_RGB},${OP.border})`;
   const shadow = hovered
+    ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
+    : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
+
+  const topBg = topHovered ? `rgba(${BRAND_BLUE_RGB},1)` : "rgba(255,255,255,1)";
+  const topColor = topHovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},${OP.text})`;
+  const topBorder = topHovered ? `1px solid rgba(${BRAND_BLUE_RGB},1)` : `1px solid rgba(${BRAND_BLUE_RGB},${OP.border})`;
+  const topShadow = topHovered
     ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
     : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
 
@@ -138,7 +152,8 @@ export default function QuickConsult({
       if (el) {
         const rect = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
-        let rightPx = parseFloat((cs as any).right);
+        // @ts-expect-error 讀取 right
+        let rightPx = parseFloat(cs.right);
         if (!Number.isFinite(rightPx)) rightPx = window.innerWidth - rect.right;
 
         const rightRem = rightPx / baseFont + rightAdjustRem;
@@ -175,6 +190,18 @@ export default function QuickConsult({
     initialPinned.rightRem,
   ]);
 
+  // 捲動一定高度後才顯示「回到頂端」
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => {
+      const y = window.scrollY || window.pageYOffset || 0;
+      setShowBackToTop(y > 320);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const onGo = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const el = isHome
       ? document.getElementById(targetId) ||
@@ -184,6 +211,13 @@ export default function QuickConsult({
     if (isHome && el) {
       e.preventDefault();
       el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const onBackToTop = (e: any) => {
+    e.preventDefault();
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -198,37 +232,66 @@ export default function QuickConsult({
       ].join(" ")}
       style={{
         top: position === "top-right" ? `calc(${pinned.topRem}rem + env(safe-area-inset-top, 0px))` : "auto",
-        bottom: position === "bottom-right" ? `calc(${pinned.topRem}rem + env(safe-area-inset-bottom, 0px))` : "auto",
+        bottom:
+          position === "bottom-right"
+            ? `calc(${pinned.topRem}rem + env(safe-area-inset-bottom, 0px))`
+            : "auto",
         left: "auto",
         right: `calc(${pinned.rightRem}rem + env(safe-area-inset-right, 0px))`,
       }}
     >
-      <a
-        href={href}
-        onClick={onGo}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onFocus={() => setHovered(true)}
-        onBlur={() => setHovered(false)}
-        aria-label={label}
-        aria-controls={isHome ? targetId : undefined}
-        role="button"
-        className="flex items-center justify-between px-3 py-2 text-[13px] font-medium select-none rounded-xl outline-none shadow-lg backdrop-blur-md transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgba(28,61,90,0.35)]"
-        style={{
-          backgroundColor: bg,
-          color,
-          border,
-          boxShadow: shadow,
-          // 不強制調整寬高，讓手機與桌機樣式一致
-        }}
-      >
-        <span className="truncate text-left">{label}</span>
-        <span
-          aria-hidden="true"
-          className="ml-2 h-2 w-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: hovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},0.9)` }}
-        />
-      </a>
+      {/* 外層 inline-flex，兩顆按鈕共用同一個寬度容器 */}
+      <div className="inline-flex flex-col items-stretch gap-2">
+        {showBackToTop && (
+          <button
+            type="button"
+            onClick={onBackToTop}
+            onMouseEnter={() => setTopHovered(true)}
+            onMouseLeave={() => setTopHovered(false)}
+            onFocus={() => setTopHovered(true)}
+            onBlur={() => setTopHovered(false)}
+            aria-label={backToTopLabel}
+            className="w-full flex items-center justify-between px-3 py-2 text-[13px] font-medium select-none rounded-xl outline-none shadow-lg backdrop-blur-md transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgba(28,61,90,0.35)]"
+            style={{
+              backgroundColor: topBg,
+              color: topColor,
+              border: topBorder,
+              boxShadow: topShadow,
+            }}
+          >
+            <span className="truncate text-left">{backToTopLabel}</span>
+            <span aria-hidden="true" className="ml-2 text-xs leading-none">
+              ↑
+            </span>
+          </button>
+        )}
+
+        <a
+          href={href}
+          onClick={onGo}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onFocus={() => setHovered(true)}
+          onBlur={() => setHovered(false)}
+          aria-label={label}
+          aria-controls={isHome ? targetId : undefined}
+          role="button"
+          className="w-full flex items-center justify-between px-3 py-2 text-[13px] font-medium select-none rounded-xl outline-none shadow-lg backdrop-blur-md transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgba(28,61,90,0.35)]"
+          style={{
+            backgroundColor: bg,
+            color,
+            border,
+            boxShadow: shadow,
+          }}
+        >
+          <span className="truncate text-left">{label}</span>
+          <span
+            aria-hidden="true"
+            className="ml-2 h-2 w-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: hovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},0.9)` }}
+          />
+        </a>
+      </div>
     </div>
   );
 }
