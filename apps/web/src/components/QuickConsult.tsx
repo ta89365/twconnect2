@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -67,8 +68,10 @@ export default function QuickConsult({
   );
 
   const [hovered, setHovered] = useState(false);
-  const [topHovered, setTopHovered] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // 新增：用來控制「回到頂端」按鈕點擊後變藍
+  const [topClicked, setTopClicked] = useState(false);
 
   // 根據 position 決定貼邊距離
   const effectiveOffsetY = position === "bottom-right" ? offsetY : Math.max(offsetY, 1);
@@ -90,10 +93,13 @@ export default function QuickConsult({
     ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
     : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
 
-  const topBg = topHovered ? `rgba(${BRAND_BLUE_RGB},1)` : "rgba(255,255,255,1)";
-  const topColor = topHovered ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},${OP.text})`;
-  const topBorder = topHovered ? `1px solid rgba(${BRAND_BLUE_RGB},1)` : `1px solid rgba(${BRAND_BLUE_RGB},${OP.border})`;
-  const topShadow = topHovered
+  // 回到頂端按鈕配色：只看 topClicked，不看 hover
+  const topBg = topClicked ? `rgba(${BRAND_BLUE_RGB},1)` : "rgba(255,255,255,1)";
+  const topColor = topClicked ? "#FFFFFF" : `rgba(${BRAND_BLUE_RGB},${OP.text})`;
+  const topBorder = topClicked
+    ? `1px solid rgba(${BRAND_BLUE_RGB},1)`
+    : `1px solid rgba(${BRAND_BLUE_RGB},${OP.border})`;
+  const topShadow = topClicked
     ? `0 12px 24px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`
     : `0 8px 18px rgba(${BRAND_BLUE_RGB}, ${OP.shadow})`;
 
@@ -152,7 +158,8 @@ export default function QuickConsult({
       if (el) {
         const rect = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
-        let rightPx = parseFloat(cs.right);
+        const rightStr = cs.right || "";
+        let rightPx = parseFloat(rightStr);
         if (!Number.isFinite(rightPx)) rightPx = window.innerWidth - rect.right;
 
         const rightRem = rightPx / baseFont + rightAdjustRem;
@@ -190,11 +197,15 @@ export default function QuickConsult({
   ]);
 
   // 捲動一定高度後才顯示「回到頂端」
+  // 並且：當捲到頂端（y 很小）時，把 topClicked 重設成 false 變回白
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onScroll = () => {
       const y = window.scrollY || window.pageYOffset || 0;
       setShowBackToTop(y > 320);
+      if (y <= 2) {
+        setTopClicked(false);
+      }
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -213,8 +224,9 @@ export default function QuickConsult({
     }
   };
 
-  const onBackToTop = (e: any) => {
+  const onBackToTop = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    setTopClicked(true);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -245,10 +257,6 @@ export default function QuickConsult({
           <button
             type="button"
             onClick={onBackToTop}
-            onMouseEnter={() => setTopHovered(true)}
-            onMouseLeave={() => setTopHovered(false)}
-            onFocus={() => setTopHovered(true)}
-            onBlur={() => setTopHovered(false)}
             aria-label={backToTopLabel}
             className="w-full flex items-center justify-between px-3 py-2 text-[13px] font-medium select-none rounded-xl outline-none shadow-lg backdrop-blur-md transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[rgba(28,61,90,0.35)]"
             style={{

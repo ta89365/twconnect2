@@ -21,6 +21,7 @@ import { crossBorderByLang } from "@/lib/queries/crossBorder";
 import { aboutByLang } from "@/lib/queries/about";
 import { contactByLang } from "@/lib/queries/contact";
 import { homePostsQuery } from "@/lib/queries/homePosts";
+import { cnInvestmentLandingQuery } from "@/lib/queries/cnInvestmentLanding";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -110,7 +111,14 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     spLang === "zh" || spLang === "en" || spLang === "jp" ? (spLang as Lang) : "jp";
 
   const [
-    settings, hero, crossBorder, services, about, contact, homePosts
+    settings,
+    hero,
+    crossBorder,
+    services,
+    about,
+    contact,
+    homePosts,
+    cnInvestmentLanding,
   ] = await Promise.all([
     sfetch<any>(siteSettingsByLang, { lang: contentLang }),
     sfetch<any>(heroByLang, { lang: contentLang }),
@@ -119,6 +127,7 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     sfetch<AboutData>(aboutByLang, { lang: contentLang }),
     sfetch<ContactData>(contactByLang, { lang: contentLang }),
     sfetch<any[]>(homePostsQuery, { lang: contentLang }),
+    sfetch<any>(cnInvestmentLandingQuery), // 這裡拿陸資 Landing
   ]);
 
   const rawItems: NavItem[] = Array.isArray(settings?.navigation) ? settings.navigation : [];
@@ -164,11 +173,15 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
     };
   });
 
+  // 從 cnInvestmentLanding 取出 hero 圖片與 slug，給 ServiceSection 用
+  const cnInvHero = cnInvestmentLanding?.heroImage ?? null;
+  const cnInvHref = cnInvestmentLanding?.slug ? `/${cnInvestmentLanding.slug}` : undefined;
+
   return (
     <main id="top" className="bg-background text-foreground overflow-x-hidden">
       {await (NavigationServer as any)({ lang: spRaw?.lang as string })}
 
-      {/* 語言切換：維持先前桌機定位（static + relative 容器），手機預設顯示，開啟行動選單時自動隱藏 */}
+      {/* 語言切換 */}
       <div className="relative" style={{ height: 0 }}>
         <LanguageSwitcher
           current={contentLang}
@@ -183,7 +196,17 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
       </section>
 
       <div>{await ChallengesSection({ lang: contentLang })}</div>
-      <div><ServiceSection items={services || []} lang={contentLang} /></div>
+
+      {/* 這裡加上 cnInvestmentHero / cnInvestmentHref 才會多出陸資卡片 */}
+      <div>
+        <ServiceSection
+          items={services || []}
+          lang={contentLang}
+          cnInvestmentHero={cnInvHero}
+          cnInvestmentHref={cnInvHref}
+        />
+      </div>
+
       <div><CrossBorderSection data={crossBorder ?? null} tune={CROSS_TUNE} lang={contentLang} /></div>
 
       <SectionDivider className="mt-2 sm:-mt-2 md:-mt-4" />
