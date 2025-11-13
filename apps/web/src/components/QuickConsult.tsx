@@ -152,7 +152,6 @@ export default function QuickConsult({
       if (el) {
         const rect = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
-        // @ts-expect-error 讀取 right
         let rightPx = parseFloat(cs.right);
         if (!Number.isFinite(rightPx)) rightPx = window.innerWidth - rect.right;
 
