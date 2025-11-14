@@ -76,25 +76,25 @@ function resolveCopy(lang: Lang) {
   const key: "jp" | "zh" | "en" = lang === "zh-cn" ? "zh" : (lang as any);
   const dict = {
     jp: {
-      heading: "台湾進出で、こんな課題はありませんか？",
+      heading: "台湾進出でこんな課題はありませんか？",
       sub: "解決策を提示する前に、まずよくある本当の課題を整理しましょう。",
       ribbonTitle: "Taiwan Connect が解決します",
       ribbonSub: "グローバル展開を、もっとスムーズに。",
-      cta: "詳細を見る",
+      cta: "お問い合わせ",
     },
     zh: {
       heading: "在拓展台灣市場時，是否也遇到這些挑戰？",
       sub: "在提出解決方案之前，我們先整理企業最常面臨的真實問題。",
       ribbonTitle: "Taiwan Connect 為你解決",
       ribbonSub: "讓跨境布局，更順暢。",
-      cta: "立即了解",
+      cta: "立即諮詢",
     },
     en: {
       heading: "Facing these challenges when expanding to Taiwan?",
       sub: "Before proposing solutions, let's first organize the real challenges businesses often face.",
       ribbonTitle: "Taiwan Connect Solves It",
       ribbonSub: "Make global expansion smoother.",
-      cta: "Learn More",
+      cta: "Contact Us Now",
     },
   } as const;
   return dict[key];
@@ -142,13 +142,10 @@ export default async function ChallengesSection({
                 <ChallengeIcon item={it} />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
-              <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
-                {it.desc}
-              </p>
+              <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">{it.desc}</p>
             </article>
           ))}
 
-          {/* 後兩張卡片（行動版與桌機版） */}
           {tail.map((it) => (
             <article
               key={it._id}
@@ -158,9 +155,7 @@ export default async function ChallengesSection({
                 <ChallengeIcon item={it} />
               </div>
               <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
-              <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
-                {it.desc}
-              </p>
+              <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">{it.desc}</p>
             </article>
           ))}
 
@@ -175,9 +170,7 @@ export default async function ChallengesSection({
                     <ChallengeIcon item={it} />
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold text-white">{it.title}</h3>
-                  <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">
-                    {it.desc}
-                  </p>
+                  <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-300">{it.desc}</p>
                 </article>
               ))}
             </div>
@@ -191,8 +184,10 @@ export default async function ChallengesSection({
               <div className="font-semibold whitespace-nowrap">{copy.ribbonTitle}</div>
               <div className="text-slate-200 whitespace-nowrap">{copy.ribbonSub}</div>
             </div>
+
+            {/* ★★★ CTA 改為 /contact?lang=${lang} ★★★ */}
             <a
-              href={`/services?lang=${lang}`}
+              href={`/contact?lang=${lang}`}
               className="inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-semibold shadow transition-colors duration-200 text-white bg-[#1f2454] hover:bg-[#2b3068] whitespace-nowrap"
             >
               {copy.cta}
