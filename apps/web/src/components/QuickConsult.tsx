@@ -58,7 +58,7 @@ export default function QuickConsult({
   const contactHref = `/contact${langQuery}`;
 
   const label = useMemo(
-    () => ({ jp: "今すぐ相談", zh: "立刻諮詢", en: "Consult Now" }[activeLang]),
+    () => ({ jp: "今すぐ相談", zh: "立即諮詢", en: "Consult Us Now" }[activeLang]),
     [activeLang]
   );
 

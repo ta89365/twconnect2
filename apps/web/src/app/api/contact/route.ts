@@ -24,7 +24,10 @@ const autoReplyQuery = /* groq */ `
 `;
 
 function esc(s: unknown) {
-  return String(s ?? "").replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]!));
+  return String(s ?? "").replace(
+    /[<>&"]/g,
+    (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]!
+  ));
 }
 
 /** 簡碼 ↔ 全名（可本地化顯示） */
@@ -122,7 +125,7 @@ export async function POST(req: Request) {
     // ===== 語言欄位 =====
     siteLang = normalizeLang(String(form.get("lang") ?? "zh"), "zh"); // UI 回跳用
     const preferredLanguageRaw = String(form.get("preferredLanguage") ?? "");
-    msgLang = normalizeLang(preferredLanguageRaw || siteLang, siteLang);      // 郵件語系用
+    msgLang = normalizeLang(preferredLanguageRaw || siteLang, siteLang); // 郵件語系用
 
     // ===== 基本欄位 =====
     const name = String(form.get("name") ?? "");
@@ -133,6 +136,12 @@ export async function POST(req: Request) {
     const summary = String(form.get("summary") ?? "");
     const consent = String(form.get("consent") ?? "");
     const timezone = String(form.get("timezone") ?? "");
+
+    // ===== 新增欄位 =====
+    const nationality = String(form.get("nationality") ?? "");
+    const clientType = String(form.get("clientType") ?? "");
+    const establishmentType = String(form.get("establishmentType") ?? "");
+    const parentCompanyCountry = String(form.get("parentCompanyCountry") ?? "");
 
     // ===== 附件 =====
     const attachments: any[] = [];
@@ -157,7 +166,7 @@ export async function POST(req: Request) {
     const isoNow = now.toISOString();
     const year = String(now.getFullYear());
 
-    // ===== 管理者通知信（語言顯示為英文全名）=====
+    // ===== 管理者通知信 =====
     const adminSubject = `${MailEnv.MAIL_SUBJECT_PREFIX} ${subject}`.trim();
     const adminHtml = `
       <div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;background-color:#f7f9fc;padding:32px;color:#333;">
@@ -174,6 +183,10 @@ export async function POST(req: Request) {
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Company</td><td>${esc(company)}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Email</td><td><a href="mailto:${esc(email)}" style="color:#1C3D5A;text-decoration:none;">${esc(email)}</a></td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Phone</td><td>${esc(phone)}</td></tr>
+                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Nationality</td><td>${esc(nationality)}</td></tr>
+                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Client Type</td><td>${esc(clientType)}</td></tr>
+                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Type of Establishment</td><td>${esc(establishmentType)}</td></tr>
+                <tr><td style="padding:6px 0;color:#555;font-weight:600;">Parent Company Country</td><td>${esc(parentCompanyCountry)}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Preferred Language</td><td>${esc(langFullName(msgLang, "en"))}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Site Language</td><td>${esc(langFullName(siteLang, "en"))}</td></tr>
                 <tr><td style="padding:6px 0;color:#555;font-weight:600;">Time Zone</td><td>${esc(timezone)}</td></tr>
@@ -181,8 +194,10 @@ export async function POST(req: Request) {
               </tbody>
             </table>
             <div style="margin:24px 0;border-top:1px solid #e3e6ec;"></div>
-            <div><h4 style="margin:0 0 6px;color:#1C3D5A;">Message Summary</h4>
-            <p style="white-space:pre-wrap;margin:0;">${esc(summary)}</p></div>
+            <div>
+              <h4 style="margin:0 0 6px;color:#1C3D5A;">Message Summary</h4>
+              <p style="white-space:pre-wrap;margin:0;">${esc(summary)}</p>
+            </div>
           </div>
           <div style="background:#f3f5f8;text-align:center;padding:14px;font-size:12px;color:#777;">© ${esc(year)} TW Connect</div>
         </div>
@@ -198,7 +213,8 @@ export async function POST(req: Request) {
       attachments,
     });
 
-    // ===== 自動回覆（語言顯示為該信件語系的全名）=====
+    // ===== 自動回覆給填表人 =====
+
     const ctx = {
       lang: msgLang,
       name,
@@ -207,7 +223,11 @@ export async function POST(req: Request) {
       company,
       subject,
       summary,
-      preferredLanguageFull: langFullName(msgLang, msgLang), // 顯示本地化的全名
+      nationality,
+      clientType,
+      establishmentType,
+      parentCompanyCountry,
+      preferredLanguageFull: langFullName(msgLang, msgLang),
       year,
       lineLink: "https://line.me/ti/p/@030qreji",
     };
@@ -215,45 +235,89 @@ export async function POST(req: Request) {
     const replySubject = `${MailEnv.MAIL_SUBJECT_PREFIX} ${defaultSubject(msgLang)}`.trim();
 
     const detailsSubmitter = `
-      <p>${msgLang === "jp" ? "ご入力内容（抜粋）：" : msgLang === "en" ? "Summary of your submission:" : "您提供的資料摘要如下："}</p>
+      <p>${
+        msgLang === "jp"
+          ? "ご入力内容（抜粋）："
+          : msgLang === "en"
+          ? "Summary of your submission:"
+          : "您提供的資料摘要如下："
+      }</p>
       <p>
         ${msgLang === "jp" ? "ご用件" : msgLang === "en" ? "Subject" : "主旨"}：{{subject}}<br/>
         ${msgLang === "jp" ? "会社名" : msgLang === "en" ? "Company" : "公司"}：{{company}}<br/>
         ${msgLang === "jp" ? "ご氏名" : msgLang === "en" ? "Name" : "姓名"}：{{name}}<br/>
         Email：{{email}}<br/>
         ${msgLang === "jp" ? "お電話" : "Phone"}：{{phone}}<br/>
-        ${msgLang === "jp" ? "ご希望の言語" : msgLang === "en" ? "Preferred language" : "希望聯絡語言"}：{{preferredLanguageFull}}
+        ${msgLang === "jp" ? "国籍" : msgLang === "en" ? "Nationality" : "國籍"}：{{nationality}}<br/>
+        ${msgLang === "jp" ? "顧客区分" : msgLang === "en" ? "Client type" : "A型態"}：{{clientType}}<br/>
+        ${
+          msgLang === "jp"
+            ? "設立形態"
+            : msgLang === "en"
+            ? "Type of establishment"
+            : "設立型態"
+        }：{{establishmentType}}<br/>
+        ${
+          msgLang === "jp"
+            ? "親会社の登録国"
+            : msgLang === "en"
+            ? "Parent company country"
+            : "母公司設立國"
+        }：{{parentCompanyCountry}}<br/>
+        ${
+          msgLang === "jp"
+            ? "ご希望の言語"
+            : msgLang === "en"
+            ? "Preferred language"
+            : "希望聯絡語言"
+        }：{{preferredLanguageFull}}
       </p>
       <div>
-        <h4 style="margin:0 0 6px;color:#1C3D5A;">${msgLang === "jp" ? "メッセージ概要" : msgLang === "en" ? "Message Summary" : "訊息摘要"}</h4>
+        <h4 style="margin:0 0 6px;color:#1C3D5A;">${
+          msgLang === "jp"
+            ? "メッセージ概要"
+            : msgLang === "en"
+            ? "Message Summary"
+            : "訊息摘要"
+        }</h4>
         <p style="white-space:pre-wrap;margin:0;">{{summary}}</p>
       </div>
-      <p style="margin-top:12px;">${msgLang === "jp"
-        ? "お急ぎの場合は LINE からもお問い合わせください："
-        : msgLang === "en"
-        ? "If you need urgent assistance, contact us via LINE:"
-        : "若需加速處理，歡迎透過 LINE 聯繫我們：" }<br/>
+      <p style="margin-top:12px;">${
+        msgLang === "jp"
+          ? "お急ぎの場合は LINE からもお問い合わせください："
+          : msgLang === "en"
+          ? "If you need urgent assistance, contact us via LINE:"
+          : "若需加速處理，歡迎透過 LINE 聯繫我們："
+      }<br/>
         <a href="{{{lineLink}}}" target="_blank">{{{lineLink}}}</a>
-      </p>`;
+      </p>
+    `;
 
     const headerJP = `<p>お問い合わせありがとうございます。<strong>1〜2 営業日</strong>以内にご連絡いたします。</p>`;
     const headerEN = `<p>Thank you for your message. We will reply within <strong>1–2 business days</strong>.</p>`;
     const headerZH = `<p>感謝您的來信，我們將在 <strong>1–2 個工作日</strong>內回覆您。</p>`;
 
     const replyHtmlBlock =
-      (msgLang === "jp" ? headerJP : msgLang === "en" ? headerEN : headerZH) + detailsSubmitter;
+      (msgLang === "jp" ? headerJP : msgLang === "en" ? headerEN : headerZH) +
+      detailsSubmitter;
 
     const replyHtml = `
       <div style="font-family:'Segoe UI',Roboto,Arial,sans-serif;background:#f7f9fc;padding:32px;color:#333;">
         <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06);">
           <div style="background:#1C3D5A;padding:20px 28px;">
-            <h2 style="margin:0;color:#fff;font-weight:600;font-size:18px;">${esc(localizedBannerTitle(msgLang))}</h2>
+            <h2 style="margin:0;color:#fff;font-weight:600;font-size:18px;">${esc(
+              localizedBannerTitle(msgLang)
+            )}</h2>
           </div>
           <div style="padding:24px 28px;font-size:14px;line-height:1.7;">
             ${renderTemplate(replyHtmlBlock, ctx)}
-            <p style="margin-top:14px;color:#65728a;font-size:12px;">${esc(now.toLocaleString())}</p>
+            <p style="margin-top:14px;color:#65728a;font-size:12px;">${esc(
+              now.toLocaleString()
+            )}</p>
           </div>
-          <div style="background:#f3f5f8;text-align:center;padding:14px;font-size:12px;color:#777;">© ${esc(year)} TW Connect</div>
+          <div style="background:#f3f5f8;text-align:center;padding:14px;font-size:12px;color:#777;">© ${esc(
+            year
+          )} TW Connect</div>
         </div>
       </div>
     `;
@@ -273,14 +337,13 @@ export async function POST(req: Request) {
     url.searchParams.set("submitted", "1");
     url.searchParams.set("lang", siteLang);
     return NextResponse.redirect(url.toString(), { status: 303 });
-
   } catch (err: any) {
     console.error("[/api/contact] error:", err);
     const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
     const url = new URL("/contact", base);
     url.searchParams.set("submitted", "0");
     url.searchParams.set("error", String(err?.message || "MAIL_FAILED"));
-    url.searchParams.set("lang", siteLang); // 失敗亦保留 UI 語言
+    url.searchParams.set("lang", siteLang);
     return NextResponse.redirect(url.toString(), { status: 303 });
   }
 }

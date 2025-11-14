@@ -12,22 +12,55 @@ function tLabel(key: string, lang: Lang): string {
     Email: { zh: "Email", jp: "メールアドレス", en: "Email" },
     Phone: { zh: "聯絡電話", jp: "電話番号", en: "Phone" },
     Company: { zh: "公司名稱", jp: "会社名", en: "Company" },
+    Nationality: { zh: "國籍", jp: "国籍", en: "Nationality" },
+
     Subject: { zh: "主旨", jp: "件名", en: "Subject" },
     "Please select": { zh: "請選擇", jp: "選択してください", en: "Please select" },
-    "Preferred language": { zh: "偏好聯絡語言", jp: "希望言語", en: "Preferred language" },
+
+    "Preferred language": {
+      zh: "偏好語言",
+      jp: "希望言語",
+      en: "Preferred Language",
+    },
     Chinese: { zh: "繁體中文", jp: "中国語", en: "Chinese" },
     Japanese: { zh: "日文", jp: "日本語", en: "Japanese" },
     English: { zh: "英文", jp: "英語", en: "English" },
-    "Preferred contact": { zh: "希望連絡方法", jp: "希望連絡方法", en: "Preferred Contact" },
+
+    "Preferred contact": {
+      zh: "偏好聯絡方式",
+      jp: "希望連絡方法",
+      en: "Preferred Contact",
+    },
     Summary: { zh: "需求摘要", jp: "概要", en: "Summary" },
     Attachment: { zh: "附件", jp: "添付ファイル", en: "Attachment" },
     Send: { zh: "送出", jp: "送信", en: "Send" },
-    "First preferred time": { zh: "第一備選時段", jp: "第1希望日時", en: "First preferred time" },
-    "Second preferred time": { zh: "第二備選時段", jp: "第2希望日時", en: "Second preferred time" },
+
+    "First preferred time": {
+      zh: "第一備選時段",
+      jp: "第1希望日時",
+      en: "First preferred time",
+    },
+    "Second preferred time": {
+      zh: "第二備選時段",
+      jp: "第2希望日時",
+      en: "Second preferred time",
+    },
     "Attachment hint default": {
       zh: "資料附件 PDF／Excel／圖片（上限 10MB）",
       jp: "資料添付 PDF／Excel／画像（10MB まで）",
       en: "Attachments PDF / Excel / Images (up to 10MB)",
+    },
+
+    "Client Type": { zh: "型態", jp: "顧客区分", en: "Client Type" },
+    "Type of Establishment": {
+      zh: "設立型態",
+      jp: "設立形態",
+      en: "Type of Establishment",
+    },
+    "Parent Company Country": {
+      zh: "母公司設立國",
+      jp: "親会社の登録国",
+      en: "Parent Company Country",
     },
   };
   return dict[key]?.[lang] ?? key;
@@ -135,6 +168,36 @@ const textareaBase =
   "peer box-border mt-1 w-full max-w-full min-w-0 rounded-xl border border-gray-300/70 bg-white px-3 py-3 text-[15px] min-h-[130px] " +
   "placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1C3D5A] focus:border-transparent transition";
 
+/* ========== Options helpers：與大表單共用邏輯，但判斷更寬鬆 ========== */
+
+const TRIGGER_SUBJECT_KEYS = [
+  "台湾進出支援",
+  "台灣設立支援",
+  "Taiwan Market Entry Support",
+];
+
+// 判斷是否屬於「台灣業務」主旨：包含關鍵字就算
+function isTaiwanSubject(raw: string): boolean {
+  const v = raw.trim();
+  if (!v) return false;
+  if (TRIGGER_SUBJECT_KEYS.includes(v)) return true;
+  return TRIGGER_SUBJECT_KEYS.some((k) => v.includes(k));
+}
+
+function clientTypeOptionsByLang(lang: Lang): string[] {
+  return lang === "en" ? ["Corporation", "Individual"] : ["法人", "個人"];
+}
+
+function establishmentOptionsByLang(lang: Lang): string[] {
+  if (lang === "en") {
+    return ["Subsidiary", "Branch", "Representative Office", "Undecided"];
+  }
+  if (lang === "jp") {
+    return ["子会社", "支店", "駐在員事務所", "未定"];
+  }
+  return ["子公司", "分公司", "辦事處", "尚未決定"];
+}
+
 /* ========== Fields ========== */
 export function InputField(props: {
   label: string;
@@ -164,9 +227,15 @@ export function InputField(props: {
         className={inputBase}
         {...vProps}
       />
-      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
-        {inline}
-      </span>
+      {required ? (
+        <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
+          {inline}
+        </span>
+      ) : (
+        <span className="mt-1 h-4 text-xs text-red-600 opacity-0 select-none">
+          &nbsp;
+        </span>
+      )}
     </label>
   );
 }
@@ -192,9 +261,15 @@ export function TextareaField(props: {
         className={textareaBase}
         {...validationProps<HTMLTextAreaElement>("textarea", lang)}
       />
-      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
-        {errMsgRequired(lang)}
-      </span>
+      {required ? (
+        <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
+          {errMsgRequired(lang)}
+        </span>
+      ) : (
+        <span className="mt-1 h-4 text-xs text-red-600 opacity-0 select-none">
+          &nbsp;
+        </span>
+      )}
     </label>
   );
 }
@@ -206,8 +281,10 @@ export function SelectField(props: {
   required?: boolean;
   defaultValue?: string;
   children: React.ReactNode;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
 }) {
-  const { label, name, lang, required, defaultValue, children } = props;
+  const { label, name, lang, required, defaultValue, children, onChange } =
+    props;
   return (
     <label className="grid min-w-0 max-w-full gap-1.5">
       <span className="text-sm font-medium text-gray-900">
@@ -220,12 +297,19 @@ export function SelectField(props: {
         required={required}
         className={inputBase}
         {...validationProps<HTMLSelectElement>("select", lang)}
+        onChange={onChange}
       >
         {children}
       </select>
-      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
-        {errMsgSelect(lang)}
-      </span>
+      {required ? (
+        <span className="mt-1 h-4 text-xs text-red-600 invisible peer-[&:invalid]:visible">
+          {errMsgSelect(lang)}
+        </span>
+      ) : (
+        <span className="mt-1 h-4 text-xs text-red-600 opacity-0 select-none">
+          &nbsp;
+        </span>
+      )}
     </label>
   );
 }
@@ -236,21 +320,25 @@ export function RadioGroupField(props: {
   lang: Lang;
   options: string[];
   required?: boolean;
+  onChange?: (value: string) => void;
 }) {
-  const { label, name, lang, options, required } = props;
-  const hiddenId = React.useId();
+  const { label, name, lang, options, required, onChange } = props;
+  const hiddenRef = React.useRef<HTMLInputElement | null>(null);
+
   return (
     <div className="grid min-w-0 max-w-full gap-1.5">
       <span className="text-sm font-medium text-gray-900">
         {label}
         {required ? " *" : ""}
       </span>
+
+      {/* 這顆 hidden input 專門用來吃 required 與顯示錯誤訊息 */}
       <input
-        id={hiddenId}
+        ref={hiddenRef}
         className="peer sr-only"
         tabIndex={-1}
         required={required}
-        value=""
+        defaultValue=""
         onInvalid={(e) =>
           (e.currentTarget as HTMLInputElement).setCustomValidity(
             errMsgRadio(lang)
@@ -260,13 +348,17 @@ export function RadioGroupField(props: {
           (e.currentTarget as HTMLInputElement).setCustomValidity("")
         }
       />
+
       <div
         className="flex flex-wrap items-center gap-3"
-        onChange={() => {
-          const h = document.getElementById(hiddenId) as HTMLInputElement | null;
-          if (h) {
-            h.value = "ok";
-            h.setCustomValidity("");
+        onChange={(e) => {
+          const target = e.target as HTMLInputElement | null;
+          if (hiddenRef.current) {
+            hiddenRef.current.value = "ok";
+            hiddenRef.current.setCustomValidity("");
+          }
+          if (target && target.value && onChange) {
+            onChange(target.value);
           }
         }}
       >
@@ -282,9 +374,16 @@ export function RadioGroupField(props: {
           </label>
         ))}
       </div>
-      <span className="mt-1 h-4 text-xs text-red-600 invisible peer-invalid:visible">
-        {errMsgRadio(lang)}
-      </span>
+
+      {required ? (
+        <span className="mt-1 h-4 text-xs text-red-600 invisible peer-invalid:visible">
+          {errMsgRadio(lang)}
+        </span>
+      ) : (
+        <span className="mt-1 h-4 text-xs text-red-600 opacity-0 select-none">
+          &nbsp;
+        </span>
+      )}
     </div>
   );
 }
@@ -330,8 +429,19 @@ export default function ContactForm({
 }) {
   const formRef = React.useRef<HTMLFormElement | null>(null);
 
-  // 上傳檔案顯示文字
   const [fileText, setFileText] = React.useState<string>("");
+
+  // 動態欄位 state
+  const [subjectValue, setSubjectValue] = React.useState("");
+  const [clientTypeValue, setClientTypeValue] = React.useState("");
+  const [establishmentValue, setEstablishmentValue] = React.useState("");
+
+  const clientTypeOptions = clientTypeOptionsByLang(lang);
+  const establishmentOptions = establishmentOptionsByLang(lang);
+
+  const showClientType = isTaiwanSubject(subjectValue);
+  const isCorpSelected = clientTypeValue === clientTypeOptions[0];
+  const showCorpExtra = showClientType && isCorpSelected;
 
   function detectTimezone(): string {
     try {
@@ -352,7 +462,6 @@ export default function ContactForm({
     }
   }
 
-  // 掛載後先寫一次
   React.useEffect(() => {
     applyTimezoneToForm();
   }, []);
@@ -380,8 +489,6 @@ export default function ContactForm({
   const contactOps = Array.isArray(preferredContactOptions)
     ? preferredContactOptions
     : [];
-
-  // 只有 Sanity 有提供聯絡方式選項才顯示該欄位
   const hasPreferredContact = contactOps.length > 0;
 
   return (
@@ -394,12 +501,16 @@ export default function ContactForm({
       onSubmit={applyTimezoneToForm}
     >
       <input type="hidden" name="lang" value={lang} />
-      {/* 初始值給 Chicago，實際送出前會被 applyTimezoneToForm 覆寫 */}
       <input type="hidden" name="timezone" defaultValue="America/Chicago" />
 
-      {/* 第一列 */}
+      {/* 第一列：姓名 / Email */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <InputField label={tLabel("Name", lang)} name="name" lang={lang} required />
+        <InputField
+          label={tLabel("Name", lang)}
+          name="name"
+          lang={lang}
+          required
+        />
         <InputField
           label={tLabel("Email", lang)}
           name="email"
@@ -410,7 +521,7 @@ export default function ContactForm({
         />
       </div>
 
-      {/* 第二列 */}
+      {/* 第二列：電話 / 公司 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <InputField
           label={tLabel("Phone", lang)}
@@ -425,8 +536,20 @@ export default function ContactForm({
               : "0900-000-000"
           }
         />
-        <InputField label={tLabel("Company", lang)} name="company" lang={lang} />
+        <InputField
+          label={tLabel("Company", lang)}
+          name="company"
+          lang={lang}
+        />
       </div>
+
+      {/* 國籍 */}
+      <InputField
+        label={tLabel("Nationality", lang)}
+        name="nationality"
+        lang={lang}
+        required
+      />
 
       {/* 件名（Subject） */}
       <SelectField
@@ -435,6 +558,14 @@ export default function ContactForm({
         lang={lang}
         required
         defaultValue=""
+        onChange={(e) => {
+          const v = e.target.value;
+          setSubjectValue(v);
+          if (!isTaiwanSubject(v)) {
+            setClientTypeValue("");
+            setEstablishmentValue("");
+          }
+        }}
       >
         <option value="">{tLabel("Please select", lang)}</option>
         {subjectOps.map((s, i) => (
@@ -444,7 +575,7 @@ export default function ContactForm({
         ))}
       </SelectField>
 
-      {/* 希望語言 */}
+      {/* Preferred Language */}
       <SelectField
         label={tLabel("Preferred language", lang)}
         name="preferredLanguage"
@@ -457,7 +588,39 @@ export default function ContactForm({
         <option value="en">{tLabel("English", lang)}</option>
       </SelectField>
 
-      {/* 希望連絡方法：Sanity 未回傳則不顯示也不要求必填 */}
+      {/* A 型態：Client Type */}
+      {showClientType && (
+        <RadioGroupField
+          label={tLabel("Client Type", lang)}
+          name="clientType"
+          lang={lang}
+          options={clientTypeOptions}
+          required={showClientType}
+          onChange={(v) => setClientTypeValue(v)}
+        />
+      )}
+
+      {/* 法人額外欄位 */}
+      {showCorpExtra && (
+        <div className="space-y-4">
+          <RadioGroupField
+            label={tLabel("Type of Establishment", lang)}
+            name="establishmentType"
+            lang={lang}
+            options={establishmentOptions}
+            required={showCorpExtra}
+            onChange={(v) => setEstablishmentValue(v)}
+          />
+          <InputField
+            label={tLabel("Parent Company Country", lang)}
+            name="parentCompanyCountry"
+            lang={lang}
+            required={showCorpExtra}
+          />
+        </div>
+      )}
+
+      {/* Preferred Contact */}
       {hasPreferredContact && (
         <RadioGroupField
           label={tLabel("Preferred contact", lang)}
@@ -468,7 +631,7 @@ export default function ContactForm({
         />
       )}
 
-      {/* 概要 */}
+      {/* Summary */}
       <TextareaField
         label={tLabel("Summary", lang)}
         name="summary"
@@ -476,7 +639,7 @@ export default function ContactForm({
         placeholder={summaryHint ?? ""}
       />
 
-      {/* 附件：自訂按鈕＋多語文字 */}
+      {/* Attachment */}
       <div className="grid min-w-0 gap-1.5">
         <span className="text-sm font-medium text-gray-900">
           {tLabel("Attachment", lang)}
@@ -492,10 +655,10 @@ export default function ContactForm({
               onChange={handleFileChange}
             />
           </label>
-        <span className="text-xs text-gray-600 truncate max-w-full">
-            {fileText || noFileText(lang)}
-          </span>
         </div>
+        <span className="max-w-full truncate text-xs text-gray-600">
+          {fileText || noFileText(lang)}
+        </span>
         <span className="mt-1 text-xs text-gray-500">
           {attachmentHint ?? tLabel("Attachment hint default", lang)}
         </span>

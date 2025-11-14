@@ -109,8 +109,9 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
       <div className="w-full px-0 py-3 flex items-center gap-6">
         {/* 左：Logo + 公司名 */}
         <Link href={normalizeHref("/")} className="flex items-center gap-5 flex-shrink-0 pl-3 md:pl-4">
-          <div className="h-9 w-9 rounded-lg bg-white/10 ring-1 ring-white/20 overflow-hidden flex items-center justify-center">
-            <Image src={logoSrc} alt={brandNameForLang} width={36} height={36} className="h-7 w-7 object-contain" />
+          {/* ✅ 移除邊框與底色，僅保留 Logo 本身 */}
+          <div className="h-9 w-9 flex items-center justify-center">
+            <Image src={logoSrc} alt={brandNameForLang} width={36} height={36} className="h-9 w-9 object-contain" />
           </div>
           <span className="text-white font-semibold text-base">{brandNameForLang}</span>
         </Link>
@@ -199,8 +200,9 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
         >
           <div className="flex items-center justify-between px-4 py-4 border-b border-white/20">
             <Link href={normalizeHref("/")} className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-              <div className="h-8 w-8 rounded-md bg-white/10 overflow-hidden flex items-center justify-center ring-1 ring-white/20">
-                <Image src={logoSrc} alt={brandNameForLang} width={28} height={28} className="h-6 w-6 object-contain" />
+              {/* ✅ 手機版也移除邊框與底色 */}
+              <div className="h-8 w-8 flex items-center justify-center">
+                <Image src={logoSrc} alt={brandNameForLang} width={28} height={28} className="h-8 w-8 object-contain" />
               </div>
               <span className="font-medium text-white">{brandNameForLang}</span>
             </Link>
@@ -270,7 +272,7 @@ export default function Navigation({ lang = "jp", linkLang, items = [], brand }:
                             <li key={`${c.href ?? "child"}-m-${cidx}`}>
                               <Link
                                 href={normalizeHref(c.href)}
-                                className="block pl-6 pr-3 py-2 text-[14px] text-white/90 hover:bg-white/10 rounded-md"
+                                className="block pl-6 pr-3 py-2 text-[14px] text-white/90 hover:bg白/10 rounded-md"
                                 onClick={() => setMobileOpen(false)}
                               >
                                 {c.label}
