@@ -186,7 +186,7 @@ function labelByLang(key: string, lang: Lang): string {
     "Type of Establishment": { zh: "設立型態", jp: "設立形態", en: "Type of Establishment" },
     "Parent Company Country": {
       zh: "母公司設立國",
-      jp: "親会社の登録国",
+      jp: "親公司の登録国",
       en: "Parent Company Country",
     },
 
@@ -273,7 +273,7 @@ export default async function Page({
       ? ["子会社", "支店", "駐在員事務所", "未定"]
       : ["子公司", "分公司", "辦事處", "尚未決定"];
 
-  // 🔧 新增：把 Sanity 的 preferredContactOptions 做 trim + 過濾空字串
+  // preferredContactOptions：Sanity 欄位過濾空字串
   const preferredContactOptions: string[] = Array.isArray(
     form.preferredContactOptions
   )
@@ -287,6 +287,7 @@ export default async function Page({
       className="min-h-screen overflow-x-hidden"
       style={{ backgroundColor: BRAND_BLUE }}
       data-lang={lang}
+      data-contact-page
     >
       <NavigationServer lang={lang} />
 
@@ -445,7 +446,7 @@ export default async function Page({
                     name="name"
                     required
                     lang={lang as ClientLang}
-                    showInlineError={false}
+                    showInlineError={true}
                   />
 
                   <InputField
@@ -787,6 +788,14 @@ export default async function Page({
       `}</Script>
 
       <FooterServer lang={lang} />
+
+      {/* ========================== Radio 選取強調樣式（含手機） ========================== */}
+      <style>{`
+        [data-contact-page] input[type="radio"]:checked {
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+          border-color: rgba(255, 255, 255, 0.95);
+        }
+      `}</style>
     </div>
   );
 }
@@ -801,7 +810,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-10 -left-10 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute bottom-0 -right-10 h-72 w-72 rounded-full bg白/10 blur-2xl" />
+        <div className="absolute bottom-0 -right-10 h-72 w-72 rounded-full bg-white/10 blur-2xl" />
       </div>
 
       <div className="relative">
@@ -857,7 +866,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
           <CtaLink
             href="/services"
             lang={lang}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text白 ring-1 ring白/15 hover:bg白/16 sm:h-11 md:h-12"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
           >
             <ArrowRightIcon className="h-5 w-5" />
             View Services
@@ -866,7 +875,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
           <CtaLink
             href="/companyStrengthsAndFAQ"
             lang={lang}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg白/10 px-5 font-medium text白 ring-1 ring白/15 hover:bg白/16 sm:h-11 md:h-12"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
           >
             <HelpIcon className="h-5 w-5" />
             View FAQ

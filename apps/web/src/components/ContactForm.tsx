@@ -22,7 +22,7 @@ function tLabel(key: string, lang: Lang): string {
       jp: "希望言語",
       en: "Preferred Language",
     },
-    Chinese: { zh: "繁體中文", jp: "中国語", en: "Chinese" },
+    Chinese: { zh: "中文", jp: "中国語", en: "Chinese" },
     Japanese: { zh: "日文", jp: "日本語", en: "Japanese" },
     English: { zh: "英文", jp: "英語", en: "English" },
 
