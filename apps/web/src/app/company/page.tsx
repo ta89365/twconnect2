@@ -85,7 +85,8 @@ type SimpleBlock = {
 };
 
 const BRAND_DARK = "#1C3D5A";
-const container = "container mx-auto max-w-[1200px] px-4 sm:px-5";
+const container = "container mx-auto max-w-[800px] px-4 sm:px-5";
+const footerContainer = "container mx-auto max-w-[1200px] px-4 sm:px-5";
 const card = "rounded-2xl bg-white/5 border border-white/15 shadow-lg";
 const thickDivider = "my-10 h-[2px] w-full bg-white/20";
 
@@ -156,7 +157,11 @@ function RepMessageBlocks({ blocks }: { blocks?: SimpleBlock[] | null }) {
     <div className={TYPO.cardBody + " text-slate-200 space-y-3"}>
       {blocks.map((b, i) => {
         const text = (b.children ?? []).map((c) => c.text ?? "").join("");
-        return <p key={i} className="whitespace-pre-wrap">{text}</p>;
+        return (
+          <p key={i} className="whitespace-pre-wrap">
+            {text}
+          </p>
+        );
       })}
     </div>
   );
@@ -277,6 +282,7 @@ export default async function CompanyPage({
           style={{
             paddingTop: HERO_TUNE.PADDING_TOP_PX,
             paddingBottom: HERO_TUNE.PADDING_BOTTOM_PX,
+            maxWidth: "800px",
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-6">
@@ -360,9 +366,7 @@ export default async function CompanyPage({
         <section className="py-12 md:py-14">
           <div className={container}>
             <h2 className={`${TYPO.h2} text-center`}>{leadershipLabel}</h2>
-            <div className={`${TYPO.smallCaps} text-slate-300 text-center mt-1`}>
-              LEADERSHIP
-            </div>
+            <div className={`${TYPO.smallCaps} text-slate-300 text-center mt-1`}>LEADERSHIP</div>
             <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
             {/* 創業者照片 + 代表者訊息 + 創業者介紹 */}
@@ -381,9 +385,7 @@ export default async function CompanyPage({
                     {(fTitle || fName) && (
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0D2436]/70 to-transparent p-3 text-sm text-white/90">
                         <span className="font-medium">{fName}</span>
-                        {fTitle ? (
-                          <span className="ml-2 text-white/75">{fTitle}</span>
-                        ) : null}
+                        {fTitle ? <span className="ml-2 text-white/75">{fTitle}</span> : null}
                       </div>
                     )}
                   </div>
@@ -466,9 +468,7 @@ export default async function CompanyPage({
       <section className="py-12 md:py-14">
         <div className={container}>
           <h2 className={`${TYPO.h2} text-center`}>{companyInfoLabel}</h2>
-          <div className={`${TYPO.smallCaps} text-slate-300 text-center mt-1`}>
-            COMPANY
-          </div>
+          <div className={`${TYPO.smallCaps} text-slate-300 text-center mt-1`}>COMPANY</div>
           <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
           {!!company?.companyInfo && (
@@ -569,15 +569,15 @@ export default async function CompanyPage({
         </div>
       </section>
 
-      {/* Footer */}
-      <div className="w-full border-t border-white/15">
-        <div className={container}>
-          <FooterServer
-            lang={lang}
-            {...({ logoUrl: navLogoUrl, logoText: displayCompanyName } as any)}
-          />
-        </div>
-      </div>
+{/* Footer */}
+<div className="w-full border-t border-white/15">
+  <div className={footerContainer}>
+    <FooterServer
+      lang={lang}
+      {...({ logoUrl: navLogoUrl, logoText: displayCompanyName } as any)}
+    />
+  </div>
+</div>
     </main>
   );
 }

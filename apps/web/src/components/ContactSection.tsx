@@ -21,7 +21,9 @@ export default async function ContactSection({
 }) {
   if (!data) return null;
 
-  const lineHref = data.lineId ? `https://line.me/R/ti/p/${encodeURIComponent(data.lineId)}` : undefined;
+  const lineHref = data.lineId
+    ? `https://line.me/R/ti/p/${encodeURIComponent(data.lineId)}`
+    : undefined;
   const mailHref = data.email ? `mailto:${data.email}` : undefined;
 
   // 🟦 關鍵：與 /contact 相同，用 GROQ 取回表單選項與提示
@@ -38,14 +40,41 @@ export default async function ContactSection({
   };
 
   const formFromGROQ = contactDoc?.doc?.form ?? {};
-  const subjectOptions = Array.isArray(formFromGROQ.subjectOptions) ? formFromGROQ.subjectOptions : [];
-  const preferredContactOptions = Array.isArray(formFromGROQ.preferredContactOptions) ? formFromGROQ.preferredContactOptions : [];
-  const summaryHint = typeof formFromGROQ.summaryHint === "string" ? formFromGROQ.summaryHint : undefined;
-  const datetimeHint = typeof formFromGROQ.datetimeHint === "string" ? formFromGROQ.datetimeHint : undefined;
-  const attachmentHint = typeof formFromGROQ.attachmentHint === "string" ? formFromGROQ.attachmentHint : undefined;
+
+  // ✅ 件名：trim + 過濾空字串
+  const subjectOptions = Array.isArray(formFromGROQ.subjectOptions)
+    ? formFromGROQ.subjectOptions
+        .map((s) => (s ?? "").trim())
+        .filter((s) => s.length > 0)
+    : [];
+
+  // ✅ 偏好聯絡方式：trim + 過濾空字串（重點）
+  const preferredContactOptions = Array.isArray(
+    formFromGROQ.preferredContactOptions
+  )
+    ? formFromGROQ.preferredContactOptions
+        .map((s) => (s ?? "").trim())
+        .filter((s) => s.length > 0)
+    : [];
+
+  const summaryHint =
+    typeof formFromGROQ.summaryHint === "string"
+      ? formFromGROQ.summaryHint
+      : undefined;
+  const datetimeHint =
+    typeof formFromGROQ.datetimeHint === "string"
+      ? formFromGROQ.datetimeHint
+      : undefined;
+  const attachmentHint =
+    typeof formFromGROQ.attachmentHint === "string"
+      ? formFromGROQ.attachmentHint
+      : undefined;
 
   return (
-    <section className="overflow-x-hidden text-white" style={{ backgroundColor: "#1C3D5A" }}>
+    <section
+      className="overflow-x-hidden text-white"
+      style={{ backgroundColor: "#1C3D5A" }}
+    >
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         {/* Heading / Body */}
         <div className="text-center">

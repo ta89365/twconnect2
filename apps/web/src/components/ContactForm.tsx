@@ -485,10 +485,17 @@ export default function ContactForm({
     }
   };
 
-  const subjectOps = Array.isArray(subjectOptions) ? subjectOptions : [];
+  // ✅ 再做一次 trim + 過濾空字串，避免其他呼叫來源出問題
+  const subjectOps = Array.isArray(subjectOptions)
+    ? subjectOptions.map((s) => (s ?? "").trim()).filter((s) => s.length > 0)
+    : [];
+
   const contactOps = Array.isArray(preferredContactOptions)
     ? preferredContactOptions
+        .map((s) => (s ?? "").trim())
+        .filter((s) => s.length > 0)
     : [];
+
   const hasPreferredContact = contactOps.length > 0;
 
   return (
