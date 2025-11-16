@@ -1,6 +1,7 @@
 // apps/web/src/components/hero-banner.tsx
 import Image from "next/image";
 import Link from "next/link";
+import type React from "react";
 
 export type Lang = "jp" | "zh" | "en";
 
@@ -16,19 +17,14 @@ export type HeroData = {
 
 type Offset = { xRem: number; yRem: number };
 
-/**
- * Tune：支援既有的字串型別，也支援數字。
- * - heroMaxWidth: 若是 number 會被視為 rem
- * - heroObjectPos / heroObjectPosY: 若是 number 會被視為 %
- */
 export type Tune = {
-  langOffsetYrem?: number;       
+  langOffsetYrem?: number;
   langOffsetRightRem?: number;
   heroContentOffsetVh: number;
   heroLeftPadRem: { base: number; md: number; lg: number };
-  heroMaxWidth: string | number;         // ← 支援 string 或 number(rem)
-  heroObjectPos: string | number;        // ← 支援 string 或 number(%)
-  heroObjectPosY?: string | number;      // ← 支援 string 或 number(%)
+  heroMaxWidth: string | number;
+  heroObjectPos: string | number;
+  heroObjectPosY?: string | number;
   headingSizes: string;
   subTextSize: string;
   textColorClass: string;
@@ -43,23 +39,21 @@ export type Tune = {
   };
   forceTopVh?: boolean;
   shiftVh?: number;
+  mobileExtraShiftVh?: number;  // ← 已內建
 };
 
-/** 將數值寬度轉成 CSS（rem） */
 function toMaxWidth(v: string | number | undefined): string | undefined {
   if (v === undefined) return undefined;
   if (typeof v === "number") return `${v}rem`;
   return v;
 }
 
-/** 將數值座標轉成 CSS 百分比字串 */
 function toPercent(v: string | number | undefined): string | undefined {
   if (v === undefined) return undefined;
   if (typeof v === "number") return `${v}%`;
   return v;
 }
 
-/** 外部或不需處理的連結判斷 */
 function isBypassLink(href?: string): boolean {
   if (!href) return true;
   const s = href.trim().toLowerCase();
@@ -73,17 +67,20 @@ function isBypassLink(href?: string): boolean {
   );
 }
 
-/** ✅ 將 ?lang=xx 附掛到站內相對路徑；若已帶 lang 則不重複附掛 */
 function withLangQuery(href: string, lang: Lang): string {
   if (isBypassLink(href)) return href;
   if (!href.startsWith("/")) return href;
 
-  // 已經帶有 lang 參數就不再附掛
   if (/[?&]lang=/.test(href)) return href;
 
   const joiner = href.includes("?") ? "&" : "?";
   return `${href}${joiner}lang=${lang}`;
 }
+
+type HeroContainerStyle = React.CSSProperties & {
+  "--hero-shift-mobile"?: string;
+  "--hero-shift-desktop"?: string;
+};
 
 export default function HeroBanner({
   data,
@@ -96,7 +93,6 @@ export default function HeroBanner({
   tune: Tune;
   lang: Lang;
 }) {
-  // 物件定位：允許數字或字串
   const posX = toPercent(tune.heroObjectPos) ?? "50%";
   const posY = toPercent(tune.heroObjectPosY) ?? "50%";
   const objectPosition = `${posX} ${posY}`;
@@ -128,17 +124,27 @@ export default function HeroBanner({
   const containerAlignClass = tune.forceTopVh ? "items-start" : "items-center";
   const containerJustifyClass = "justify-center";
 
-  const shift = typeof tune.shiftVh === "number" ? tune.shiftVh : 12;
+  // -----------------------------
+  // ⭐⭐⭐ 關鍵修改區
+  // -----------------------------
+  const baseShift = typeof tune.shiftVh === "number" ? tune.shiftVh : 12;
 
-  const containerStyle: React.CSSProperties = {
+  // 👇 已經幫你固定手機再多下移 8vh
+  const mobileExtraShift = 4;
+
+  const mobileShift = baseShift + mobileExtraShift;
+  const desktopShift = baseShift;
+  // -----------------------------
+
+  const containerStyle: HeroContainerStyle = {
     maxWidth: toMaxWidth(tune.heroMaxWidth),
     paddingTop: tune.forceTopVh
       ? `max(${navHeight + 8}px, ${tune.heroContentOffsetVh}vh)`
       : undefined,
-    transform: `translateY(${shift}vh)`,
+    "--hero-shift-mobile": `${mobileShift}vh`,
+    "--hero-shift-desktop": `${desktopShift}vh`,
   };
 
-  // ✅ 產出最終 CTA：站內自動附掛 ?lang=，外部維持原樣
   const ctaHrefFinal =
     data?.ctaHref && lang ? withLangQuery(data.ctaHref, lang) : data?.ctaHref ?? "";
 
@@ -160,7 +166,7 @@ export default function HeroBanner({
 
       <div className="absolute inset-0 z-20">
         <div
-          className={`${containerBaseClass} ${containerAlignClass} ${containerJustifyClass}`}
+          className={`${containerBaseClass} ${containerAlignClass} ${containerJustifyClass} hero-shift-block`}
           style={containerStyle}
         >
           <div className="w-full text-white text-center flex flex-col items-center">
@@ -237,6 +243,21 @@ export default function HeroBanner({
           </div>
         </div>
       </div>
+
+      {/* ⭐⭐⭐ 控制手機 / 桌機的 transform */}
+      <style>
+        {`
+          .hero-shift-block {
+            transform: translateY(var(--hero-shift-mobile, 0));
+          }
+
+          @media (min-width: 768px) {
+            .hero-shift-block {
+              transform: translateY(var(--hero-shift-desktop, 0));
+            }
+          }
+        `}
+      </style>
     </section>
   );
 }

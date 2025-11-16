@@ -38,9 +38,12 @@ const clamp01to100 = (n: number) =>
   Math.min(100, Math.max(0, Math.round(n)));
 
 type Lang = "jp" | "zh" | "en";
+
 function resolveLang(sp?: string): Lang {
   const k = String(sp ?? "").trim().toLowerCase();
+
   if (!k) return "jp";
+
   if (
     k === "zh" ||
     k === "zh-hant" ||
@@ -54,11 +57,15 @@ function resolveLang(sp?: string): Lang {
     k === "cn"
   )
     return "zh";
+
   if (k === "en" || k === "en-us" || k === "en_us" || k === "en-gb")
     return "en";
+
   if (k === "jp" || k === "ja" || k === "ja-jp") return "jp";
+
   return "jp";
 }
+
 function t(lang: Lang, dict: Record<Lang, string>) {
   return dict[lang];
 }
@@ -66,40 +73,66 @@ function t(lang: Lang, dict: Record<Lang, string>) {
 // 將空字串或只有空白的字串視為無效，方便 fallback
 function nz(...vals: Array<string | null | undefined>): string | undefined {
   for (const v of vals) {
-    const s = typeof v === "string" ? v.trim() : String(v ?? "").trim();
+    const s =
+      typeof v === "string" ? v.trim() : String(v ?? "").trim();
     if (s) return s;
   }
   return undefined;
 }
 
 export async function generateMetadata(props: {
-  searchParams?: { lang?: string } | Promise<{ lang?: string }>;
+  searchParams?:
+    | {
+        lang?: string;
+      }
+    | Promise<{
+        lang?: string;
+      }>;
 }) {
   const sp =
-    props.searchParams && typeof (props.searchParams as any).then === "function"
+    props.searchParams &&
+    typeof (props.searchParams as any).then === "function"
       ? await (props.searchParams as Promise<{ lang?: string }>)
       : (props.searchParams as { lang?: string } | undefined);
 
   const lang = resolveLang(sp?.lang);
-  const data = await sfetch<{ title?: string | null }>(twServiceDetailBySlug, {
-    slug: CANONICAL_SLUG,
-    lang,
-  });
 
-  const fallbackTitle = t(lang, {
-    jp: "台湾進出支援",
-    zh: "台灣進出支援",
-    en: "Taiwan Market Entry Support",
-  } as any);
+  const data = await sfetch<{ title?: string | null }>(
+    twServiceDetailBySlug,
+    {
+      slug: CANONICAL_SLUG,
+      lang,
+    }
+  );
+
+  const fallbackTitle = t(
+    lang,
+    {
+      jp: "台湾進出支援",
+      zh: "台灣進出支援",
+      en: "Taiwan Market Entry Support",
+    } as any
+  );
+
   const title = nz(data?.title) ?? fallbackTitle;
-  return { title, description: `${title} at Taiwan Connect` };
+
+  return {
+    title,
+    description: `${title} at Taiwan Connect`,
+  };
 }
 
-type ScheduleBlock = { title?: string | null; items?: string[] | null };
+type ScheduleBlock = {
+  title?: string | null;
+  items?: string[] | null;
+};
 
 // 服務流程的每個步驟：支援新舊兩種型態
 type ServiceFlowStep =
-  | { title?: string | null; description?: string | null }
+  | {
+      title?: string | null;
+      description?: string | null;
+    }
   | string
   | null;
 
@@ -110,6 +143,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     </h2>
   );
 }
+
 function SubTitle({ children }: { children: React.ReactNode }) {
   return (
     <h3 className="text-lg md:text-xl font-semibold text-neutral-900">
@@ -117,6 +151,7 @@ function SubTitle({ children }: { children: React.ReactNode }) {
     </h3>
   );
 }
+
 function Separator() {
   return (
     <div className="my-10 md:my-14">
@@ -124,13 +159,16 @@ function Separator() {
     </div>
   );
 }
+
 function WarningBlock({ text }: { text?: string | null }) {
   if (!text) return null;
   const body = String(text).replace(/^⚠️\s*/, "");
   return (
     <div className="mb-2">
       <div className="text-amber-600 text-sm leading-none">⚠️</div>
-      <p className="mt-1 text-[12px] md:text-sm text-neutral-600">{body}</p>
+      <p className="mt-1 text-[12px] md:text-sm text-neutral-600">
+        {body}
+      </p>
     </div>
   );
 }
@@ -180,35 +218,48 @@ const keywordRules: Array<{ re: RegExp; key: IconKey }> = [
     re: /銀行|bank account|口座|開設|政府|government|agency|liaison/i,
     key: "file-text",
   },
-  { re: /進出後|經營|運營|ongoongo|maintenance/i, key: "wrench" },
+  {
+    re: /進出後|經營|運營|ongoongo|maintenance/i,
+    key: "wrench",
+  },
   {
     re: /法規|罰則|compliance|規範|regulation/i,
     key: "clipboard-list",
   },
-  { re: /時間|時程|schedule|耗時|time/i, key: "clock" },
+  {
+    re: /時間|時程|schedule|耗時|time/i,
+    key: "clock",
+  },
 ];
 
 function createUniqueIconPicker() {
   const used = new Set<IconKey>();
+
   function nextUnused(): IconKey {
     const k =
       ICON_POOL_KEYS.find((kk) => !used.has(kk)) ?? "check-circle-2";
     used.add(k);
     return k;
   }
+
   return function pick(text?: string) {
     const s = String(text ?? "");
     let key: IconKey | null = null;
+
     for (const rule of keywordRules) {
       if (rule.re.test(s)) {
         if (!used.has(rule.key)) key = rule.key;
         break;
       }
     }
+
     if (!key) key = nextUnused();
     else used.add(key);
+
     const IconC = ICON_MAP[key];
-    return <IconC className="w-5 h-5 text-[#1C3D5A] shrink-0 mr-2" />;
+    return (
+      <IconC className="w-5 h-5 text-[#1C3D5A] shrink-0 mr-2" />
+    );
   };
 }
 
@@ -217,11 +268,15 @@ function parseWeekPrefix(input?: string) {
   const m = s.match(
     /^第?([一二三四五六七八九十百千0-9]+)\s*週[:：]?\s*(.*)$/
   );
+
   if (!m) return { week: null as string | null, body: s };
+
   return { week: m[1], body: m[2] || "" };
 }
+
 function ScheduleItem({ text }: { text: string }) {
   const { week, body } = parseWeekPrefix(text);
+
   return (
     <li className="relative ps-10">
       <span
@@ -248,7 +303,7 @@ type HeaderLabels = {
   plan: string;
   serviceDetails: string;
   idealFor: string;
-  feeJpy: string; // Estimated Time
+  feeJpy: string;
   category: string;
   service: string;
   fee: string;
@@ -258,10 +313,17 @@ type HeaderLabels = {
 export default async function TaiwanServicePage({
   searchParams,
 }: {
-  searchParams?: { lang?: string } | Promise<{ lang?: string }>;
+  searchParams?:
+    | {
+        lang?: string;
+      }
+    | Promise<{
+        lang?: string;
+      }>;
 }) {
   const sp =
-    searchParams && typeof (searchParams as any).then === "function"
+    searchParams &&
+    typeof (searchParams as any).then === "function"
       ? await (searchParams as Promise<{ lang?: string }>)
       : (searchParams as { lang?: string } | undefined);
 
@@ -274,7 +336,10 @@ export default async function TaiwanServicePage({
     coverImage?: { url?: string | null } | null;
     background?: string | null;
     challenges?: string[] | null;
-    services?: { items?: string[] | null; keywords?: string[] | null } | null;
+    services?: {
+      items?: string[] | null;
+      keywords?: string[] | null;
+    } | null;
     serviceFlow?: ServiceFlowStep[] | null;
     scheduleExample?: ScheduleBlock[] | null;
 
@@ -286,40 +351,50 @@ export default async function TaiwanServicePage({
     valueAddedTitle?: string | null;
 
     // 五個表格欄位標題（已依語系回傳）
-    subsidiaryColumns?: {
-      col1?: string | null;
-      col2?: string | null;
-      col3?: string | null;
-      col4?: string | null;
-    } | null;
-    branchColumns?: {
-      col1?: string | null;
-      col2?: string | null;
-      col3?: string | null;
-    } | null;
-    repOfficeColumns?: {
-      col1?: string | null;
-      col2?: string | null;
-      col3?: string | null;
-    } | null;
-    accountingTaxColumns?: {
-      col1?: string | null;
-      col2?: string | null;
-      col3?: string | null;
-    } | null;
-    valueAddedColumns?: {
-      col1?: string | null;
-      col2?: string | null;
-      col3?: string | null;
-    } | null;
+    subsidiaryColumns?:
+      | {
+          col1?: string | null;
+          col2?: string | null;
+          col3?: string | null;
+          col4?: string | null;
+        }
+      | null;
+    branchColumns?:
+      | {
+          col1?: string | null;
+          col2?: string | null;
+          col3?: string | null;
+        }
+      | null;
+    repOfficeColumns?:
+      | {
+          col1?: string | null;
+          col2?: string | null;
+          col3?: string | null;
+        }
+      | null;
+    accountingTaxColumns?:
+      | {
+          col1?: string | null;
+          col2?: string | null;
+          col3?: string | null;
+        }
+      | null;
+    valueAddedColumns?:
+      | {
+          col1?: string | null;
+          col2?: string | null;
+          col3?: string | null;
+        }
+      | null;
 
     feesSectionTitle?: string | null;
+
     subsidiaryPlans?: SubsidiaryPlan[] | null;
     branchSupport?: FeeCommonRow[] | null;
     repOfficeSupport?: FeeCommonRow[] | null;
     accountingTaxSupport?: FeeCommonRow[] | null;
     valueAddedServices?: FeeCommonRow[] | null;
-
     feesFlat?: FeeRow[] | null;
 
     ctaLabel?: string | null;
@@ -336,41 +411,53 @@ export default async function TaiwanServicePage({
     zh?: string | null;
     en?: string | null;
   }>(
-    `
-*[_type in ["twServiceDetail","twService","service"] && slug.current == $slug][0]{
-  "jp": coalesce(titleJp, title.jp),
-  "zh": coalesce(titleZh, title.zh),
-  "en": coalesce(titleEn, title.en)
-}
-  `,
+    `*[_type in ["twServiceDetail","twService","service"] && slug.current == $slug][0]{
+      "jp": coalesce(titleJp, title.jp),
+      "zh": coalesce(titleZh, title.zh),
+      "en": coalesce(titleEn, title.en)
+    }`,
     { slug: CANONICAL_SLUG }
   );
 
-  const fallbackTitle = t(lang, {
-    jp: "台湾進出支援",
-    zh: "台灣進出支援",
-    en: "Taiwan Market Entry Support",
-  } as any);
+  const fallbackTitle = t(
+    lang,
+    {
+      jp: "台湾進出支援",
+      zh: "台灣進出支援",
+      en: "Taiwan Market Entry Support",
+    } as any
+  );
+
   const preferByLang =
-    lang === "jp" ? titles?.jp : lang === "zh" ? titles?.zh : titles?.en;
+    lang === "jp"
+      ? titles?.jp
+      : lang === "zh"
+      ? titles?.zh
+      : titles?.en;
 
   const heroTitle =
     nz(preferByLang) || nz(data.title) || fallbackTitle;
 
   const coverUrl = data.coverImage?.url ?? "";
   const background = data.background ?? "";
-  const challenges = data.challenges ?? [];
+
+  const challengesRaw = data.challenges ?? [];
   const services = data.services?.items ?? [];
+  const keywords = data.services?.keywords ?? [];
   const flow = data.serviceFlow ?? [];
   const schedules = data.scheduleExample ?? [];
 
   const feesTitle =
     nz(data.feesSectionTitle) ??
-    t(lang, {
-      jp: "料金（参考）",
-      zh: "費用（參考）",
-      en: "Fees (Reference)",
-    } as any);
+    t(
+      lang,
+      {
+        jp: "料金（参考）",
+        zh: "費用（參考）",
+        en: "Fees (Reference)",
+      } as any
+    );
+
   const subsidiaryPlans = data.subsidiaryPlans ?? [];
   const branchSupport = data.branchSupport ?? [];
   const repOfficeSupport = data.repOfficeSupport ?? [];
@@ -385,6 +472,7 @@ export default async function TaiwanServicePage({
       accountingTaxSupport.length +
       valueAddedServices.length >
     0;
+
   const hasFees = hasFeesNew || feesFlat.length > 0;
 
   const ctaLink = data.ctaLink ?? "/contact";
@@ -393,8 +481,8 @@ export default async function TaiwanServicePage({
   const heroY = clamp01to100(HERO_TUNE.y);
 
   const hasBackground = !!background;
-  const hasChallenges = challenges.length > 0;
-  const hasServices = services.length > 0;
+  const hasChallenges = challengesRaw.length > 0;
+  const hasServices = services.length > 0 || keywords.length > 0;
   const hasFlow = flow.some((step) => {
     if (!step) return false;
     if (typeof step === "string") return step.trim().length > 0;
@@ -406,22 +494,38 @@ export default async function TaiwanServicePage({
 
   const labels = {
     quickNav: {
-      bg: t(lang, { jp: "背景", zh: "背景", en: "Background" } as any),
-      ch: t(lang, {
-        jp: "サービス課題",
-        zh: "挑戰",
-        en: "Challenges",
-      } as any),
-      sv: t(lang, {
-        jp: "サービス内容",
-        zh: "服務內容",
-        en: "Services",
-      } as any),
-      fl: t(lang, {
-        jp: "サービスの流れ",
-        zh: "服務流程",
-        en: "Service Flow",
-      } as any),
+      bg: t(
+        lang,
+        {
+          jp: "背景",
+          zh: "背景",
+          en: "Background",
+        } as any
+      ),
+      ch: t(
+        lang,
+        {
+          jp: "サービス課題",
+          zh: "挑戰",
+          en: "Challenges",
+        } as any
+      ),
+      sv: t(
+        lang,
+        {
+          jp: "サービス内容",
+          zh: "服務內容",
+          en: "Services",
+        } as any
+      ),
+      fl: t(
+        lang,
+        {
+          jp: "サービスの流れ",
+          zh: "服務流程",
+          en: "Service Flow",
+        } as any
+      ),
       sc: t(
         lang,
         {
@@ -430,11 +534,14 @@ export default async function TaiwanServicePage({
           jp: "サービスの流れとスケジュール例",
         } as any
       ),
-      fe: t(lang, {
-        jp: "サービスプラン",
-        zh: "服務介紹",
-        en: "Service Plans",
-      } as any),
+      fe: t(
+        lang,
+        {
+          jp: "サービスプラン",
+          zh: "服務介紹",
+          en: "Service Plans",
+        } as any
+      ),
     },
   };
 
@@ -494,7 +601,10 @@ export default async function TaiwanServicePage({
 
   // 共用預設表頭（字串翻譯）
   const defaultHdr: HeaderLabels = {
-    plan: t(lang, { jp: "プラン", zh: "方案", en: "Plan" } as any),
+    plan: t(
+      lang,
+      { jp: "プラン", zh: "方案", en: "Plan" } as any
+    ),
     serviceDetails: t(
       lang,
       {
@@ -511,13 +621,12 @@ export default async function TaiwanServicePage({
         en: "Ideal For",
       } as any
     ),
-    // feeJpy 現在代表 Estimated Time
     feeJpy: t(
       lang,
       {
-        jp: "想定期間",
-        zh: "預估時間",
-        en: "Estimated Time",
+        jp: "料金 JPY",
+        zh: "費用 JPY",
+        en: "Fee JPY",
       } as any
     ),
     category: t(
@@ -559,8 +668,10 @@ export default async function TaiwanServicePage({
     plan: nz(data.subsidiaryColumns?.col1) ?? defaultHdr.plan,
     serviceDetails:
       nz(data.subsidiaryColumns?.col2) ?? defaultHdr.serviceDetails,
-    idealFor: nz(data.subsidiaryColumns?.col3) ?? defaultHdr.idealFor,
-    feeJpy: nz(data.subsidiaryColumns?.col4) ?? defaultHdr.feeJpy,
+    idealFor:
+      nz(data.subsidiaryColumns?.col3) ?? defaultHdr.idealFor,
+    feeJpy:
+      nz(data.subsidiaryColumns?.col4) ?? defaultHdr.feeJpy,
     category: defaultHdr.category,
     service: defaultHdr.service,
     fee: defaultHdr.fee,
@@ -570,8 +681,10 @@ export default async function TaiwanServicePage({
   // II. Branch 表頭：只看 branchColumns，缺再回退到預設
   const hdrBranch: HeaderLabels = {
     plan: defaultHdr.plan,
-    serviceDetails: nz(data.branchColumns?.col1) ?? defaultHdr.serviceDetails,
-    idealFor: nz(data.branchColumns?.col2) ?? defaultHdr.idealFor,
+    serviceDetails:
+      nz(data.branchColumns?.col1) ?? defaultHdr.serviceDetails,
+    idealFor:
+      nz(data.branchColumns?.col2) ?? defaultHdr.idealFor,
     feeJpy: nz(data.branchColumns?.col3) ?? defaultHdr.feeJpy,
     category: defaultHdr.category,
     service: defaultHdr.service,
@@ -584,7 +697,8 @@ export default async function TaiwanServicePage({
     plan: defaultHdr.plan,
     serviceDetails:
       nz(data.repOfficeColumns?.col1) ?? defaultHdr.serviceDetails,
-    idealFor: nz(data.repOfficeColumns?.col2) ?? defaultHdr.idealFor,
+    idealFor:
+      nz(data.repOfficeColumns?.col2) ?? defaultHdr.idealFor,
     feeJpy: nz(data.repOfficeColumns?.col3) ?? defaultHdr.feeJpy,
     category: defaultHdr.category,
     service: defaultHdr.service,
@@ -596,9 +710,12 @@ export default async function TaiwanServicePage({
   const hdrAccounting: HeaderLabels = {
     plan: defaultHdr.plan,
     serviceDetails:
-      nz(data.accountingTaxColumns?.col1) ?? defaultHdr.serviceDetails,
-    idealFor: nz(data.accountingTaxColumns?.col2) ?? defaultHdr.idealFor,
-    feeJpy: nz(data.accountingTaxColumns?.col3) ?? defaultHdr.feeJpy,
+      nz(data.accountingTaxColumns?.col1) ??
+      defaultHdr.serviceDetails,
+    idealFor:
+      nz(data.accountingTaxColumns?.col2) ?? defaultHdr.idealFor,
+    feeJpy:
+      nz(data.accountingTaxColumns?.col3) ?? defaultHdr.feeJpy,
     category: defaultHdr.category,
     service: defaultHdr.service,
     fee: defaultHdr.fee,
@@ -610,8 +727,10 @@ export default async function TaiwanServicePage({
     plan: defaultHdr.plan,
     serviceDetails:
       nz(data.valueAddedColumns?.col1) ?? defaultHdr.serviceDetails,
-    idealFor: nz(data.valueAddedColumns?.col2) ?? defaultHdr.idealFor,
-    feeJpy: nz(data.valueAddedColumns?.col3) ?? defaultHdr.feeJpy,
+    idealFor:
+      nz(data.valueAddedColumns?.col2) ?? defaultHdr.idealFor,
+    feeJpy:
+      nz(data.valueAddedColumns?.col3) ?? defaultHdr.feeJpy,
     category: defaultHdr.category,
     service: defaultHdr.service,
     fee: defaultHdr.fee,
@@ -622,8 +741,8 @@ export default async function TaiwanServicePage({
   const hdrFlat: HeaderLabels = defaultHdr;
 
   // 欄寬設定
-  const widthsSubsidiary = [8, 12, 15, 13]; // Plan / Details / Ideal / Estimated Time
-  const widthsCommon = [35, 32, 24]; // Details / Ideal / Estimated Time
+  const widthsSubsidiary = [8, 12, 15, 13]; // Plan / Details / Ideal / Fee
+  const widthsCommon = [35, 32, 24]; // Details / Ideal / Fee
 
   const pickIconForChallenge = createUniqueIconPicker();
   const pickIconForService = createUniqueIconPicker();
@@ -634,7 +753,10 @@ export default async function TaiwanServicePage({
 
       {/* HERO */}
       <section className="relative w-full">
-        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 overflow-hidden"
+        >
           <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[110vw] h-[110vh] bg-[radial-gradient(60%_60%_at_50%_40%,rgba(26,121,178,0.28),rgba(12,38,58,0)_70%)]" />
           <div className="absolute top-24 right-1/3 w-[70vw] h-[70vh] bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,255,255,0.08),rgba(0,0,0,0)_70%)]" />
         </div>
@@ -648,7 +770,9 @@ export default async function TaiwanServicePage({
               className="object-cover opacity-90"
               priority
               sizes="100vw"
-              style={{ objectPosition: `${heroX}% ${heroY}%` }}
+              style={{
+                objectPosition: `${heroX}% ${heroY}%`,
+              }}
             />
           ) : (
             <div className="h-full w-full bg-[#1C3D5A]" />
@@ -682,18 +806,19 @@ export default async function TaiwanServicePage({
               </span>
             </a>
           )}
+
           {(hasChallenges || hasServices) && (
             <a
               href="#ch"
               className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <Scale className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
-              {/* Quick nav 顯示 Services 文案 */}
               <span className="opacity-80 group-hover:opacity-100">
-                {labels.quickNav.sv}
+                {labels.quickNav.ch}
               </span>
             </a>
           )}
+
           {hasFlow && (
             <a
               href="#fl"
@@ -705,6 +830,7 @@ export default async function TaiwanServicePage({
               </span>
             </a>
           )}
+
           {hasSchedules && (
             <a
               href="#sc"
@@ -716,6 +842,7 @@ export default async function TaiwanServicePage({
               </span>
             </a>
           )}
+
           {hasFees && (
             <a
               href="#fe"
@@ -739,14 +866,19 @@ export default async function TaiwanServicePage({
               <>
                 <section
                   id="bg"
-                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  style={{
+                    scrollMarginTop: SECTION_SCROLL_MARGIN,
+                  }}
                   className="mb-10 md:mb-14"
                 >
-                  <SectionTitle>{labels.quickNav.bg}</SectionTitle>
+                  <SectionTitle>
+                    {labels.quickNav.bg}
+                  </SectionTitle>
                   <p className="mt-4 text-base md:text-lg leading-7 text-neutral-800 whitespace-pre-line">
                     {background}
                   </p>
                 </section>
+
                 {(hasChallenges ||
                   hasServices ||
                   hasFlow ||
@@ -755,7 +887,7 @@ export default async function TaiwanServicePage({
               </>
             )}
 
-            {/* 挑戰 + 服務內容：保留左邊挑戰卡片，移除 Challenge 標題，只留下置中的 Services 標題 */}
+            {/* 挑戰 × 服務內容 */}
             {(hasChallenges || hasServices) && (
               <>
                 <section
@@ -763,25 +895,40 @@ export default async function TaiwanServicePage({
                   style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
                   className="mb-10 md:mb-14"
                 >
-                  {/* 只有一個 Service 標題，置中 */}
-                  <div className="flex justify-center">
-                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A] text-center">
+                  {/* 標題：手機與桌機都左右兩欄 */}
+                  <div className="mb-4 md:mb-6 grid grid-cols-2 gap-4">
+                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">
+                      {labels.quickNav.ch}
+                    </h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">
                       {labels.quickNav.sv}
                     </h2>
                   </div>
 
                   <ul className="mt-6 space-y-3">
                     {Array.from({
-                      length: Math.max(challenges.length, services.length),
+                      length: Math.max(
+                        challengesRaw.length,
+                        services.length
+                      ),
                     }).map((_, i) => {
-                      const ch = challenges[i];
-                      const sv = services[i];
+                      const rawCh = challengesRaw[i];
+                      const chText = String(rawCh ?? "").trim();
+                      const isEllipsis =
+                        chText &&
+                        /^[.。．…]+$/.test(chText);
+                      const ch =
+                        chText && !isEllipsis ? chText : "";
+
+                      const svRaw = services[i];
+                      const sv = String(svRaw ?? "").trim();
+
                       return (
                         <li
                           key={`pair-${i}`}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                          className="grid grid-cols-2 gap-3"
                         >
-                          {/* 左欄：Challenge 項目（沒有標題） */}
+                          {/* 左：挑戰 */}
                           <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg-white hover:shadow-md transition min-h-[56px]">
                             {ch ? (
                               <>
@@ -791,11 +938,13 @@ export default async function TaiwanServicePage({
                                 </span>
                               </>
                             ) : (
-                              <span className="text-neutral-400">&nbsp;</span>
+                              <span className="text-neutral-400">
+                                &nbsp;
+                              </span>
                             )}
                           </div>
 
-                          {/* 右欄：Service 項目 */}
+                          {/* 右：服務內容 */}
                           <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg-white hover:shadow-md transition min-h-[56px]">
                             {sv ? (
                               <>
@@ -805,23 +954,32 @@ export default async function TaiwanServicePage({
                                 </span>
                               </>
                             ) : (
-                              <span className="text-neutral-400">&nbsp;</span>
+                              <span className="text-neutral-400">
+                                &nbsp;
+                              </span>
                             )}
                           </div>
                         </li>
                       );
                     })}
                   </ul>
+
+                  {/* Keywords 區塊已依需求移除 */}
                 </section>
 
+                {/* 保留錨點供 quick nav 用 */}
                 <section
                   id="sv"
-                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  style={{
+                    scrollMarginTop: SECTION_SCROLL_MARGIN,
+                  }}
                   className="hidden"
                   aria-hidden
                 />
 
-                {(hasFlow || hasSchedules || hasFees) && <Separator />}
+                {(hasFlow || hasSchedules || hasFees) && (
+                  <Separator />
+                )}
               </>
             )}
 
@@ -830,46 +988,59 @@ export default async function TaiwanServicePage({
               <>
                 <section
                   id="fl"
-                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  style={{
+                    scrollMarginTop: SECTION_SCROLL_MARGIN,
+                  }}
                   className="mb-10 md:mb-14"
                 >
-                  <SectionTitle>{labels.quickNav.fl}</SectionTitle>
+                  <SectionTitle>
+                    {labels.quickNav.fl}
+                  </SectionTitle>
+
                   <ol className="mt-6 relative ms-6 border-s-2 border-[#1C3D5A]/25">
-                    {flow.map((step: ServiceFlowStep, idx: number) => {
-                      let title = "";
-                      let desc = "";
+                    {flow.map(
+                      (step: ServiceFlowStep, idx: number) => {
+                        let title = "";
+                        let desc = "";
 
-                      if (typeof step === "string") {
-                        title = step.trim();
-                      } else if (step) {
-                        title = (step.title ?? "").trim();
-                        desc = (step.description ?? "").trim();
+                        if (typeof step === "string") {
+                          title = step.trim();
+                        } else if (step) {
+                          title = (step.title ?? "").trim();
+                          desc =
+                            (step.description ?? "").trim();
+                        }
+
+                        if (!title && !desc) return null;
+
+                        return (
+                          <li
+                            key={`flow-${idx}`}
+                            className="mb-6 ms-4"
+                          >
+                            <div className="absolute w-7 h-7 -start-[22px] mt-1.5 rounded-full bg-[#1C3D5A] text-white grid place-items-center text-xs font-bold ring-2 ring-white">
+                              {idx + 1}
+                            </div>
+
+                            <div className="bg-white rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
+                              {title && (
+                                <div className="text-neutral-900 font-semibold">
+                                  {title}
+                                </div>
+                              )}
+                              {desc && (
+                                <p className="mt-1 text-sm md:text-base text-neutral-800">
+                                  {desc}
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        );
                       }
-
-                      if (!title && !desc) return null;
-
-                      return (
-                        <li key={`flow-${idx}`} className="mb-6 ms-4">
-                          <div className="absolute w-7 h-7 -start-[22px] mt-1.5 rounded-full bg-[#1C3D5A] text-white grid place-items-center text-xs font-bold ring-2 ring-white">
-                            {idx + 1}
-                          </div>
-                          <div className="bg-white rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
-                            {title && (
-                              <div className="text-neutral-900 font-semibold">
-                                {title}
-                              </div>
-                            )}
-                            {desc && (
-                              <p className="mt-1 text-sm md:text-base text-neutral-800">
-                                {desc}
-                              </p>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
+                    )}
                   </ol>
                 </section>
+
                 {(hasSchedules || hasFees) && <Separator />}
               </>
             )}
@@ -879,39 +1050,49 @@ export default async function TaiwanServicePage({
               <>
                 <section
                   id="sc"
-                  style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                  style={{
+                    scrollMarginTop: SECTION_SCROLL_MARGIN,
+                  }}
                   className="mb-10 md:mb-14"
                 >
-                  <SectionTitle>{labels.quickNav.sc}</SectionTitle>
+                  <SectionTitle>
+                    {labels.quickNav.sc}
+                  </SectionTitle>
 
                   <div className="mt-6 grid gap-5 grid-cols-1">
-                    {schedules.map((blk: ScheduleBlock, idx: number) => (
-                      <div
-                        key={`sched-${idx}`}
-                        className="rounded-2xl border border-neutral-200 bg-white p-5 md:p-6 hover:shadow-md transition"
-                      >
-                        {blk.title && (
-                          <div className="mb-4 flex items-center gap-2">
-                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A]">
-                              <Clock className="h-4 w-4" />
-                            </span>
-                            <h3 className="text-lg md:text-xl font-semibold text-neutral-900">
-                              {blk.title}
-                            </h3>
-                          </div>
-                        )}
-                        <ol className="relative ms-1 space-y-3">
-                          {(blk.items ?? []).map((it: string, i: number) => (
-                            <ScheduleItem
-                              key={`sched-item-${idx}-${i}`}
-                              text={it}
-                            />
-                          ))}
-                        </ol>
-                      </div>
-                    ))}
+                    {schedules.map(
+                      (blk: ScheduleBlock, idx: number) => (
+                        <div
+                          key={`sched-${idx}`}
+                          className="rounded-2xl border border-neutral-200 bg-white p-5 md:p-6 hover:shadow-md transition"
+                        >
+                          {blk.title && (
+                            <div className="mb-4 flex items-center gap-2">
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1C3D5A]/10 text-[#1C3D5A]">
+                                <Clock className="h-4 w-4" />
+                              </span>
+                              <h3 className="text-lg md:text-xl font-semibold text-neutral-900">
+                                {blk.title}
+                              </h3>
+                            </div>
+                          )}
+
+                          <ol className="relative ms-1 space-y-3">
+                            {(blk.items ?? []).map(
+                              (it: string, i: number) => (
+                                <ScheduleItem
+                                  key={`sched-item-${idx}-${i}`}
+                                  text={it}
+                                />
+                              )
+                            )}
+                          </ol>
+                        </div>
+                      )
+                    )}
                   </div>
                 </section>
+
                 {hasFees && <Separator />}
               </>
             )}
@@ -920,7 +1101,9 @@ export default async function TaiwanServicePage({
             {hasFees && (
               <section
                 id="fe"
-                style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
+                style={{
+                  scrollMarginTop: SECTION_SCROLL_MARGIN,
+                }}
                 className="mb-2 md:mb-4"
               >
                 <SectionTitle>{feesTitle}</SectionTitle>
@@ -961,12 +1144,15 @@ export default async function TaiwanServicePage({
               } as any
             )}
           </h3>
+
           <div className="mt-5 flex items-center justify-center gap-3">
             <a
               href={
                 (ctaLink ?? "/contact").startsWith("/")
                   ? `${ctaLink ?? "/contact"}${
-                      (ctaLink ?? "/contact").includes("?") ? "&" : "?"
+                      (ctaLink ?? "/contact").includes("?")
+                        ? "&"
+                        : "?"
                     }lang=${lang}`
                   : ctaLink ?? "/contact"
               }
@@ -981,9 +1167,10 @@ export default async function TaiwanServicePage({
                 } as any
               )}
             </a>
+
             <a
               href="mailto:info@twconnects.com"
-              className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
+              className="inline-block bg-white/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
             >
               info@twconnects.com
             </a>
@@ -991,7 +1178,9 @@ export default async function TaiwanServicePage({
         </div>
       </section>
 
-      <FooterServer lang={(sp?.lang?.toLowerCase() as any) || lang} />
+      <FooterServer
+        lang={(sp?.lang?.toLowerCase() as any) || lang}
+      />
     </div>
   );
 }

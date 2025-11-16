@@ -85,7 +85,7 @@ type SimpleBlock = {
 };
 
 const BRAND_DARK = "#1C3D5A";
-const container = "container mx-auto max-w-[800px] px-4 sm:px-5";
+const container = "container mx-auto max-w-[1200px] px-4 sm:px-5";
 const card = "rounded-2xl bg-white/5 border border-white/15 shadow-lg";
 const thickDivider = "my-10 h-[2px] w-full bg-white/20";
 
@@ -277,7 +277,6 @@ export default async function CompanyPage({
           style={{
             paddingTop: HERO_TUNE.PADDING_TOP_PX,
             paddingBottom: HERO_TUNE.PADDING_BOTTOM_PX,
-            maxWidth: "800px",
           }}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-6">
