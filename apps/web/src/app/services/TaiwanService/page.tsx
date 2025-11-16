@@ -1,5 +1,3 @@
-// apps/web/src/app/services/TaiwanService/page.tsx
-
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import Image from "next/image";
@@ -16,10 +14,15 @@ import {
   Clock,
   Wrench,
   FileText,
-  CheckCircle2,
   Tags,
   UserCheck,
 } from "lucide-react";
+
+import FeesSection, {
+  FeeRow,
+  SubsidiaryPlan,
+  FeeCommonRow,
+} from "./FeesSection";
 
 type LucideIconType = typeof Building2;
 
@@ -31,18 +34,28 @@ const QUICKNAV_HEIGHT = 56;
 const SECTION_SCROLL_MARGIN = NAV_HEIGHT + 16;
 
 const HERO_TUNE = { x: 50, y: 33 };
-const clamp01to100 = (n: number) => Math.min(100, Math.max(0, Math.round(n)));
+const clamp01to100 = (n: number) =>
+  Math.min(100, Math.max(0, Math.round(n)));
 
 type Lang = "jp" | "zh" | "en";
 function resolveLang(sp?: string): Lang {
   const k = String(sp ?? "").trim().toLowerCase();
   if (!k) return "jp";
   if (
-    k === "zh" || k === "zh-hant" || k === "hant" ||
-    k === "zh_tw" || k === "zh-tw" ||
-    k === "zh-cn" || k === "zh_cn" || k === "zh-hans" || k === "hans" || k === "cn"
-  ) return "zh";
-  if (k === "en" || k === "en-us" || k === "en_us" || k === "en-gb") return "en";
+    k === "zh" ||
+    k === "zh-hant" ||
+    k === "hant" ||
+    k === "zh_tw" ||
+    k === "zh-tw" ||
+    k === "zh-cn" ||
+    k === "zh_cn" ||
+    k === "zh-hans" ||
+    k === "hans" ||
+    k === "cn"
+  )
+    return "zh";
+  if (k === "en" || k === "en-us" || k === "en_us" || k === "en-gb")
+    return "en";
   if (k === "jp" || k === "ja" || k === "ja-jp") return "jp";
   return "jp";
 }
@@ -50,46 +63,59 @@ function t(lang: Lang, dict: Record<Lang, string>) {
   return dict[lang];
 }
 
+// 將空字串或只有空白的字串視為無效，方便 fallback
+function nz(...vals: Array<string | null | undefined>): string | undefined {
+  for (const v of vals) {
+    const s = typeof v === "string" ? v.trim() : String(v ?? "").trim();
+    if (s) return s;
+  }
+  return undefined;
+}
+
 export async function generateMetadata(props: {
   searchParams?: { lang?: string } | Promise<{ lang?: string }>;
 }) {
-  const sp = props.searchParams && typeof (props.searchParams as any).then === "function"
-    ? await (props.searchParams as Promise<{ lang?: string }>)
-    : (props.searchParams as { lang?: string } | undefined);
+  const sp =
+    props.searchParams && typeof (props.searchParams as any).then === "function"
+      ? await (props.searchParams as Promise<{ lang?: string }>)
+      : (props.searchParams as { lang?: string } | undefined);
 
   const lang = resolveLang(sp?.lang);
-  const data = await sfetch<{ title?: string | null }>(twServiceDetailBySlug, { slug: CANONICAL_SLUG, lang });
+  const data = await sfetch<{ title?: string | null }>(twServiceDetailBySlug, {
+    slug: CANONICAL_SLUG,
+    lang,
+  });
 
-  const fallbackTitle = t(lang, { jp: "台湾進出支援", zh: "台灣進出支援", en: "Taiwan Market Entry Support" } as any);
-  const title = (data?.title || "").trim() || fallbackTitle;
+  const fallbackTitle = t(lang, {
+    jp: "台湾進出支援",
+    zh: "台灣進出支援",
+    en: "Taiwan Market Entry Support",
+  } as any);
+  const title = nz(data?.title) ?? fallbackTitle;
   return { title, description: `${title} at Taiwan Connect` };
 }
 
 type ScheduleBlock = { title?: string | null; items?: string[] | null };
-type FeeRow = { category?: string | null; serviceName?: string | null; fee?: string | null; notes?: string | null };
-type SubsidiaryPlan = {
-  plan?: string | null;
-  services?: string[] | null;
-  who?: string | null;
-  feeJpy?: string | null;
-  notes?: string | null;
-};
-type FeeCommonRow = {
-  name?: string | null;
-  details?: string[] | string | null;
-  idealFor?: string[] | string | null;
-  feeJpy?: string | null;
-  notes?: string | null;
-};
 
 // 服務流程的每個步驟：支援新舊兩種型態
-type ServiceFlowStep = { title?: string | null; description?: string | null } | string | null;
+type ServiceFlowStep =
+  | { title?: string | null; description?: string | null }
+  | string
+  | null;
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">{children}</h2>;
+  return (
+    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">
+      {children}
+    </h2>
+  );
 }
 function SubTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-lg md:text-xl font-semibold text-neutral-900">{children}</h3>;
+  return (
+    <h3 className="text-lg md:text-xl font-semibold text-neutral-900">
+      {children}
+    </h3>
+  );
 }
 function Separator() {
   return (
@@ -117,7 +143,7 @@ const ICON_MAP: Record<string, LucideIconType> = {
   clock: Clock,
   wrench: Wrench,
   "file-text": FileText,
-  "check-circle-2": CheckCircle2,
+  "check-circle-2": UserCheck,
   tags: Tags,
   "user-check": UserCheck,
 };
@@ -138,19 +164,35 @@ const ICON_POOL_KEYS = [
 type IconKey = (typeof ICON_POOL_KEYS)[number];
 
 const keywordRules: Array<{ re: RegExp; key: IconKey }> = [
-  { re: /設立|登記|incorporation|register|registration|articles/i, key: "building-2" },
-  { re: /税務|稅務|會計|会計|tax|accounting|bookkeeping|filing/i, key: "scale" },
-  { re: /投資|investment review|審査|審查|資本登記|capital/i, key: "landmark" },
-  { re: /銀行|bank account|口座|開設|政府|government|agency|liaison/i, key: "file-text" },
-  { re: /進出後|經營|運營|ongoing|maintenance/i, key: "wrench" },
-  { re: /法規|罰則|compliance|規範|regulation/i, key: "clipboard-list" },
+  {
+    re: /設立|登記|incorporation|register|registration|articles/i,
+    key: "building-2",
+  },
+  {
+    re: /税務|稅務|會計|会計|tax|accounting|bookkeeping|filing/i,
+    key: "scale",
+  },
+  {
+    re: /投資|investment review|審査|審查|資本登記|capital/i,
+    key: "landmark",
+  },
+  {
+    re: /銀行|bank account|口座|開設|政府|government|agency|liaison/i,
+    key: "file-text",
+  },
+  { re: /進出後|經營|運營|ongoongo|maintenance/i, key: "wrench" },
+  {
+    re: /法規|罰則|compliance|規範|regulation/i,
+    key: "clipboard-list",
+  },
   { re: /時間|時程|schedule|耗時|time/i, key: "clock" },
 ];
 
 function createUniqueIconPicker() {
   const used = new Set<IconKey>();
   function nextUnused(): IconKey {
-    const k = ICON_POOL_KEYS.find((kk) => !used.has(kk)) ?? "check-circle-2";
+    const k =
+      ICON_POOL_KEYS.find((kk) => !used.has(kk)) ?? "check-circle-2";
     used.add(k);
     return k;
   }
@@ -172,7 +214,9 @@ function createUniqueIconPicker() {
 
 function parseWeekPrefix(input?: string) {
   const s = String(input ?? "").trim();
-  const m = s.match(/^第?([一二三四五六七八九十百千0-9]+)\s*週[:：]?\s*(.*)$/);
+  const m = s.match(
+    /^第?([一二三四五六七八九十百千0-9]+)\s*週[:：]?\s*(.*)$/
+  );
   if (!m) return { week: null as string | null, body: s };
   return { week: m[1], body: m[2] || "" };
 }
@@ -180,8 +224,14 @@ function ScheduleItem({ text }: { text: string }) {
   const { week, body } = parseWeekPrefix(text);
   return (
     <li className="relative ps-10">
-      <span className="absolute left-4 top-0 bottom-0 w-px bg-[#1C3D5A]/15" aria-hidden />
-      <span className="absolute left-[14px] top-1.5 h-3 w-3 rounded-full bg-[#1C3D5A]" aria-hidden />
+      <span
+        className="absolute left-4 top-0 bottom-0 w-px bg-[#1C3D5A]/15"
+        aria-hidden
+      />
+      <span
+        className="absolute left-[14px] top-1.5 h-3 w-3 rounded-full bg-[#1C3D5A]"
+        aria-hidden
+      />
       <div className="flex items-start gap-3">
         {week ? (
           <span className="inline-flex select-none items-center rounded-full border border-[#1C3D5A]/25 bg-[#1C3D5A]/5 px-2 py-0.5 text-xs font-semibold text-[#1C3D5A] leading-6">
@@ -193,63 +243,17 @@ function ScheduleItem({ text }: { text: string }) {
     </li>
   );
 }
-function PriceBadge({ fee }: { fee?: string | null }) {
-  if (!fee) return null;
-  return (
-    <div className="shrink-0 rounded-full bg-[#EAF2FB] text-[#1C3D5A] px-2.5 py-1 text-xs md:text-sm font-semibold">
-      {fee}
-    </div>
-  );
-}
-function Bullet({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-2 text-[13px] md:text-sm">
-      <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-      <span className="text-neutral-900">{children}</span>
-    </li>
-  );
-}
 
-function TableShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mt-4 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-      {children}
-    </div>
-  );
-}
-function TheadBlue({ cols }: { cols: string[] }) {
-  return (
-    <thead className="bg-[#1C3D5A] text-white">
-      <tr>
-        {cols.map((c, i) => (
-          <th key={i} className="text-left px-5 py-3 font-semibold">
-            {c}
-          </th>
-        ))}
-      </tr>
-    </thead>
-  );
-}
-/** 透過 colgroup 強制每張表格欄寬一致，避免不同表格位移 */
-function TableColgroup({ widthsPct }: { widthsPct: number[] }) {
-  return (
-    <colgroup>
-      {widthsPct.map((w, i) => (
-        <col key={i} style={{ width: `${w}%` }} />
-      ))}
-    </colgroup>
-  );
-}
-
-/* ---------- 安全轉型 helper ---------- */
-function toArray(v?: string[] | string | null): string[] {
-  if (Array.isArray(v)) return v.filter(Boolean) as string[];
-  if (typeof v === "string" && v.trim()) return [v.trim()];
-  return [];
-}
-function detailsArray(v?: string[] | string | null): string[] {
-  return toArray(v);
-}
+type HeaderLabels = {
+  plan: string;
+  serviceDetails: string;
+  idealFor: string;
+  feeJpy: string; // Estimated Time
+  category: string;
+  service: string;
+  fee: string;
+  notes: string;
+};
 
 export default async function TaiwanServicePage({
   searchParams,
@@ -280,6 +284,34 @@ export default async function TaiwanServicePage({
     repOfficeTitle?: string | null;
     accountingTaxTitle?: string | null;
     valueAddedTitle?: string | null;
+
+    // 五個表格欄位標題（已依語系回傳）
+    subsidiaryColumns?: {
+      col1?: string | null;
+      col2?: string | null;
+      col3?: string | null;
+      col4?: string | null;
+    } | null;
+    branchColumns?: {
+      col1?: string | null;
+      col2?: string | null;
+      col3?: string | null;
+    } | null;
+    repOfficeColumns?: {
+      col1?: string | null;
+      col2?: string | null;
+      col3?: string | null;
+    } | null;
+    accountingTaxColumns?: {
+      col1?: string | null;
+      col2?: string | null;
+      col3?: string | null;
+    } | null;
+    valueAddedColumns?: {
+      col1?: string | null;
+      col2?: string | null;
+      col3?: string | null;
+    } | null;
 
     feesSectionTitle?: string | null;
     subsidiaryPlans?: SubsidiaryPlan[] | null;
@@ -323,21 +355,22 @@ export default async function TaiwanServicePage({
     lang === "jp" ? titles?.jp : lang === "zh" ? titles?.zh : titles?.en;
 
   const heroTitle =
-    (preferByLang && String(preferByLang).trim()) ||
-    (data.title ?? "").trim() ||
-    fallbackTitle;
+    nz(preferByLang) || nz(data.title) || fallbackTitle;
 
   const coverUrl = data.coverImage?.url ?? "";
   const background = data.background ?? "";
   const challenges = data.challenges ?? [];
   const services = data.services?.items ?? [];
-  const keywords = data.services?.keywords ?? [];
   const flow = data.serviceFlow ?? [];
   const schedules = data.scheduleExample ?? [];
 
   const feesTitle =
-    data.feesSectionTitle ??
-    t(lang, { jp: "料金（参考）", zh: "費用（參考）", en: "Fees (Reference)" } as any);
+    nz(data.feesSectionTitle) ??
+    t(lang, {
+      jp: "料金（参考）",
+      zh: "費用（參考）",
+      en: "Fees (Reference)",
+    } as any);
   const subsidiaryPlans = data.subsidiaryPlans ?? [];
   const branchSupport = data.branchSupport ?? [];
   const repOfficeSupport = data.repOfficeSupport ?? [];
@@ -361,7 +394,7 @@ export default async function TaiwanServicePage({
 
   const hasBackground = !!background;
   const hasChallenges = challenges.length > 0;
-  const hasServices = services.length > 0 || keywords.length > 0;
+  const hasServices = services.length > 0;
   const hasFlow = flow.some((step) => {
     if (!step) return false;
     if (typeof step === "string") return step.trim().length > 0;
@@ -374,9 +407,21 @@ export default async function TaiwanServicePage({
   const labels = {
     quickNav: {
       bg: t(lang, { jp: "背景", zh: "背景", en: "Background" } as any),
-      ch: t(lang, { jp: "サービス課題", zh: "挑戰", en: "Challenges" } as any),
-      sv: t(lang, { jp: "サービス内容", zh: "服務內容", en: "Services" } as any),
-      fl: t(lang, { jp: "サービスの流れ", zh: "服務流程", en: "Service Flow" } as any),
+      ch: t(lang, {
+        jp: "サービス課題",
+        zh: "挑戰",
+        en: "Challenges",
+      } as any),
+      sv: t(lang, {
+        jp: "サービス内容",
+        zh: "服務內容",
+        en: "Services",
+      } as any),
+      fl: t(lang, {
+        jp: "サービスの流れ",
+        zh: "服務流程",
+        en: "Service Flow",
+      } as any),
       sc: t(
         lang,
         {
@@ -385,14 +430,18 @@ export default async function TaiwanServicePage({
           jp: "サービスの流れとスケジュール例",
         } as any
       ),
-      fe: t(lang, { jp: "料金（参考）", zh: "費用參考", en: "Fees (Reference)" } as any),
+      fe: t(lang, {
+        jp: "サービスプラン",
+        zh: "服務介紹",
+        en: "Service Plans",
+      } as any),
     },
   };
 
   // 五個表格小標題：優先使用 Sanity，否則回退到預設三語
   const tableTitles = {
     subsidiary:
-      data.subsidiaryTitle ??
+      nz(data.subsidiaryTitle) ??
       t(
         lang,
         {
@@ -402,7 +451,7 @@ export default async function TaiwanServicePage({
         } as any
       ),
     branch:
-      data.branchTitle ??
+      nz(data.branchTitle) ??
       t(
         lang,
         {
@@ -412,7 +461,7 @@ export default async function TaiwanServicePage({
         } as any
       ),
     rep:
-      data.repOfficeTitle ??
+      nz(data.repOfficeTitle) ??
       t(
         lang,
         {
@@ -422,7 +471,7 @@ export default async function TaiwanServicePage({
         } as any
       ),
     accounting:
-      data.accountingTaxTitle ??
+      nz(data.accountingTaxTitle) ??
       t(
         lang,
         {
@@ -432,7 +481,7 @@ export default async function TaiwanServicePage({
         } as any
       ),
     valueAdded:
-      data.valueAddedTitle ??
+      nz(data.valueAddedTitle) ??
       t(
         lang,
         {
@@ -443,26 +492,138 @@ export default async function TaiwanServicePage({
       ),
   };
 
-  // 欄位標題
-  const hdr = {
+  // 共用預設表頭（字串翻譯）
+  const defaultHdr: HeaderLabels = {
     plan: t(lang, { jp: "プラン", zh: "方案", en: "Plan" } as any),
-    serviceDetails: t(lang, {
-      jp: "サービス内容",
-      zh: "服務內容",
-      en: "Service Details",
-    } as any),
-    idealFor: t(lang, { jp: "対象", zh: "適合對象", en: "Ideal For" } as any),
-    feeJpy: t(lang, { jp: "料金（JPY）", zh: "費用（JPY）", en: "Fee (JPY)" } as any),
-    // 舊備援表格
-    category: t(lang, { jp: "カテゴリ", zh: "類別", en: "Category" } as any),
-    service: t(lang, { jp: "サービス", zh: "服務項目", en: "Service" } as any),
-    fee: t(lang, { jp: "料金 JPY", zh: "費用 JPY", en: "Fee JPY" } as any),
-    notes: t(lang, { jp: "備考", zh: "備註", en: "Notes" } as any),
+    serviceDetails: t(
+      lang,
+      {
+        jp: "サービス内容",
+        zh: "服務內容",
+        en: "Service Details",
+      } as any
+    ),
+    idealFor: t(
+      lang,
+      {
+        jp: "対象",
+        zh: "適合對象",
+        en: "Ideal For",
+      } as any
+    ),
+    // feeJpy 現在代表 Estimated Time
+    feeJpy: t(
+      lang,
+      {
+        jp: "想定期間",
+        zh: "預估時間",
+        en: "Estimated Time",
+      } as any
+    ),
+    category: t(
+      lang,
+      {
+        jp: "カテゴリ",
+        zh: "類別",
+        en: "Category",
+      } as any
+    ),
+    service: t(
+      lang,
+      {
+        jp: "サービス",
+        zh: "服務項目",
+        en: "Service",
+      } as any
+    ),
+    fee: t(
+      lang,
+      {
+        jp: "料金 JPY",
+        zh: "費用 JPY",
+        en: "Fee JPY",
+      } as any
+    ),
+    notes: t(
+      lang,
+      {
+        jp: "備考",
+        zh: "備註",
+        en: "Notes",
+      } as any
+    ),
   };
 
+  // I. 子公司表頭：只看 subsidiaryColumns，缺再用預設字串
+  const hdrSubsidiary: HeaderLabels = {
+    plan: nz(data.subsidiaryColumns?.col1) ?? defaultHdr.plan,
+    serviceDetails:
+      nz(data.subsidiaryColumns?.col2) ?? defaultHdr.serviceDetails,
+    idealFor: nz(data.subsidiaryColumns?.col3) ?? defaultHdr.idealFor,
+    feeJpy: nz(data.subsidiaryColumns?.col4) ?? defaultHdr.feeJpy,
+    category: defaultHdr.category,
+    service: defaultHdr.service,
+    fee: defaultHdr.fee,
+    notes: defaultHdr.notes,
+  };
+
+  // II. Branch 表頭：只看 branchColumns，缺再回退到預設
+  const hdrBranch: HeaderLabels = {
+    plan: defaultHdr.plan,
+    serviceDetails: nz(data.branchColumns?.col1) ?? defaultHdr.serviceDetails,
+    idealFor: nz(data.branchColumns?.col2) ?? defaultHdr.idealFor,
+    feeJpy: nz(data.branchColumns?.col3) ?? defaultHdr.feeJpy,
+    category: defaultHdr.category,
+    service: defaultHdr.service,
+    fee: defaultHdr.fee,
+    notes: defaultHdr.notes,
+  };
+
+  // III. Rep Office 表頭
+  const hdrRep: HeaderLabels = {
+    plan: defaultHdr.plan,
+    serviceDetails:
+      nz(data.repOfficeColumns?.col1) ?? defaultHdr.serviceDetails,
+    idealFor: nz(data.repOfficeColumns?.col2) ?? defaultHdr.idealFor,
+    feeJpy: nz(data.repOfficeColumns?.col3) ?? defaultHdr.feeJpy,
+    category: defaultHdr.category,
+    service: defaultHdr.service,
+    fee: defaultHdr.fee,
+    notes: defaultHdr.notes,
+  };
+
+  // IV. Accounting & Tax 表頭
+  const hdrAccounting: HeaderLabels = {
+    plan: defaultHdr.plan,
+    serviceDetails:
+      nz(data.accountingTaxColumns?.col1) ?? defaultHdr.serviceDetails,
+    idealFor: nz(data.accountingTaxColumns?.col2) ?? defaultHdr.idealFor,
+    feeJpy: nz(data.accountingTaxColumns?.col3) ?? defaultHdr.feeJpy,
+    category: defaultHdr.category,
+    service: defaultHdr.service,
+    fee: defaultHdr.fee,
+    notes: defaultHdr.notes,
+  };
+
+  // V. Value-Added 表頭
+  const hdrValueAdded: HeaderLabels = {
+    plan: defaultHdr.plan,
+    serviceDetails:
+      nz(data.valueAddedColumns?.col1) ?? defaultHdr.serviceDetails,
+    idealFor: nz(data.valueAddedColumns?.col2) ?? defaultHdr.idealFor,
+    feeJpy: nz(data.valueAddedColumns?.col3) ?? defaultHdr.feeJpy,
+    category: defaultHdr.category,
+    service: defaultHdr.service,
+    fee: defaultHdr.fee,
+    notes: defaultHdr.notes,
+  };
+
+  // 舊 flat fallback 用（只有一張表，用預設即可）
+  const hdrFlat: HeaderLabels = defaultHdr;
+
   // 欄寬設定
-  const widthsSubsidiary = [8, 12, 15, 13]; // Plan / Details / Ideal / Fee
-  const widthsCommon = [35, 32, 24]; // Details / Ideal / Fee
+  const widthsSubsidiary = [8, 12, 15, 13]; // Plan / Details / Ideal / Estimated Time
+  const widthsCommon = [35, 32, 24]; // Details / Ideal / Estimated Time
 
   const pickIconForChallenge = createUniqueIconPicker();
   const pickIconForService = createUniqueIconPicker();
@@ -513,7 +674,7 @@ export default async function TaiwanServicePage({
           {hasBackground && (
             <a
               href="#bg"
-              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <ClipboardList className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">
@@ -524,29 +685,30 @@ export default async function TaiwanServicePage({
           {(hasChallenges || hasServices) && (
             <a
               href="#ch"
-              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <Scale className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
+              {/* Quick nav 顯示 Services 文案 */}
               <span className="opacity-80 group-hover:opacity-100">
-                {labels.quickNav.ch}
+                {labels.quickNav.sv}
               </span>
             </a>
           )}
           {hasFlow && (
             <a
               href="#fl"
-              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <ClipboardList className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">
-                {labels.quickNav.sc}
+                {labels.quickNav.fl}
               </span>
             </a>
           )}
           {hasSchedules && (
             <a
               href="#sc"
-              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <Clock className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">
@@ -557,7 +719,7 @@ export default async function TaiwanServicePage({
           {hasFees && (
             <a
               href="#fe"
-              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg白/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="group inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm md:text-base transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <FileText className="w-4 h-4 mr-2 opacity-80 group-hover:opacity-100" />
               <span className="opacity-80 group-hover:opacity-100">
@@ -593,7 +755,7 @@ export default async function TaiwanServicePage({
               </>
             )}
 
-            {/* 挑戰 × 服務內容 */}
+            {/* 挑戰 + 服務內容：保留左邊挑戰卡片，移除 Challenge 標題，只留下置中的 Services 標題 */}
             {(hasChallenges || hasServices) && (
               <>
                 <section
@@ -601,11 +763,9 @@ export default async function TaiwanServicePage({
                   style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
                   className="mb-10 md:mb-14"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">
-                      {labels.quickNav.ch}
-                    </h2>
-                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A]">
+                  {/* 只有一個 Service 標題，置中 */}
+                  <div className="flex justify-center">
+                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#1C3D5A] text-center">
                       {labels.quickNav.sv}
                     </h2>
                   </div>
@@ -621,22 +781,28 @@ export default async function TaiwanServicePage({
                           key={`pair-${i}`}
                           className="grid grid-cols-1 md:grid-cols-2 gap-3"
                         >
+                          {/* 左欄：Challenge 項目（沒有標題） */}
                           <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg-white hover:shadow-md transition min-h-[56px]">
                             {ch ? (
                               <>
                                 {pickIconForChallenge(ch)}
-                                <span className="text-neutral-900">{ch}</span>
+                                <span className="text-neutral-900">
+                                  {ch}
+                                </span>
                               </>
                             ) : (
                               <span className="text-neutral-400">&nbsp;</span>
                             )}
                           </div>
 
-                          <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg白 hover:shadow-md transition min-h-[56px]">
+                          {/* 右欄：Service 項目 */}
+                          <div className="flex items-center rounded-2xl border border-neutral-200 p-4 md:p-5 bg-white hover:shadow-md transition min-h-[56px]">
                             {sv ? (
                               <>
                                 {pickIconForService(sv)}
-                                <span className="text-neutral-900">{sv}</span>
+                                <span className="text-neutral-900">
+                                  {sv}
+                                </span>
                               </>
                             ) : (
                               <span className="text-neutral-400">&nbsp;</span>
@@ -646,29 +812,6 @@ export default async function TaiwanServicePage({
                       );
                     })}
                   </ul>
-
-                  {keywords.length > 0 && (
-                    <div className="mt-6 md:mt-8">
-                      <h3 className="text-lg font-medium mb-3 text-neutral-700">
-                        {t(lang, {
-                          jp: "キーワード",
-                          zh: "關鍵詞",
-                          en: "Keywords",
-                        } as any)}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {keywords.map((kw: string, idx: number) => (
-                          <span
-                            key={`kw-${idx}`}
-                            className="inline-flex items-center rounded-full border border-[#1C3D5A]/20 px-3 py-1 text-sm bg-[#1C3D5A]/5"
-                          >
-                            <Tags className="w-4 h-4 mr-1.5 text-[#1C3D5A]" />
-                            {kw}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </section>
 
                 <section
@@ -690,7 +833,7 @@ export default async function TaiwanServicePage({
                   style={{ scrollMarginTop: SECTION_SCROLL_MARGIN }}
                   className="mb-10 md:mb-14"
                 >
-                  <SectionTitle>{labels.quickNav.sc}</SectionTitle>
+                  <SectionTitle>{labels.quickNav.fl}</SectionTitle>
                   <ol className="mt-6 relative ms-6 border-s-2 border-[#1C3D5A]/25">
                     {flow.map((step: ServiceFlowStep, idx: number) => {
                       let title = "";
@@ -710,7 +853,7 @@ export default async function TaiwanServicePage({
                           <div className="absolute w-7 h-7 -start-[22px] mt-1.5 rounded-full bg-[#1C3D5A] text-white grid place-items-center text-xs font-bold ring-2 ring-white">
                             {idx + 1}
                           </div>
-                          <div className="bg白 rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
+                          <div className="bg-white rounded-xl border border-neutral-200 p-4 md:p-5 shadow-sm">
                             {title && (
                               <div className="text-neutral-900 font-semibold">
                                 {title}
@@ -745,7 +888,7 @@ export default async function TaiwanServicePage({
                     {schedules.map((blk: ScheduleBlock, idx: number) => (
                       <div
                         key={`sched-${idx}`}
-                        className="rounded-2xl border border-neutral-200 bg白 p-5 md:p-6 hover:shadow-md transition"
+                        className="rounded-2xl border border-neutral-200 bg-white p-5 md:p-6 hover:shadow-md transition"
                       >
                         {blk.title && (
                           <div className="mb-4 flex items-center gap-2">
@@ -782,341 +925,23 @@ export default async function TaiwanServicePage({
               >
                 <SectionTitle>{feesTitle}</SectionTitle>
 
-                {/* I. Subsidiary */}
-                {subsidiaryPlans.length > 0 && (
-                  <div className="mt-6">
-                    <SubTitle>{tableTitles.subsidiary}</SubTitle>
-                    <TableShell>
-                      <table className="min-w-full text-sm table-fixed">
-                        <TableColgroup widthsPct={widthsSubsidiary} />
-                        <thead className="bg-[#1C3D5A] text-white">
-                          <tr>
-                            <th className="text-left px-5 py-3 font-semibold">
-                              {hdr.plan}
-                            </th>
-                            <th className="text-left px-5 py-3 font-semibold">
-                              {hdr.serviceDetails}
-                            </th>
-                            <th className="text-left px-5 py-3 font-semibold hidden md:table-cell">
-                              {hdr.idealFor}
-                            </th>
-                            <th className="text-left px-5 py-3 font-semibold">
-                              {hdr.feeJpy}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {subsidiaryPlans.map((row, i) => (
-                            <tr
-                              key={`sp-${i}`}
-                              className="border-t border-neutral-200 align-top"
-                            >
-                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
-                                <div>{row.plan ?? ""}</div>
-                                {row.who && (
-                                  <div className="mt-2 text-xs text-neutral-700 md:hidden">
-                                    <span className="font-normal">
-                                      {hdr.idealFor}：
-                                    </span>
-                                    {row.who}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-5 py-4">
-                                <ul className="space-y-1">
-                                  {(row.services ?? []).map((s, idx) => (
-                                    <li
-                                      key={idx}
-                                      className="flex items-start gap-2"
-                                    >
-                                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                      <span className="text-neutral-900">
-                                        {s}
-                                      </span>
-                                    </li>
-                                  ))}
-                                </ul>
-                                {row.notes && (
-                                  <p className="mt-2 text-xs text-neutral-600">
-                                    {row.notes}
-                                  </p>
-                                )}
-                              </td>
-                              <td className="px-5 py-4 text-neutral-800 break-words hidden md:table-cell">
-                                {row.who ?? ""}
-                              </td>
-                              <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
-                                {row.feeJpy ?? ""}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </TableShell>
-                  </div>
-                )}
-
-                {/* 後面四張表格：標題與欄位完全一致 */}
-                {/* II. Branch */}
-                {branchSupport.length > 0 && (
-                  <div className="mt-10">
-                    <SubTitle>{tableTitles.branch}</SubTitle>
-                    <TableShell>
-                      <table className="min-w-full text-sm table-fixed">
-                        <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue
-                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
-                        />
-                        <tbody>
-                          {branchSupport.map((row, i) => {
-                            const ideal = toArray(row.idealFor).join(" ／ ");
-                            const details = detailsArray(row.details);
-                            return (
-                              <tr
-                                key={`br-${i}`}
-                                className="border-t border-neutral-200 align-top"
-                              >
-                                <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">
-                                    {row.name ?? ""}
-                                  </div>
-                                  <ul className="mt-1.5 space-y-1">
-                                    {details.map((d, k) => (
-                                      <li
-                                        key={k}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span className="break-words">{d}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                  {row.notes && (
-                                    <p className="mt-2 text-xs text-neutral-600 break-words">
-                                      {row.notes}
-                                    </p>
-                                  )}
-                                </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">
-                                  {ideal}
-                                </td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
-                                  {row.feeJpy ?? ""}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </TableShell>
-                  </div>
-                )}
-
-                {/* III. Representative */}
-                {repOfficeSupport.length > 0 && (
-                  <div className="mt-10">
-                    <SubTitle>{tableTitles.rep}</SubTitle>
-                    <TableShell>
-                      <table className="min-w-full text-sm table-fixed">
-                        <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue
-                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
-                        />
-                        <tbody>
-                          {repOfficeSupport.map((row, i) => {
-                            const ideal = toArray(row.idealFor).join(" ／ ");
-                            const details = detailsArray(row.details);
-                            return (
-                              <tr
-                                key={`ro-${i}`}
-                                className="border-t border-neutral-200 align-top"
-                              >
-                                <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">
-                                    {row.name ?? ""}
-                                  </div>
-                                  <ul className="mt-1.5 space-y-1">
-                                    {details.map((d, k) => (
-                                      <li
-                                        key={k}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span className="break-words">{d}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                  {row.notes && (
-                                    <p className="mt-2 text-xs text-neutral-600 break-words">
-                                      {row.notes}
-                                    </p>
-                                  )}
-                                </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">
-                                  {ideal}
-                                </td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
-                                  {row.feeJpy ?? ""}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </TableShell>
-                  </div>
-                )}
-
-                {/* IV. Accounting & Tax */}
-                {accountingTaxSupport.length > 0 && (
-                  <div className="mt-10">
-                    <SubTitle>{tableTitles.accounting}</SubTitle>
-                    <TableShell>
-                      <table className="min-w-full text-sm table-fixed">
-                        <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue
-                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
-                        />
-                        <tbody>
-                          {accountingTaxSupport.map((row, i) => {
-                            const ideal = toArray(row.idealFor).join(" ／ ");
-                            const details = detailsArray(row.details);
-                            return (
-                              <tr
-                                key={`at-${i}`}
-                                className="border-t border-neutral-200 align-top"
-                              >
-                                <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">
-                                    {row.name ?? ""}
-                                  </div>
-                                  <ul className="mt-1.5 space-y-1">
-                                    {details.map((d, k) => (
-                                      <li
-                                        key={k}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span className="break-words">{d}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                  {row.notes && (
-                                    <p className="mt-2 text-xs text-neutral-600 break-words">
-                                      {row.notes}
-                                    </p>
-                                  )}
-                                </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">
-                                  {ideal}
-                                </td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
-                                  {row.feeJpy ?? ""}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </TableShell>
-                  </div>
-                )}
-
-                {/* V. Value-Added */}
-                {valueAddedServices.length > 0 && (
-                  <div className="mt-10">
-                    <SubTitle>{tableTitles.valueAdded}</SubTitle>
-                    <TableShell>
-                      <table className="min-w-full text-sm table-fixed">
-                        <TableColgroup widthsPct={widthsCommon} />
-                        <TheadBlue
-                          cols={[hdr.serviceDetails, hdr.idealFor, hdr.feeJpy]}
-                        />
-                        <tbody>
-                          {valueAddedServices.map((row, i) => {
-                            const ideal = toArray(row.idealFor).join(" ／ ");
-                            const details = detailsArray(row.details);
-                            return (
-                              <tr
-                                key={`va-${i}`}
-                                className="border-t border-neutral-200 align-top"
-                              >
-                                <td className="px-5 py-4">
-                                  <div className="font-semibold text-neutral-900 break-words">
-                                    {row.name ?? ""}
-                                  </div>
-                                  <ul className="mt-1.5 space-y-1">
-                                    {details.map((d, k) => (
-                                      <li
-                                        key={k}
-                                        className="flex items-start gap-2"
-                                      >
-                                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-[#1C3D5A]" />
-                                        <span className="break-words">{d}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                  {row.notes && (
-                                    <p className="mt-2 text-xs text-neutral-600 break-words">
-                                      {row.notes}
-                                    </p>
-                                  )}
-                                </td>
-                                <td className="px-5 py-4 text-neutral-800 break-words">
-                                  {ideal}
-                                </td>
-                                <td className="px-5 py-4 font-semibold text-neutral-900 break-words">
-                                  {row.feeJpy ?? ""}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </TableShell>
-                  </div>
-                )}
-
-                {/* 舊 flat fallback */}
-                {!hasFeesNew && feesFlat.length > 0 && (
-                  <div className="mt-6 overflow-x-auto rounded-2xl border border-neutral-200 bg白">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-[#1C3D5A] text-white">
-                        <tr>
-                          <th className="text-left px-5 py-3 font-semibold">
-                            {hdr.category}
-                          </th>
-                          <th className="text-left px-5 py-3 font-semibold">
-                            {hdr.service}
-                          </th>
-                          <th className="text-left px-5 py-3 font-semibold">
-                            {hdr.fee}
-                          </th>
-                          <th className="text-left px-5 py-3 font-semibold">
-                            {hdr.notes}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {feesFlat.map((row: FeeRow, idx: number) => (
-                          <tr
-                            key={`fee-${idx}`}
-                            className="border-t border-neutral-200"
-                          >
-                            <td className="px-5 py-3">{row.category ?? ""}</td>
-                            <td className="px-5 py-3">
-                              {row.serviceName ?? ""}
-                            </td>
-                            <td className="px-5 py-3">{row.fee ?? ""}</td>
-                            <td className="px-5 py-3 text-neutral-700">
-                              {row.notes ?? ""}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <FeesSection
+                  tableTitles={tableTitles}
+                  hdrSubsidiary={hdrSubsidiary}
+                  hdrBranch={hdrBranch}
+                  hdrRep={hdrRep}
+                  hdrAccounting={hdrAccounting}
+                  hdrValueAdded={hdrValueAdded}
+                  hdrFlat={hdrFlat}
+                  widthsSubsidiary={widthsSubsidiary}
+                  widthsCommon={widthsCommon}
+                  subsidiaryPlans={subsidiaryPlans}
+                  branchSupport={branchSupport}
+                  repOfficeSupport={repOfficeSupport}
+                  accountingTaxSupport={accountingTaxSupport}
+                  valueAddedServices={valueAddedServices}
+                  feesFlat={feesFlat}
+                />
               </section>
             )}
           </div>
@@ -1158,7 +983,7 @@ export default async function TaiwanServicePage({
             </a>
             <a
               href="mailto:info@twconnects.com"
-              className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg白/15 transition"
+              className="inline-block bg白/10 border border-white/20 font-semibold px-6 py-3 rounded-lg hover:bg-white/15 transition"
             >
               info@twconnects.com
             </a>

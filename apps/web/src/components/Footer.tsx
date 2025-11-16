@@ -1,4 +1,3 @@
-// apps/web/src/components/Footer.tsx
 "use client";
 
 import Image from "next/image";
@@ -113,6 +112,7 @@ export default function Footer({
   const displaySitemap = sitemapLabel?.trim() || defaultSitemap(lang);
 
   const s = social || {};
+  const isEn = lang === "en";
 
   return (
     <footer className="text-slate-100" style={{ backgroundColor: BRAND_BG }}>
@@ -121,35 +121,65 @@ export default function Footer({
           {/* 左：公司敘述 */}
           <section className="md:w-[38%]">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden ring-1 ring-white/20">
-                <Image
-                  src={safeLogoSrc}
-                  alt={displayCompanyName || "Taiwan Connect"}
-                  width={36}
-                  height={36}
-                  className="h-7 w-7 object-contain"
-                />
+              {/* 移除外框，只保留 logo 圖片 */}
+              <Image
+                src={safeLogoSrc}
+                alt={displayCompanyName || "Taiwan Connect"}
+                width={36}
+                height={36}
+                className="h-9 w-9 object-contain"
+              />
+              <div className="font-semibold text-white text-[15px]">
+                {displayCompanyName}
               </div>
-              <div className="font-semibold text-white text-[15px]">{displayCompanyName}</div>
             </div>
-            <p className="mt-2 text-[14px] leading-6 text-slate-300">{displayDesc}</p>
+            <p className="mt-2 text-[14px] leading-6 text-slate-300">
+              {displayDesc}
+            </p>
           </section>
 
           {/* 中：聯絡資訊 */}
           <section className="md:w-[32%]">
             <ul className="space-y-1.5 text-slate-200 text-[14px]">
-              {contact?.addressJp && (
-                <li className="flex items-start gap-2 leading-5">
-                  <MapPin className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
-                  <span>{contact.addressJp}</span>
-                </li>
+              {isEn ? (
+                <>
+                  {/* 英文版固定顯示英文地址 */}
+                  <li className="flex items-start gap-2 leading-5">
+                    <MapPin className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
+                    <span>
+                      <span className="font-semibold">Japan Office</span>
+                      <br />
+                      Glass Court Itabashi 503, 3-9-14 Itabashi, Itabashi-ku, Tokyo
+                      173-0004, Japan
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2 leading-5">
+                    <MapPin className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
+                    <span>
+                      <span className="font-semibold">Taiwan Office</span>
+                      <br />
+                      No. 18, Lane 158, Section 3, Xingguang Road, Pingzhen District,
+                      Taoyuan City, Taiwan
+                    </span>
+                  </li>
+                </>
+              ) : (
+                <>
+                  {contact?.addressJp && (
+                    <li className="flex items-start gap-2 leading-5">
+                      <MapPin className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
+                      <span>{contact.addressJp}</span>
+                    </li>
+                  )}
+                  {contact?.addressTw && (
+                    <li className="flex items-start gap-2 leading-5">
+                      <MapPin className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
+                      <span>{contact.addressTw}</span>
+                    </li>
+                  )}
+                </>
               )}
-              {contact?.addressTw && (
-                <li className="flex items-start gap-2 leading-5">
-                  <MapPin className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />
-                  <span>{contact.addressTw}</span>
-                </li>
-              )}
+
               {displayEmail && (
                 <li className="flex items-start gap-2 leading-5">
                   <Mail className="h-4 w-4 text-white/90 mt-[2px] shrink-0" />

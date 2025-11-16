@@ -60,9 +60,9 @@ function resolveCnInvestmentTexts(lang: Exclude<Lang, "zh-cn">) {
   if (lang === "jp") {
     return {
       blockHeading: "中国資本台湾投資",
-      blockSubheading: "中国資本の台湾進出・設立を専門的に支援するエリア",
+      blockSubheading: "中中国投資者による対台湾投資を専門的に支援",
       cardTitle: "中国資本台湾投資",
-      cardSubtitle: "中国資本の台湾進出・設立を専門的に支援するエリア",
+      cardSubtitle: "中国投資者による対台湾投資を専門的に支援",
     };
   }
   if (lang === "en") {
@@ -141,10 +141,34 @@ export default function ServiceSection({
 
   const cnInvImageUrl = cnInvestmentHero?.url ?? null;
   const cnInvAlt = cnInvestmentHero?.alt || cnInvTexts.cardTitle;
-  const cnInvHrefFinal = cnInvestmentHref ? toHref(cnInvestmentHref) : "#";
+  const cnInvHrefFinal = cnInvestmentHref ? toHref(cnInvestmentHref) : "/cn-investment?lang=zh-cn";
 
   // 四個卡片固定高度
   const CARD_H = "h-[380px]";
+
+  // 合併左側 items + 陸資卡片，統一用一個 grid 排版
+  const cards = [
+    ...items.map((it) => ({
+      key: it._id,
+      title: it.title,
+      desc: it.desc,
+      imageUrl: it.imageUrl,
+      href: toHref(it.href),
+      alt: it.title || "",
+    })),
+    ...(cnInvImageUrl
+      ? [
+          {
+            key: "cn-investment",
+            title: cnInvTexts.cardTitle,
+            desc: cnInvTexts.cardSubtitle,
+            imageUrl: cnInvImageUrl,
+            href: cnInvHrefFinal,
+            alt: cnInvAlt,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <section className="relative overflow-hidden bg-[#1C3D5A] py-16 sm:py-20">
@@ -153,124 +177,51 @@ export default function ServiceSection({
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4">
-        {/* 整個區塊二欄：左邊再加寬一點 70 / 30 */}
-        <div className="mx-auto max-w-6xl lg:grid lg:grid-cols-[minmax(0,70%)_minmax(0,30%)] lg:gap-10">
-          {/* 左欄：主標＋副標＋三張卡片 */}
-          <div className="flex flex-col h-full lg:pr-6">
-            <div className="mb-8 text-center sm:mb-10">
-              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                {heading ?? copy.heading}
-              </h2>
-              <p className="mt-3 text-sm text-slate-200 sm:text-base">
-                {subheading ?? copy.subheading}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-              {items.map((it) => {
-                const finalHref = toHref(it.href);
-                return (
-                  <div
-                    key={it._id}
-                    className={`
-                      group relative flex flex-col overflow-hidden rounded-2xl
-                      bg-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] ring-1 ring-white/10
-                      transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]
-                      ${CARD_H}
-                    `}
-                  >
-                    {it.imageUrl ? (
-                      <div className="relative aspect-[16/9] w-full">
-                        <Image
-                          src={it.imageUrl}
-                          alt={it.title || ""}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                          sizes="(min-width: 1280px) 260px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-                        />
-                      </div>
-                    ) : (
-                      <div className="aspect-[16/9] w-full bg-slate-700" />
-                    )}
-
-                    <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                      <h3 className="text-base font-semibold leading-snug text-white">
-                        {it.title}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-200 line-clamp-4">
-                        {it.desc}
-                      </p>
-
-                      {/* 左側 CTA：有 href，走多語邏輯 */}
-                      <div className="mt-auto pt-4 flex justify-center">
-                        <Link
-                          href={finalHref}
-                          className="
-                            inline-flex h-10 items-center justify-center rounded-xl
-                            px-4 text-sm font-semibold shadow
-                            transition-colors duration-200
-                            text-white bg-[#1f2454] hover:bg-[#2b3068]
-                          "
-                        >
-                          {ctaText ?? copy.cta}
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        <div className="mx-auto max-w-6xl">
+          {/* 上方只保留主標題，置中 */}
+          <div className="mb-8 text-center sm:mb-10">
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              {heading ?? copy.heading}
+            </h2>
           </div>
 
-          {/* 右欄：主標＋副標＋一張卡片 */}
-          {cnInvImageUrl && (
-            <div
-              className="
-                mt-10 border-t border-white/15 pt-8
-                flex flex-col h-full
-                lg:mt-0 lg:border-t-0 lg:border-l lg:border-white/20 lg:pl-8 lg:pt-0
-              "
-            >
-              <div className="mb-8 text-center max-w-md mx-auto">
-                <h3 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                  {cnInvTexts.blockHeading}
-                </h3>
-                {/* 副標題一行顯示，不斷行 */}
-                <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-200 whitespace-nowrap">
-                  {cnInvTexts.blockSubheading}
-                </p>
-              </div>
-
+          {/* 單一 grid：最多四張卡片同高度 */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+            {cards.map((card) => (
               <div
+                key={card.key}
                 className={`
                   group relative flex flex-col overflow-hidden rounded-2xl
                   bg-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] ring-1 ring-white/10
                   transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.5)]
-                  max-w-md mx-auto ${CARD_H}
+                  ${CARD_H}
                 `}
               >
-                <div className="relative aspect-[16/9] w-full">
-                  <Image
-                    src={cnInvImageUrl}
-                    alt={cnInvAlt}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    sizes="(min-width: 1280px) 260px, (min-width: 1024px) 32vw, 100vw"
-                  />
-                </div>
+                {card.imageUrl ? (
+                  <div className="relative aspect-[16/9] w-full">
+                    <Image
+                      src={card.imageUrl}
+                      alt={card.alt}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      sizes="(min-width: 1280px) 260px, (min-width: 1024px) 25vw, (min-width: 640px) 45vw, 100vw"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[16/9] w-full bg-slate-700" />
+                )}
 
                 <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                  <h4 className="text-base font-semibold leading-snug text-white">
-                    {cnInvTexts.cardTitle}
-                  </h4>
+                  <h3 className="text-base font-semibold leading-snug text-white">
+                    {card.title}
+                  </h3>
                   <p className="mt-2 text-sm leading-6 text-slate-200 line-clamp-4">
-                    {cnInvTexts.cardSubtitle}
+                    {card.desc}
                   </p>
 
-                  {/* 右側 CTA：固定連到 /cn-investment?lang=zh-cn */}
                   <div className="mt-auto pt-4 flex justify-center">
                     <Link
-                      href="/cn-investment?lang=zh-cn"
+                      href={card.href}
                       className="
                         inline-flex h-10 items-center justify-center rounded-xl
                         px-4 text-sm font-semibold shadow
@@ -283,8 +234,8 @@ export default function ServiceSection({
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* 底部大 CTA：維持原本多語 /company 邏輯 */}

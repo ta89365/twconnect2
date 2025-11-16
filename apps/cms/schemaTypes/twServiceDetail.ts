@@ -54,19 +54,27 @@ const localeStringArray = (name: string, title: string) =>
   });
 
 /** ---------- Reusable row field sets ---------- */
+// I. Plans rows
 const planRowFields = [
   localeString("plan", "Plan Name"),
   localeStringArray("services", "Service Content"),
   localeString("who", "Ideal For"),
-  defineField({ name: "feeJpy", title: "Fee (JPY)", type: "string" }),
+  // 多語系 Fee (JP/ZH/EN)
+  localeString("fee", "Fee"),
+  // 原本 feeJpy → 預估時間，改為多語系 Estimated Time
+  localeString("feeJpy", "Estimated Time"),
   localeText("notes", "Notes (Optional)", 3),
 ];
 
+// II–V 共用 rows
 const commonRowFields = [
   localeString("name", "Row Title / Service Name"),
   localeStringArray("details", "Service Details / Items"),
   localeString("idealFor", "Ideal For / Target Customers"),
-  defineField({ name: "feeJpy", title: "Fee (JPY)", type: "string" }),
+  // 多語系 Fee (JP/ZH/EN)
+  localeString("fee", "Fee"),
+  // 原本 feeJpy → 預估時間，改為多語系 Estimated Time
+  localeString("feeJpy", "Estimated Time"),
   localeText("notes", "Notes (Optional)", 3),
 ];
 
@@ -90,9 +98,10 @@ export default defineType({
   title: "Taiwan Market Entry Detail",
   type: "document",
   fields: [
+    // Label 改為 Title (EN)
     defineField({
       name: "title",
-      title: "Service Title (Legacy EN)",
+      title: "Title (EN)",
       type: "string",
       description:
         "Legacy English title used for slug. New multi-language fields below are preferred.",
@@ -329,6 +338,59 @@ export default defineType({
     localeString("accountingTaxTitle", "Table Title – Accounting & Tax"),
     localeString("valueAddedTitle", "Table Title – Value-Added Services"),
 
+    // ====== New column titles for 5 tables ======
+    defineField({
+      name: "subsidiaryColumns",
+      title: "Subsidiary Table – Column Titles (4 columns)",
+      type: "object",
+      fields: [
+        localeString("col1", "Column 1 Title"),
+        localeString("col2", "Column 2 Title"),
+        localeString("col3", "Column 3 Title"),
+        localeString("col4", "Column 4 Title"),
+      ],
+    }),
+    defineField({
+      name: "branchColumns",
+      title: "Branch Table – Column Titles (3 columns)",
+      type: "object",
+      fields: [
+        localeString("col1", "Column 1 Title"),
+        localeString("col2", "Column 2 Title"),
+        localeString("col3", "Column 3 Title"),
+      ],
+    }),
+    defineField({
+      name: "repOfficeColumns",
+      title: "Representative Office Table – Column Titles (3 columns)",
+      type: "object",
+      fields: [
+        localeString("col1", "Column 1 Title"),
+        localeString("col2", "Column 2 Title"),
+        localeString("col3", "Column 3 Title"),
+      ],
+    }),
+    defineField({
+      name: "accountingTaxColumns",
+      title: "Accounting & Tax Table – Column Titles (3 columns)",
+      type: "object",
+      fields: [
+        localeString("col1", "Column 1 Title"),
+        localeString("col2", "Column 2 Title"),
+        localeString("col3", "Column 3 Title"),
+      ],
+    }),
+    defineField({
+      name: "valueAddedColumns",
+      title: "Value-Added Services Table – Column Titles (3 columns)",
+      type: "object",
+      fields: [
+        localeString("col1", "Column 1 Title"),
+        localeString("col2", "Column 2 Title"),
+        localeString("col3", "Column 3 Title"),
+      ],
+    }),
+
     // ====== Table data ======
     defineField({
       name: "subsidiaryPlans",
@@ -340,6 +402,15 @@ export default defineType({
           name: "planRow",
           title: "Plan Row",
           fields: planRowFields,
+          // 預覽顯示 plan.en
+          preview: {
+            select: {
+              titleEn: "plan.en",
+            },
+            prepare({ titleEn }) {
+              return { title: titleEn || "Untitled" };
+            },
+          },
         }),
       ],
     }),
@@ -353,6 +424,15 @@ export default defineType({
           name: "branchRow",
           title: "Branch Row",
           fields: commonRowFields,
+          // 預覽顯示 name.en
+          preview: {
+            select: {
+              titleEn: "name.en",
+            },
+            prepare({ titleEn }) {
+              return { title: titleEn || "Untitled" };
+            },
+          },
         }),
       ],
     }),
@@ -366,6 +446,15 @@ export default defineType({
           name: "repOfficeRow",
           title: "Representative Office Row",
           fields: commonRowFields,
+          // 預覽顯示 name.en
+          preview: {
+            select: {
+              titleEn: "name.en",
+            },
+            prepare({ titleEn }) {
+              return { title: titleEn || "Untitled" };
+            },
+          },
         }),
       ],
     }),
@@ -379,6 +468,15 @@ export default defineType({
           name: "accountingTaxRow",
           title: "Accounting / Tax Row",
           fields: commonRowFields,
+          // 預覽顯示 name.en
+          preview: {
+            select: {
+              titleEn: "name.en",
+            },
+            prepare({ titleEn }) {
+              return { title: titleEn || "Untitled" };
+            },
+          },
         }),
       ],
     }),
@@ -392,6 +490,15 @@ export default defineType({
           name: "valueAddedRow",
           title: "Value-Added Row",
           fields: commonRowFields,
+          // 預覽顯示 name.en
+          preview: {
+            select: {
+              titleEn: "name.en",
+            },
+            prepare({ titleEn }) {
+              return { title: titleEn || "Untitled" };
+            },
+          },
         }),
       ],
     }),
@@ -401,9 +508,15 @@ export default defineType({
     defineField({ name: "ctaLink", title: "CTA Link", type: "url" }),
   ],
 
+  // Document list 預覽：優先 titleEn，其次 legacy title
   preview: {
-    select: { title: "titleZh", media: "coverImage" },
-    prepare({ title, media }) {
+    select: {
+      titleEn: "titleEn",
+      titleLegacy: "title",
+      media: "coverImage",
+    },
+    prepare({ titleEn, titleLegacy, media }) {
+      const title = titleEn || titleLegacy;
       return { title: title || "(Untitled Service)", media };
     },
   },

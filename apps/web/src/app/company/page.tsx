@@ -1,4 +1,3 @@
-// apps/web/src/app/company/page.tsx
 import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import Image from "next/image";
@@ -249,6 +248,11 @@ export default async function CompanyPage({
   const cPhotoAlt = coFounder?.photo?.alt ?? cName ?? "Co-Founder";
   const cBioBlocks = (coFounder as any)?.bioLong?.[lang] as SimpleBlock[] | undefined;
 
+  /* Representative message data */
+  const repBlocks = company?.repMessageLong as any as SimpleBlock[] | undefined;
+  const repShort = company?.repMessageShort;
+  const hasRepMessage = !!((repBlocks && repBlocks.length > 0) || repShort);
+
   return (
     <main className={`${TYPO.base} bg-[#1C3D5A] text-slate-100 tracking-[0.01em]`}>
       {/* Header：改用共用 NavigationServer，保持與其他頁一致 */}
@@ -352,8 +356,8 @@ export default async function CompanyPage({
         </div>
       </section>
 
-      {/* Leadership */}
-      {(fBioBlocks?.length || cBioBlocks?.length) && (
+      {/* Leadership + Representative Message + Founder Bio */}
+      {(fBioBlocks?.length || cBioBlocks?.length || hasRepMessage) && (
         <section className="py-12 md:py-14">
           <div className={container}>
             <h2 className={`${TYPO.h2} text-center`}>{leadershipLabel}</h2>
@@ -362,28 +366,58 @@ export default async function CompanyPage({
             </div>
             <div className="mx-auto mt-2 h-px w-12 bg-white/30" />
 
-            {/* Founder */}
-            {fBioBlocks?.length ? (
-              <div className="mt-7 grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6 items-stretch">
-                <div className="lg:col-span-2 h-full relative rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5">
-                  <Image
-                    src={isValidSrc(fPhoto) ? fPhoto! : "/logo.png"}
-                    alt={fPhotoAlt}
-                    fill
-                    sizes="(max-width:1024px) 100vw, 420px"
-                    className="object-cover object-[50%_12%]"
-                  />
-                  {(fTitle || fName) && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0D2436]/70 to-transparent p-3 text-sm text-white/90">
-                      <span className="font-medium">{fName}</span>
-                      {fTitle ? (
-                        <span className="ml-2 text-white/75">{fTitle}</span>
-                      ) : null}
-                    </div>
-                  )}
-                </div>
+            {/* 創業者照片 + 代表者訊息 + 創業者介紹 */}
+            <div className="mt-7 space-y-6">
+              {(isValidSrc(fPhoto) || hasRepMessage) && (
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6 items-stretch">
+                  {/* 照片 */}
+                  <div className="lg:col-span-2 h-full relative rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5">
+                    <Image
+                      src={isValidSrc(fPhoto) ? fPhoto! : "/logo.png"}
+                      alt={fPhotoAlt}
+                      fill
+                      sizes="(max-width:1024px) 100vw, 420px"
+                      className="object-cover object-[50%_12%]"
+                    />
+                    {(fTitle || fName) && (
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0D2436]/70 to-transparent p-3 text-sm text-white/90">
+                        <span className="font-medium">{fName}</span>
+                        {fTitle ? (
+                          <span className="ml-2 text-white/75">{fTitle}</span>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="lg:col-span-3 h-full rounded-2xl bg-white/5 border border-white/15 p-4 md:p-5 shadow-lg">
+                  {/* 代表者訊息 */}
+                  <div className="lg:col-span-3 h-full rounded-2xl bg-white/5 border border-white/15 p-4 md:p-5 shadow-lg">
+                    <div className={`${TYPO.h3}`}>
+                      <HeadingIcon icon={IdCard}>{repLabel}</HeadingIcon>
+                    </div>
+                    <div className="mt-3">
+                      <RepMessageBlocks blocks={repBlocks} />
+                    </div>
+
+                    {repShort ? (
+                      <div
+                        className="mt-4 rounded-xl bg-white/7 p-3.5 border border-white/10 text-slate-200 text-[16px] leading-8 shadow-inner"
+                        style={{
+                          fontFamily:
+                            "'Bradley Hand', 'Segoe Script', 'Comic Sans MS', 'DFKai-SB', 'KaiTi', 'Yu Mincho', cursive",
+                          fontWeight: 500,
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {repShort}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {/* 創業者介紹（放在照片＋訊息下面） */}
+              {fBioBlocks?.length ? (
+                <div className={`${card} p-4 md:p-5`}>
                   <div className={`${TYPO.h3}`}>
                     <HeadingIcon icon={UserRound}>{founderBioLabel}</HeadingIcon>
                   </div>
@@ -391,15 +425,15 @@ export default async function CompanyPage({
                     <PortableParagraphs blocks={fBioBlocks} lang={lang} />
                   </div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
 
             {/* Co-Founder */}
             {cBioBlocks?.length ? (
               <>
                 <div className={thickDivider} />
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6 items-stretch">
-                  <div className="lg:col-span-2 order-last lg:order-first rounded-2xl bg白/5 border border-white/15 p-4 md:p-5 shadow-lg">
+                  <div className="lg:col-span-2 order-last lg:order-first rounded-2xl bg-white/5 border border-white/15 p-4 md:p-5 shadow-lg">
                     <div className={`${TYPO.h3}`}>
                       <HeadingIcon icon={UserRound}>{cofounderBioLabel}</HeadingIcon>
                     </div>
@@ -425,37 +459,6 @@ export default async function CompanyPage({
                 </div>
               </>
             ) : null}
-          </div>
-        </section>
-      )}
-
-      {/* Representative Message */}
-      {(company?.repMessageLong || company?.repMessageShort) && (
-        <section className="py-12 md:py-14">
-          <div className={container}>
-            <h2 className={`${TYPO.h2} text-center`}>{repLabel}</h2>
-            <div className={`${TYPO.smallCaps} text-slate-300 text-center mt-1`}>
-              MESSAGE
-            </div>
-            <div className="mx-auto mt-2 h-px w-12 bg白/30" />
-
-            <div className={`${card} p-4 md:p-5 mt-7`}>
-              <RepMessageBlocks blocks={company?.repMessageLong as any} />
-
-              {company?.repMessageShort ? (
-                <div
-                  className="mt-4 rounded-xl bg-white/7 p-3.5 border border-white/10 text-slate-200 text-[16px] leading-8 shadow-inner"
-                  style={{
-                    fontFamily:
-                      "'Bradley Hand', 'Segoe Script', 'Comic Sans MS', 'DFKai-SB', 'KaiTi', 'Yu Mincho', cursive",
-                    fontWeight: 500,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {company.repMessageShort}
-                </div>
-              ) : null}
-            </div>
           </div>
         </section>
       )}
@@ -492,7 +495,7 @@ export default async function CompanyPage({
                 {!!cinfo.representative && (
                   <>
                     <div className="text-slate-300 text-[14px] flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg白/10">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
                         <IdCard className="h-[14px] w-[14px]" />
                       </span>
                       {lang === "jp"
@@ -502,14 +505,14 @@ export default async function CompanyPage({
                         : "Representative"}
                     </div>
                     <div className="sm:col-span-2">{cinfo.representative}</div>
-                    <div className="sm:col-span-3 pt-6 mt-6 border-t border白/10" />
+                    <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
                 )}
 
                 {Array.isArray(cinfo.activities) && cinfo.activities.length > 0 && (
                   <>
                     <div className="text-slate-300 text-[14px] flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg白/10">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
                         <ListChecks className="h-[14px] w-[14px]" />
                       </span>
                       {lang === "jp"
@@ -525,14 +528,14 @@ export default async function CompanyPage({
                         ))}
                       </ul>
                     </div>
-                    <div className="sm:col-span-3 pt-6 mt-6 border-t border白/10" />
+                    <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
                 )}
 
                 {!!cinfo.addressJapan && (
                   <>
                     <div className="text-slate-300 text-[14px] flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg白/10">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
                         <MapPin className="h-[14px] w-[14px]" />
                       </span>
                       {lang === "jp"
@@ -542,14 +545,14 @@ export default async function CompanyPage({
                         : "Japan Address"}
                     </div>
                     <div className="sm:col-span-2">{cinfo.addressJapan}</div>
-                    <div className="sm:col-span-3 pt-6 mt-6 border-t border白/10" />
+                    <div className="sm:col-span-3 pt-6 mt-6 border-t border-white/10" />
                   </>
                 )}
 
                 {!!cinfo.addressTaiwan && (
                   <>
                     <div className="text-slate-300 text-[14px] flex items-center gap-2">
-                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg白/10">
+                      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
                         <MapPin className="h-[14px] w-[14px]" />
                       </span>
                       {lang === "jp"
