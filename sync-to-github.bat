@@ -65,7 +65,7 @@ git add .
 git commit -m "%msg%"
 
 if errorlevel 1 (
-    echo   ! No changes detected. Continuing to push...
+    echo   [INFO] No changes detected. Continuing to push...
 ) else (
     echo   ✔ Commit created
 )
