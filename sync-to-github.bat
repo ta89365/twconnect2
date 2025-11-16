@@ -90,7 +90,7 @@ echo ======================================================
 echo.
 
 start https://vercel.com/twconnects-ea2981af/~/deployments
-start https://github.com/twconnects/twconnect2
+start https://github.com/t89365/twconnect2
 pause
 goto End
 
