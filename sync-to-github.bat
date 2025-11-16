@@ -4,14 +4,14 @@ title TWConnect2 - GitHub Auto Sync
 setlocal EnableDelayedExpansion
 
 REM ======================================================
-REM  TWConnect2 - GitHub Auto Sync (Enhanced v2)
+REM  TWConnect2 - GitHub Auto Sync (Enhanced v3)
 REM  Author: Ben Huang
-REM  Description: Auto add / commit / push + status messages
+REM  Description: Auto add / commit / push + open Vercel + GitHub
 REM ======================================================
 
 echo.
 echo ======================================================
-echo     TWConnect2 Git Sync Tool  (Enhanced v2)
+echo     TWConnect2 Git Sync Tool  (Enhanced v3)
 echo ======================================================
 echo.
 
@@ -85,11 +85,12 @@ REM Done
 REM ------------------------------------------------------
 echo ======================================================
 echo   ✔ SYNC COMPLETE — Branch pushed: !BRANCH!
-echo   Opening Vercel Deployment page...
+echo   Opening Vercel + GitHub...
 echo ======================================================
 echo.
 
 start https://vercel.com/twconnects-ea2981af/~/deployments
+start https://github.com/twconnects/twconnect2
 pause
 goto End
 
