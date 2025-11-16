@@ -138,24 +138,28 @@ export default function CookieBanner() {
             </p>
 
             <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+              {/* Manage 按鈕：淺底色 深字，加邊框 */}
               <button
                 onClick={() => setOpen(true)}
-                className="w-full sm:w-auto text-center sm:text-left px-3 py-2 text-xs sm:text-sm underline underline-offset-4 font-medium"
+                className="w-full sm:w-auto text-center sm:text-left px-4 py-2 text-sm font-medium rounded-lg border bg-gray-50 text-gray-800 hover:bg-gray-100"
+                style={{ borderColor: "rgba(0,0,0,0.15)" }}
               >
                 {t.manage}
               </button>
 
+              {/* Reject 按鈕：白底 深字，加邊框 */}
               <button
                 onClick={rejectNonEssential}
-                className="w-full sm:w-auto text-center px-4 py-2 rounded-lg border font-medium text-xs sm:text-sm"
-                style={{ borderColor: "rgba(0,0,0,0.15)" }}
+                className="w-full sm:w-auto text-center px-4 py-2 rounded-lg border font-medium text-sm text-gray-800 bg-white hover:bg-gray-50"
+                style={{ borderColor: "rgba(0,0,0,0.2)" }}
               >
                 {t.reject}
               </button>
 
+              {/* Accept all：維持品牌藍底 白字 */}
               <button
                 onClick={acceptAll}
-                className="w-full sm:w-auto text-center px-4 py-2 rounded-lg text-white font-medium text-xs sm:text-sm"
+                className="w-full sm:w-auto text-center px-4 py-2 rounded-lg text-white font-medium text-sm"
                 style={{ backgroundColor: BRAND_BLUE }}
               >
                 {t.accept}
