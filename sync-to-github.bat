@@ -4,103 +4,136 @@ title TWConnect2 - GitHub Auto Sync
 setlocal EnableDelayedExpansion
 
 REM ======================================================
-REM  TWConnect2 - GitHub Auto Sync
+REM  TWConnect2 - GitHub Auto Sync (Enhanced v2)
 REM  Author: Ben Huang
-REM  Description: Auto add / commit / push and open Vercel deployments
+REM  Description: Auto add / commit / push + status messages
 REM ======================================================
 
+echo.
+echo ======================================================
+echo     TWConnect2 Git Sync Tool  (Enhanced v2)
+echo ======================================================
+echo.
+
+REM ------------------------------------------------------
 REM Go to project folder
+REM ------------------------------------------------------
+echo [STEP 1] Checking project folder...
 cd /d "C:\Users\ta893\twconnect2"
 if errorlevel 1 goto NoProject
+echo   ✔ Project folder OK
+echo.
 
+REM ------------------------------------------------------
 REM Check .git exists
+REM ------------------------------------------------------
+echo [STEP 2] Checking Git repository...
 if not exist ".git" goto NoGit
-
-echo.
-echo ===========================
-echo   TWConnect2 Git Sync Tool
-echo ===========================
+echo   ✔ .git exists
 echo.
 
-REM Get current branch (stable way)
+REM ------------------------------------------------------
+REM Detect current branch
+REM ------------------------------------------------------
+echo [STEP 3] Detecting current branch...
 for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%b"
 
 if "%BRANCH%"=="" goto NoBranch
-
-echo Current branch: !BRANCH!
+echo   ✔ Current branch detected: !BRANCH!
 echo.
 
-REM ---- Safety: warn if on main branch ----
+REM ------------------------------------------------------
+REM Warn for main branch
+REM ------------------------------------------------------
 if /I "%BRANCH%"=="main" goto WarnMain
 
-REM ---- Ask commit message and continue ----
+REM ------------------------------------------------------
+REM Ask commit message
+REM ------------------------------------------------------
 :AskMessage
-set /p msg=Commit message (press Enter to use default): 
+echo [STEP 4] Preparing commit
+set /p msg=Enter commit message (Enter for default): 
 if "%msg%"=="" set "msg=update from local !BRANCH!"
-
+echo   ✔ Commit message ready: "%msg%"
 echo.
-echo ===========================
-echo Committing changes...
-echo ===========================
 
+REM ------------------------------------------------------
+REM Commit changes
+REM ------------------------------------------------------
+echo [STEP 5] Running git add / commit...
 git add .
 git commit -m "%msg%"
 
 if errorlevel 1 (
-    echo.
-    echo [INFO] No changes to commit. Will still try to push current branch.
-    echo.
+    echo   ! No changes detected. Continuing to push...
+) else (
+    echo   ✔ Commit created
 )
-
 echo.
-echo ===========================
-echo Pushing to GitHub (branch: !BRANCH!)...
-echo ===========================
 
+REM ------------------------------------------------------
+REM Push branch
+REM ------------------------------------------------------
+echo [STEP 6] Pushing branch "!BRANCH!" to GitHub...
 git push origin !BRANCH!
 if errorlevel 1 goto PushError
+echo   ✔ Push successful
+echo.
 
+REM ------------------------------------------------------
+REM Done
+REM ------------------------------------------------------
+echo ======================================================
+echo   ✔ SYNC COMPLETE — Branch pushed: !BRANCH!
+echo   Opening Vercel Deployment page...
+echo ======================================================
 echo.
-echo Sync successful! Pushed to GitHub (branch: !BRANCH!).
-echo ===========================
+
 start https://vercel.com/twconnects-ea2981af/~/deployments
-echo.
 pause
 goto End
 
-REM ===========================
-REM         Error labels
-REM ===========================
+
+REM ======================================================
+REM                    ERROR HANDLERS
+REM ======================================================
+
 :NoProject
-echo [ERROR] Project folder not found: C:\Users\ta893\twconnect2
-echo Check the path in this .bat file.
+echo.
+echo ❌ ERROR: Project folder not found.
+echo Path: C:\Users\ta893\twconnect2
 echo.
 pause
 goto End
 
 :NoGit
-echo [ERROR] .git folder not found. Is this a git repository?
+echo.
+echo ❌ ERROR: .git folder not found.
+echo This folder is not a Git repository.
 echo.
 pause
 goto End
 
 :NoBranch
-echo [ERROR] Failed to detect current branch. Check git installation / PATH.
+echo.
+echo ❌ ERROR: Failed to detect current Git branch.
+echo Check Git installation or PATH setting.
 echo.
 pause
 goto End
 
 :WarnMain
-echo WARNING: You are on the main branch (production).
-echo This branch is usually for production deploy only.
 echo.
-set /p CONFIRM=Type YES to push to main, or anything else to cancel: 
+echo ⚠ WARNING: You are on MAIN (production) branch.
+echo This branch deploys to the LIVE WEBSITE.
+echo.
+set /p CONFIRM=Type YES to push to main, anything else to cancel: 
 if /I not "%CONFIRM%"=="YES" goto CancelMain
 goto AskMessage
 
 :CancelMain
 echo.
-echo Operation cancelled. Please switch to dev branch and run this tool again.
+echo Cancelled. Switch to dev branch and re-run this tool.
 echo Suggested command: git switch dev
 echo.
 pause
@@ -108,7 +141,7 @@ goto End
 
 :PushError
 echo.
-echo [ERROR] Push failed. Please check network or authentication.
+echo ❌ ERROR: Push failed. Check your network or Git login.
 echo.
 pause
 goto End
