@@ -1,7 +1,7 @@
 // apps/web/src/components/CookieBanner.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ConsentContext } from "./ConsentProvider";
 
@@ -9,16 +9,22 @@ const BRAND_BLUE = "#1C3D5A";
 
 type Lang = "en" | "jp" | "zh" | "zh-cn";
 
-const copy: Record<Lang, {
-  line: string;
-  manage: string;
-  reject: string;
-  accept: string;
-  modalTitle: string;
-  aLabel: string; aDesc: string;
-  adLabel: string; adDesc: string;
-  close: string; save: string;
-}> = {
+const copy: Record<
+  Lang,
+  {
+    line: string;
+    manage: string;
+    reject: string;
+    accept: string;
+    modalTitle: string;
+    aLabel: string;
+    aDesc: string;
+    adLabel: string;
+    adDesc: string;
+    close: string;
+    save: string;
+  }
+> = {
   en: {
     line: "We use cookies to make our site work and to improve analytics and advertising when you allow it. You can change your choice anytime in Privacy settings.",
     manage: "Manage preferences",
@@ -84,81 +90,73 @@ function normalizeLangToken(raw?: string | null): Lang | null {
 }
 
 export default function CookieBanner() {
-  const { consent, hasMadeChoice, acceptAll, rejectNonEssential, saveCustom } = React.useContext(ConsentContext);
+  const { consent, hasMadeChoice, acceptAll, rejectNonEssential, saveCustom } =
+    React.useContext(ConsentContext);
+
   const [open, setOpen] = useState(false);
   const [analytics, setAnalytics] = useState(consent.analytics);
   const [ads, setAds] = useState(consent.ads);
 
+  // 避免 SSR / 初次掛載時閃爍：等到真正 mounted 再決定要不要顯示
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const searchParams = useSearchParams();
 
   const lang: Lang = useMemo(() => {
-    // 1) 先看 ?lang=
     const fromQuery = normalizeLangToken(searchParams.get("lang"));
     if (fromQuery) return fromQuery;
 
-    // 2) 再看 <html lang="">
     if (typeof document !== "undefined") {
-      const fromHtml = normalizeLangToken(document.documentElement.getAttribute("lang"));
+      const fromHtml = normalizeLangToken(
+        document.documentElement.getAttribute("lang"),
+      );
       if (fromHtml) return fromHtml;
     }
 
-    // 3) 最後回退英文
     return "en";
   }, [searchParams]);
 
   const t = copy[lang] ?? copy.en;
 
-  if (hasMadeChoice) return null;
+  // 還沒 mounted 或已經做過選擇時，都不要畫出 Banner，避免「跳出又閃退」
+  if (!mounted || hasMadeChoice) return null;
 
   return (
     <>
-      {/* 非滿版：置中卡片，寬度貼內容長度；避免換行與水平捲動 */}
-      <div className="fixed inset-x-0 bottom-4 z-[1000] flex justify-center px-3">
+      {/* Mobile: 貼底全寬 / Desktop: 置中卡片 */}
+      <div className="fixed inset-x-0 bottom-0 z-[1000] px-3 pb-3 sm:bottom-4 sm:pb-0 flex justify-center">
         <div
-          className="rounded-2xl border shadow-xl bg-white"
-          style={{
-            borderColor: "rgba(0,0,0,0.08)",
-            maxWidth: "min(100vw - 24px, 1400px)",
-            width: "fit-content",
-          }}
+          className="w-full max-w-5xl rounded-2xl border shadow-xl bg-white"
+          style={{ borderColor: "rgba(0,0,0,0.08)" }}
         >
-          <div className="px-5 py-4 md:px-6 md:py-5">
-            <div
-              className="text-gray-800"
-              style={{
-                whiteSpace: "nowrap",
-                fontSize: "clamp(12px, 1.4vw, 16px)",
-                lineHeight: 1.6,
-              }}
-            >
+          <div className="px-4 py-3 sm:px-5 sm:py-4 md:px-6 md:py-5">
+            <p className="text-xs sm:text-sm md:text-base text-gray-800 leading-relaxed">
               {t.line}
-            </div>
+            </p>
 
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+            <div className="mt-3 sm:mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <button
                 onClick={() => setOpen(true)}
-                className="px-3 py-2 text-sm underline underline-offset-4 font-medium"
-                style={{ fontSize: "clamp(12px, 1.2vw, 14px)" }}
+                className="w-full sm:w-auto text-center sm:text-left px-3 py-2 text-xs sm:text-sm underline underline-offset-4 font-medium"
               >
                 {t.manage}
               </button>
+
               <button
                 onClick={rejectNonEssential}
-                className="px-4 py-2 rounded-lg border font-medium"
-                style={{
-                  borderColor: "rgba(0,0,0,0.15)",
-                  fontSize: "clamp(12px, 1.2vw, 14px)",
-                }}
+                className="w-full sm:w-auto text-center px-4 py-2 rounded-lg border font-medium text-xs sm:text-sm"
+                style={{ borderColor: "rgba(0,0,0,0.15)" }}
               >
                 {t.reject}
               </button>
+
               <button
                 onClick={acceptAll}
-                className="px-4 py-2 rounded-lg text-white font-medium"
-                style={{
-                  backgroundColor: BRAND_BLUE,
-                  fontSize: "clamp(12px, 1.2vw, 14px)",
-                }}
+                className="w-full sm:w-auto text-center px-4 py-2 rounded-lg text-white font-medium text-xs sm:text-sm"
+                style={{ backgroundColor: BRAND_BLUE }}
               >
                 {t.accept}
               </button>
@@ -169,39 +167,68 @@ export default function CookieBanner() {
 
       {/* 偏好管理彈層 */}
       {open && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4" aria-modal="true" role="dialog">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-2xl border p-6">
-            <h3 className="text-lg font-semibold" style={{ color: BRAND_BLUE }}>
+        <div
+          className="fixed inset-0 z-[1100] flex items-center justify-center p-3 sm:p-4"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setOpen(false)}
+          />
+          <div className="relative w-full max-w-xl max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl border p-5 sm:p-6">
+            <h3
+              className="text-base sm:text-lg font-semibold"
+              style={{ color: BRAND_BLUE }}
+            >
               {t.modalTitle}
             </h3>
 
             <div className="mt-4 space-y-4">
-              <fieldset className="border rounded-lg p-4">
-                <legend className="px-1 text-sm font-semibold">{t.aLabel}</legend>
-                <p className="text-sm text-gray-600 mb-2">{t.aDesc}</p>
+              <fieldset className="border rounded-lg p-3 sm:p-4">
+                <legend className="px-1 text-sm font-semibold">
+                  {t.aLabel}
+                </legend>
+                <p className="text-xs sm:text-sm text-gray-600 mb-2">
+                  {t.aDesc}
+                </p>
                 <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" checked={analytics} onChange={(e) => setAnalytics(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={analytics}
+                    onChange={(e) => setAnalytics(e.target.checked)}
+                  />
                   <span className="text-sm">On</span>
                 </label>
               </fieldset>
 
-              <fieldset className="border rounded-lg p-4">
-                <legend className="px-1 text-sm font-semibold">{t.adLabel}</legend>
-                <p className="text-sm text-gray-600 mb-2">{t.adDesc}</p>
+              <fieldset className="border rounded-lg p-3 sm:p-4">
+                <legend className="px-1 text-sm font-semibold">
+                  {t.adLabel}
+                </legend>
+                <p className="text-xs sm:text-sm text-gray-600 mb-2">
+                  {t.adDesc}
+                </p>
                 <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" checked={ads} onChange={(e) => setAds(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={ads}
+                    onChange={(e) => setAds(e.target.checked)}
+                  />
                   <span className="text-sm">On</span>
                 </label>
               </fieldset>
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-2">
-              <button className="px-3 py-2 text-sm underline" onClick={() => setOpen(false)}>
+            <div className="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
+              <button
+                className="px-3 py-2 text-xs sm:text-sm underline"
+                onClick={() => setOpen(false)}
+              >
                 {t.close}
               </button>
               <button
-                className="px-4 py-2 rounded-lg text-white font-medium"
+                className="px-4 py-2 rounded-lg text-white font-medium text-xs sm:text-sm"
                 style={{ backgroundColor: BRAND_BLUE }}
                 onClick={() => {
                   saveCustom({ analytics, ads });
