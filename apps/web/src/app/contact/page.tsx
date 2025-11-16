@@ -186,7 +186,7 @@ function labelByLang(key: string, lang: Lang): string {
     "Type of Establishment": { zh: "設立型態", jp: "設立形態", en: "Type of Establishment" },
     "Parent Company Country": {
       zh: "母公司設立國",
-      jp: "親公司の登録国",
+      jp: "親会社の登録国",
       en: "Parent Company Country",
     },
 
@@ -791,9 +791,30 @@ export default async function Page({
 
       {/* ========================== Radio 選取強調樣式（含手機） ========================== */}
       <style>{`
+        /* 統一這一頁所有 radio 外觀，避免各手機系統長得不一樣 */
+        [data-contact-page] input[type="radio"] {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 1.05rem;
+          height: 1.05rem;
+          border-radius: 9999px;
+          border: 2px solid rgba(255, 255, 255, 0.7);
+          background-color: transparent;
+          position: relative;
+          vertical-align: middle;
+        }
+
         [data-contact-page] input[type="radio"]:checked {
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
-          border-color: rgba(255, 255, 255, 0.95);
+          background-color: #ffffff;
+          border-color: #ffffff;
+          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+        }
+
+        /* 有被選取的那一顆，連同文字整塊都加一點淡白底 */
+        [data-contact-page] label:has(> input[type="radio"]:checked) {
+          background-color: rgba(255, 255, 255, 0.12);
+          border-radius: 9999px;
+          padding-inline: 0.35rem;
         }
       `}</style>
     </div>
@@ -875,7 +896,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
           <CtaLink
             href="/companyStrengthsAndFAQ"
             lang={lang}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text白 ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
           >
             <HelpIcon className="h-5 w-5" />
             View FAQ
