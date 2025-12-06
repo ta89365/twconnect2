@@ -19,8 +19,8 @@
       "@twconnect/cms>@types/react": "18.3.26",
       "@twconnect/cms>@types/react-dom": "18.3.7",
 
-      "web>react": "19.1.0",
-      "web>react-dom": "19.1.0",
+      "web>react": "19.1.2",
+      "web>react-dom": "19.1.2",
       "web>@types/react": "19.2.2",
       "web>@types/react-dom": "19.2.2",
 
