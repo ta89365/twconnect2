@@ -66,7 +66,11 @@ function resolveLang(sp?: { lang?: string | string[] } | null): Lang {
 }
 
 function linkWithLang(href: string, lang: Lang): string {
-  if (/^(https?:)?\/\//.test(href) || href.startsWith("mailto:") || href.startsWith("tel:"))
+  if (
+    /^(https?:)?\/\//.test(href) ||
+    href.startsWith("mailto:") ||
+    href.startsWith("tel:")
+  )
     return href;
   return href.includes("?") ? `${href}&lang=${lang}` : `${href}?lang=${lang}`;
 }
@@ -116,7 +120,12 @@ type ContactDoc = {
     title?: string;
     subtitle?: string;
     image?: { url?: string; alt?: string; lqip?: string };
-    ctas?: { label?: string; kind?: string; href?: string | null; recommended?: boolean }[];
+    ctas?: {
+      label?: string;
+      kind?: string;
+      href?: string | null;
+      recommended?: boolean;
+    }[];
   };
   info?: { languages?: string; businessHours?: string; serviceAreas?: string };
   faqTopics?: string[];
@@ -136,14 +145,22 @@ type ContactDoc = {
 function labelByLang(key: string, lang: Lang): string {
   const dict: Record<string, { zh: string; jp: string; en: string }> = {
     Languages: { zh: "服務語言", jp: "対応言語", en: "Languages" },
-    "Service areas": { zh: "服務範圍", jp: "サービス対象地域", en: "Service Areas" },
+    "Service areas": {
+      zh: "服務範圍",
+      jp: "サービス対象地域",
+      en: "Service Areas",
+    },
     "Business hours": { zh: "營業時間", jp: "営業時間", en: "Business Hours" },
     "Frequently asked topics": {
       zh: "常見主題",
       jp: "よくあるトピック",
       en: "Frequently Asked Topics",
     },
-    "Contact form": { zh: "線上聯絡表單", jp: "お問い合わせフォーム", en: "Contact Form" },
+    "Contact form": {
+      zh: "線上聯絡表單",
+      jp: "お問い合わせフォーム",
+      en: "Contact Form",
+    },
 
     // Fields
     "Your name": { zh: "您的姓名", jp: "お名前", en: "Your Name" },
@@ -155,8 +172,16 @@ function labelByLang(key: string, lang: Lang): string {
     Subject: { zh: "主旨", jp: "件名", en: "Subject" },
     "Please select": { zh: "請選擇", jp: "選択してください", en: "Please select" },
 
-    "Preferred contact": { zh: "偏好聯絡方式", jp: "希望連絡方法", en: "Preferred Contact" },
-    "Preferred language": { zh: "偏好語言", jp: "希望言語", en: "Preferred Language" },
+    "Preferred contact": {
+      zh: "偏好聯絡方式",
+      jp: "希望連絡方法",
+      en: "Preferred Contact",
+    },
+    "Preferred language": {
+      zh: "偏好語言",
+      jp: "希望言語",
+      en: "Preferred Language",
+    },
 
     Summary: { zh: "需求摘要", jp: "概要", en: "Summary" },
     Attachment: { zh: "附件", jp: "添付ファイル", en: "Attachment" },
@@ -183,14 +208,22 @@ function labelByLang(key: string, lang: Lang): string {
 
     // Extra new fields
     "Client Type": { zh: "型態", jp: "顧客区分", en: "Client Type" },
-    "Type of Establishment": { zh: "設立型態", jp: "設立形態", en: "Type of Establishment" },
+    "Type of Establishment": {
+      zh: "設立型態",
+      jp: "設立形態",
+      en: "Type of Establishment",
+    },
     "Parent Company Country": {
       zh: "母公司設立國",
       jp: "親会社の登録国",
       en: "Parent Company Country",
     },
 
-    "View services": { zh: "查看服務內容", jp: "サービス一覧を見る", en: "View services" },
+    "View services": {
+      zh: "查看服務內容",
+      jp: "サービス一覧を見る",
+      en: "View services",
+    },
   };
   return dict[key]?.[lang] ?? dict[key]?.zh ?? key;
 }
@@ -275,7 +308,7 @@ export default async function Page({
 
   // preferredContactOptions：Sanity 欄位過濾空字串
   const preferredContactOptions: string[] = Array.isArray(
-    form.preferredContactOptions
+    form.preferredContactOptions,
   )
     ? form.preferredContactOptions
         .map((s) => (s ?? "").trim())
@@ -309,7 +342,10 @@ export default async function Page({
               priority
               style={{ objectPosition: heroObjectPosition() }}
             />
-            <div className="absolute inset-0" style={{ background: HERO_OVERLAY }}></div>
+            <div
+              className="absolute inset-0"
+              style={{ background: HERO_OVERLAY }}
+            ></div>
             <div className="absolute inset-0 bg-black/40 sm:bg-black/35 md:bg-black/25"></div>
           </>
         )}
@@ -501,7 +537,11 @@ export default async function Page({
                       </option>
 
                       {form.subjectOptions.map((s, i) => (
-                        <option key={`sub-${i}`} value={s} className="bg-white text-black">
+                        <option
+                          key={`sub-${i}`}
+                          value={s}
+                          className="bg-white text-black"
+                        >
                           {s}
                         </option>
                       ))}
@@ -654,15 +694,15 @@ export default async function Page({
         </>
       )}
 
-      {/* ========================== 動態顯示 Script ========================== */}
+      {/* ========================== 動態顯示 Script（改成和 ContactForm.tsx 同邏輯） ========================== */}
       <Script id="contact-form-dynamics" strategy="afterInteractive">{`
         (function () {
-          // 會觸發 A 型態出現的 Subject 文案
-          var TRIGGER_SUBJECTS = new Set([
+          // 和 ContactForm.tsx 同一組 key
+          var TRIGGER_SUBJECT_KEYS = [
             "台湾進出支援",
             "台灣設立支援",
             "Taiwan Market Entry Support"
-          ]);
+          ];
 
           function qsa(selector) {
             return Array.prototype.slice.call(document.querySelectorAll(selector));
@@ -673,7 +713,15 @@ export default async function Page({
             el.classList.toggle("hidden", !show);
           }
 
-          // 從整個 form 取得 name="subject" 的值，不管是 select 還是別的控件
+          // 判斷是否屬於「台灣業務」主旨：包含關鍵字就算
+          function isTaiwanSubject(raw) {
+            var v = String(raw || "").trim();
+            if (!v) return false;
+            if (TRIGGER_SUBJECT_KEYS.indexOf(v) !== -1) return true;
+            return TRIGGER_SUBJECT_KEYS.some(function (k) { return v.indexOf(k) !== -1; });
+          }
+
+          // 從整個 form 取得 name="subject" 的值
           function getSubjectValue() {
             var form = document.getElementById("contact-form");
             if (!form || !form.elements) return "";
@@ -727,7 +775,7 @@ export default async function Page({
 
           function updateVisibility() {
             var subjectValue = getSubjectValue();
-            var showClientType = TRIGGER_SUBJECTS.has(subjectValue);
+            var showClientType = isTaiwanSubject(subjectValue);
             var isCorp = isClientTypeCorp();
             var showCorpExtra = showClientType && isCorp;
 
@@ -847,7 +895,8 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
           We will get back to you within 1–2 business days.
         </p>
 
-        {Array.isArray(doc?.success?.message) && doc.success?.message?.length > 0 ? (
+        {Array.isArray(doc?.success?.message) &&
+        doc.success?.message?.length > 0 ? (
           <div className="prose prose-invert mt-5 rounded-2xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm sm:mt-6 sm:p-5">
             <PortableText value={doc.success.message} />
           </div>
@@ -856,19 +905,22 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
             <li className="flex items-start gap-3">
               <MailIcon className="mt-[2px] h-5 w-5 opacity-90" />
               <span className="text-sm opacity-95">
-                A confirmation email has been sent. If you do not see it, please check your spam folder.
+                A confirmation email has been sent. If you do not see it, please
+                check your spam folder.
               </span>
             </li>
             <li className="flex items-start gap-3">
               <CalendarIcon className="mt-[2px] h-5 w-5 opacity-90" />
               <span className="text-sm opacity-95">
-                If you proposed a time, our team will confirm availability or suggest alternatives.
+                If you proposed a time, our team will confirm availability or
+                suggest alternatives.
               </span>
             </li>
             <li className="flex items-start gap-3">
               <ShieldIcon className="mt-[2px] h-5 w-5 opacity-90" />
               <span className="text-sm opacity-95">
-                Your information is kept confidential and used only for this inquiry.
+                Your information is kept confidential and used only for this
+                inquiry.
               </span>
             </li>
           </ul>
@@ -896,7 +948,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
           <CtaLink
             href="/companyStrengthsAndFAQ"
             lang={lang}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text白 ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
           >
             <HelpIcon className="h-5 w-5" />
             View FAQ
@@ -949,7 +1001,12 @@ function InfoCard({ title, body }: { title: string; body?: string }) {
 function CheckIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+      <path
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M20 6L9 17l-5-5"
+      />
     </svg>
   );
 }
