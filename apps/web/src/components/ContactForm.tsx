@@ -191,7 +191,6 @@ const TRIGGER_SUBJECT_KEYS = [
   "Taiwan Market Entry Support",
 ];
 
-// 判斷是否屬於「台灣業務」主旨：包含關鍵字就算
 function isTaiwanSubject(raw: string): boolean {
   const v = raw.trim();
   if (!v) return false;
@@ -347,7 +346,6 @@ export function RadioGroupField(props: {
         {required ? " *" : ""}
       </span>
 
-      {/* 這顆 hidden input 專門用來吃 required 與顯示錯誤訊息 */}
       <input
         ref={hiddenRef}
         className="peer sr-only"
@@ -426,7 +424,7 @@ export function ConsentCheckbox({ lang }: { lang: Lang }) {
   );
 }
 
-/* ========== 主表單 ========== */
+/* ========== 主表單（小表單） ========== */
 export default function ContactForm({
   lang = "zh",
   subjectOptions,
@@ -447,7 +445,6 @@ export default function ContactForm({
 
   const [fileText, setFileText] = React.useState<string>("");
 
-  // 動態欄位 state
   const [subjectValue, setSubjectValue] = React.useState("");
   const [clientTypeValue, setClientTypeValue] = React.useState("");
   const [establishmentValue, setEstablishmentValue] = React.useState("");
@@ -482,21 +479,47 @@ export default function ContactForm({
     applyTimezoneToForm();
   }, []);
 
-  // ===== Turnstile：全域 callback 與 submit 攔截 =====
+  // ===== Turnstile：全域 callback 與 submit 攔截（小表單專用） =====
   React.useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     if (typeof window === "undefined") return;
 
     const form = formRef.current;
-    const widget = document.querySelector<HTMLElement>(".cf-turnstile-mini");
+    const widget = turnstileRef.current;
     if (!form || !widget) return;
 
+    // 成功時，寫入 hidden input 然後真正送出
+    window.onTurnstileSuccessMini = (token: string) => {
+      const currentForm = formRef.current;
+      if (!currentForm) return;
+
+      let tokenInput =
+        currentForm.querySelector<HTMLInputElement>(
+          'input[name="cf-turnstile-response"]'
+        );
+      if (!tokenInput) {
+        tokenInput = document.createElement("input");
+        tokenInput.type = "hidden";
+        tokenInput.name = "cf-turnstile-response";
+        currentForm.appendChild(tokenInput);
+      }
+      tokenInput.value = token;
+      currentForm.submit();
+    };
+
+    window.onTurnstileErrorMini = () => {
+      console.warn("Turnstile error (mini form)");
+    };
+
+    window.onTurnstileTimeoutMini = () => {
+      console.warn("Turnstile timeout (mini form)");
+    };
+
     function handleSubmit(e: Event) {
-      // 用這次 submit 的表單當成 form
       const formEl = e.currentTarget as HTMLFormElement | null;
       if (!formEl) return;
 
-      // 如果已經有 token，就直接讓它送出，不要再叫 Turnstile
+      // 如果已經有 token（例如前一次驗證過），就直接送出
       const tokenInput = formEl.querySelector<HTMLInputElement>(
         'input[name="cf-turnstile-response"]'
       );
@@ -507,11 +530,10 @@ export default function ContactForm({
       if (typeof window.turnstile !== "undefined") {
         e.preventDefault();
         try {
-          // Invisible widget，請求驗證
           window.turnstile.execute(widget);
         } catch (err) {
           console.error("Turnstile execute error (mini form)", err);
-          // 故障時不要卡住使用者，直接送出
+          // 極端狀況（Turnstile 壞掉），不要完全卡死使用者
           formEl.submit();
         }
       }
@@ -522,7 +544,7 @@ export default function ContactForm({
     return () => {
       form.removeEventListener("submit", handleSubmit);
     };
-  }, [lang]);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -543,7 +565,6 @@ export default function ContactForm({
     }
   };
 
-  // ✅ 再做一次 trim + 過濾空字串，避免其他呼叫來源出問題
   const subjectOps = Array.isArray(subjectOptions)
     ? subjectOptions.map((s) => (s ?? "").trim()).filter((s) => s.length > 0)
     : [];
@@ -569,6 +590,12 @@ export default function ContactForm({
       >
         <input type="hidden" name="lang" value={lang} />
         <input type="hidden" name="timezone" defaultValue="America/Chicago" />
+        {/* 給 Turnstile 寫入的 hidden token 欄位 */}
+        <input
+          type="hidden"
+          name="cf-turnstile-response"
+          defaultValue=""
+        />
 
         {/* Honeypot：給 bot 填的隱藏欄位 */}
         <div className="sr-only" aria-hidden="true">
@@ -750,7 +777,7 @@ export default function ContactForm({
         {TURNSTILE_SITE_KEY && (
           <div
             ref={turnstileRef}
-            className="cf-turnstile"
+            className="cf-turnstile-mini"
             data-sitekey={TURNSTILE_SITE_KEY}
             data-theme="light"
             data-size="invisible"
@@ -770,7 +797,6 @@ export default function ContactForm({
         </div>
       </form>
 
-      {/* Cloudflare Turnstile Script（有 site key 才載入） */}
       {TURNSTILE_SITE_KEY && (
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
