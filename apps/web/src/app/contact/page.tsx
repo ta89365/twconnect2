@@ -38,7 +38,7 @@ const HERO_OVERLAY =
   "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.30) 100%)";
 const HERO_OBJECT_POS = "50% 62%";
 
-// ✅ 新增 Cloudflare Turnstile Site Key（從環境變數讀取）
+// ✅ Cloudflare Turnstile Site Key（從環境變數讀取）
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 // ========================== Hero 位置調整函式 ==========================
@@ -384,7 +384,7 @@ export default async function Page({
                         "rounded-2xl px-4 py-2 text-sm font-medium sm:px-5 sm:py-2.5",
                         isPrimary
                           ? "bg-white text-black shadow-sm"
-                          : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/20",
+                          : "bg-white/10 text白 ring-1 ring-white/15 hover:bg-white/20",
                       ].join(" ")}
                     >
                       {label}
@@ -731,6 +731,7 @@ export default async function Page({
             strategy="afterInteractive"
           />
 
+          {/* ✅ 這裡是改過的 Turnstile 整合邏輯 */}
           <Script id="cf-turnstile-init" strategy="afterInteractive">{`
             (function () {
               var form = document.getElementById("contact-form");
@@ -739,10 +740,15 @@ export default async function Page({
               var widget = document.querySelector(".cf-turnstile");
               if (!widget) return;
 
-              // 全局 callback，在 Turnstile 驗證成功後實際送出表單
+              // Turnstile 驗證成功後：重新觸發一次正常 submit（含 HTML 驗證）
               window.onTurnstileSuccess = function (token) {
                 try {
-                  form.submit();
+                  if (typeof form.requestSubmit === "function") {
+                    form.requestSubmit(); // 會跑瀏覽器內建驗證，然後觸發 submit 事件
+                  } else {
+                    // 老舊瀏覽器 fallback
+                    form.submit();
+                  }
                 } catch (e) {
                   console.error("Turnstile submit error", e);
                 }
@@ -757,25 +763,25 @@ export default async function Page({
               };
 
               form.addEventListener("submit", function (e) {
-                // 如果已經有 token，直接讓表單送出
                 var tokenInput = form.querySelector('input[name="cf-turnstile-response"]');
+
+                // 已經有 token，讓瀏覽器照正常流程送出（不要再攔截）
                 if (tokenInput && tokenInput.value) {
                   return;
                 }
 
-                // 阻止預設送出，先執行 Turnstile
+                // Turnstile 尚未就緒：不要強制送出，交給瀏覽器和後端處理
+                if (typeof window.turnstile === "undefined" || !widget) {
+                  return;
+                }
+
+                // 有 Turnstile 但還沒有 token：先擋住送出，去跑 Turnstile 挑戰
                 e.preventDefault();
 
-                if (typeof window.turnstile !== "undefined" && widget) {
-                  try {
-                    window.turnstile.execute(widget);
-                  } catch (err) {
-                    console.error("Turnstile execute error", err);
-                    form.submit();
-                  }
-                } else {
-                  // 如果 Turnstile 還沒載入，就直接送出，避免擋到正常使用者
-                  form.submit();
+                try {
+                  window.turnstile.execute(widget);
+                } catch (err) {
+                  console.error("Turnstile execute error", err);
                 }
               });
             })();
