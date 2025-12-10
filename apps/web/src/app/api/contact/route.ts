@@ -141,7 +141,12 @@ export async function POST(req: Request) {
     const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
     if (turnstileSecret) {
       const token = form.get("cf-turnstile-response");
+
+      // ★ 新增 log：看到前端到底有沒有帶 token
+      console.log("[/api/contact] Turnstile raw token:", token);
+
       if (!token || typeof token !== "string" || !token.trim()) {
+        console.error("[/api/contact] Turnstile token missing");
         throw new Error("TURNSTILE_MISSING");
       }
 
@@ -164,8 +169,15 @@ export async function POST(req: Request) {
       );
 
       const verifyData: any = await verifyRes.json();
+
+      // ★ 新增 log：印出 Cloudflare 回傳的結果
+      console.log("[/api/contact] Turnstile verify result:", verifyData);
+
       if (!verifyData?.success) {
-        console.error("[/api/contact] Turnstile verification failed:", verifyData);
+        console.error(
+          "[/api/contact] Turnstile verification failed:",
+          verifyData
+        );
         throw new Error("TURNSTILE_FAILED");
       }
     }
