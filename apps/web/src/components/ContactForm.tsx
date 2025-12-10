@@ -2,6 +2,21 @@
 "use client";
 
 import * as React from "react";
+import Script from "next/script";
+
+/* ====== Cloudflare Turnstile（從環境變數讀 site key） ====== */
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+declare global {
+  interface Window {
+    turnstile?: {
+      execute: (widget: any) => void;
+    };
+    onTurnstileSuccessMini?: (token: string) => void;
+    onTurnstileErrorMini?: () => void;
+    onTurnstileTimeoutMini?: () => void;
+  }
+}
 
 /* ========== Types & i18n ========== */
 export type Lang = "jp" | "zh" | "en";
@@ -428,6 +443,7 @@ export default function ContactForm({
   attachmentHint?: string | null;
 }) {
   const formRef = React.useRef<HTMLFormElement | null>(null);
+  const turnstileRef = React.useRef<HTMLDivElement | null>(null);
 
   const [fileText, setFileText] = React.useState<string>("");
 
@@ -466,6 +482,53 @@ export default function ContactForm({
     applyTimezoneToForm();
   }, []);
 
+  // ===== Turnstile：全域 callback 與 submit 攔截 =====
+  React.useEffect(() => {
+    const form = formRef.current;
+    const widget = turnstileRef.current;
+    if (!form || !widget || !TURNSTILE_SITE_KEY) return;
+
+    // 成功時實際送出表單
+    window.onTurnstileSuccessMini = function () {
+      try {
+        form.submit();
+      } catch (e) {
+        console.error("Turnstile submit error (mini form)", e);
+      }
+    };
+    window.onTurnstileErrorMini = function () {
+      console.warn("Turnstile error (mini form)");
+    };
+    window.onTurnstileTimeoutMini = function () {
+      console.warn("Turnstile timeout (mini form)");
+    };
+
+    function handleSubmit(e: Event) {
+      // 如果已經有 token，就直接送出
+      const tokenInput = form.querySelector<HTMLInputElement>(
+        'input[name="cf-turnstile-response"]'
+      );
+      if (tokenInput && tokenInput.value) {
+        return;
+      }
+
+      if (typeof window.turnstile !== "undefined" && widget) {
+        e.preventDefault();
+        try {
+          window.turnstile.execute(widget);
+        } catch (err) {
+          console.error("Turnstile execute error (mini form)", err);
+          form.submit();
+        }
+      }
+    }
+
+    form.addEventListener("submit", handleSubmit);
+    return () => {
+      form.removeEventListener("submit", handleSubmit);
+    };
+  }, []);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
@@ -499,188 +562,226 @@ export default function ContactForm({
   const hasPreferredContact = contactOps.length > 0;
 
   return (
-    <form
-      ref={formRef}
-      action="/api/contact"
-      method="post"
-      encType="multipart/form-data"
-      className="space-y-4 overflow-x-clip rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
-      onSubmit={applyTimezoneToForm}
-    >
-      <input type="hidden" name="lang" value={lang} />
-      <input type="hidden" name="timezone" defaultValue="America/Chicago" />
-
-      {/* 第一列：姓名 / Email */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <InputField
-          label={tLabel("Name", lang)}
-          name="name"
-          lang={lang}
-          required
-        />
-        <InputField
-          label={tLabel("Email", lang)}
-          name="email"
-          type="email"
-          lang={lang}
-          required
-          placeholder="name@example.com"
-        />
-      </div>
-
-      {/* 第二列：電話 / 公司 */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <InputField
-          label={tLabel("Phone", lang)}
-          name="phone"
-          lang={lang}
-          required
-          placeholder={
-            lang === "en"
-              ? "+1 555 000 0000"
-              : lang === "jp"
-              ? "090-0000-0000"
-              : "0900-000-000"
-          }
-        />
-        <InputField
-          label={tLabel("Company", lang)}
-          name="company"
-          lang={lang}
-        />
-      </div>
-
-      {/* 國籍 */}
-      <InputField
-        label={tLabel("Nationality", lang)}
-        name="nationality"
-        lang={lang}
-        required
-      />
-
-      {/* 件名（Subject） */}
-      <SelectField
-        label={tLabel("Subject", lang)}
-        name="subject"
-        lang={lang}
-        required
-        defaultValue=""
-        onChange={(e) => {
-          const v = e.target.value;
-          setSubjectValue(v);
-          if (!isTaiwanSubject(v)) {
-            setClientTypeValue("");
-            setEstablishmentValue("");
-          }
-        }}
+    <>
+      <form
+        ref={formRef}
+        id="mini-contact-form"
+        action="/api/contact"
+        method="post"
+        encType="multipart/form-data"
+        className="space-y-4 overflow-x-clip rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
+        onSubmit={applyTimezoneToForm}
       >
-        <option value="">{tLabel("Please select", lang)}</option>
-        {subjectOps.map((s, i) => (
-          <option key={`sub-${i}`} value={s}>
-            {s}
-          </option>
-        ))}
-      </SelectField>
+        <input type="hidden" name="lang" value={lang} />
+        <input type="hidden" name="timezone" defaultValue="America/Chicago" />
 
-      {/* Preferred Language */}
-      <SelectField
-        label={tLabel("Preferred language", lang)}
-        name="preferredLanguage"
-        lang={lang}
-        required
-        defaultValue={lang}
-      >
-        <option value="zh">{tLabel("Chinese", lang)}</option>
-        <option value="jp">{tLabel("Japanese", lang)}</option>
-        <option value="en">{tLabel("English", lang)}</option>
-      </SelectField>
-
-      {/* A 型態：Client Type */}
-      {showClientType && (
-        <RadioGroupField
-          label={tLabel("Client Type", lang)}
-          name="clientType"
-          lang={lang}
-          options={clientTypeOptions}
-          required={showClientType}
-          onChange={(v) => setClientTypeValue(v)}
-        />
-      )}
-
-      {/* 法人額外欄位 */}
-      {showCorpExtra && (
-        <div className="space-y-4">
-          <RadioGroupField
-            label={tLabel("Type of Establishment", lang)}
-            name="establishmentType"
-            lang={lang}
-            options={establishmentOptions}
-            required={showCorpExtra}
-            onChange={(v) => setEstablishmentValue(v)}
-          />
-          <InputField
-            label={tLabel("Parent Company Country", lang)}
-            name="parentCompanyCountry"
-            lang={lang}
-            required={showCorpExtra}
-          />
-        </div>
-      )}
-
-      {/* Preferred Contact */}
-      {hasPreferredContact && (
-        <RadioGroupField
-          label={tLabel("Preferred contact", lang)}
-          name="preferredContact"
-          lang={lang}
-          options={contactOps}
-          required
-        />
-      )}
-
-      {/* Summary */}
-      <TextareaField
-        label={tLabel("Summary", lang)}
-        name="summary"
-        lang={lang}
-        placeholder={summaryHint ?? ""}
-      />
-
-      {/* Attachment */}
-      <div className="grid min-w-0 gap-1.5">
-        <span className="text-sm font-medium text-gray-900">
-          {tLabel("Attachment", lang)}
-        </span>
-        <div className="mt-1 flex flex-wrap items-center gap-3">
-          <label className="inline-flex items-center rounded-xl bg-[#1C3D5A] px-3 py-2 text-sm font-medium text-white cursor-pointer">
-            {fileButtonText(lang)}
+        {/* Honeypot：給 bot 填的隱藏欄位 */}
+        <div className="sr-only" aria-hidden="true">
+          <label>
+            <span>Leave this field empty</span>
             <input
-              type="file"
-              name="attachments"
-              multiple
-              className="sr-only"
-              onChange={handleFileChange}
+              type="text"
+              name="hp_contact"
+              autoComplete="off"
+              tabIndex={-1}
             />
           </label>
         </div>
-        <span className="max-w-full truncate text-xs text-gray-600">
-          {fileText || noFileText(lang)}
-        </span>
-        <span className="mt-1 text-xs text-gray-500">
-          {attachmentHint ?? tLabel("Attachment hint default", lang)}
-        </span>
-      </div>
 
-      <ConsentCheckbox lang={lang} />
+        {/* 第一列：姓名 / Email */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InputField
+            label={tLabel("Name", lang)}
+            name="name"
+            lang={lang}
+            required
+          />
+          <InputField
+            label={tLabel("Email", lang)}
+            name="email"
+            type="email"
+            lang={lang}
+            required
+            placeholder="name@example.com"
+          />
+        </div>
 
-      <div className="pt-1">
-        <button
-          type="submit"
-          className="h-12 w-full rounded-2xl bg-[#1C3D5A] px-5 font-medium text-white transition hover:opacity-95 sm:w-auto"
+        {/* 第二列：電話 / 公司 */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <InputField
+            label={tLabel("Phone", lang)}
+            name="phone"
+            lang={lang}
+            required
+            placeholder={
+              lang === "en"
+                ? "+1 555 000 0000"
+                : lang === "jp"
+                ? "090-0000-0000"
+                : "0900-000-000"
+            }
+          />
+          <InputField
+            label={tLabel("Company", lang)}
+            name="company"
+            lang={lang}
+          />
+        </div>
+
+        {/* 國籍 */}
+        <InputField
+          label={tLabel("Nationality", lang)}
+          name="nationality"
+          lang={lang}
+          required
+        />
+
+        {/* 件名（Subject） */}
+        <SelectField
+          label={tLabel("Subject", lang)}
+          name="subject"
+          lang={lang}
+          required
+          defaultValue=""
+          onChange={(e) => {
+            const v = e.target.value;
+            setSubjectValue(v);
+            if (!isTaiwanSubject(v)) {
+              setClientTypeValue("");
+              setEstablishmentValue("");
+            }
+          }}
         >
-          {tLabel("Send", lang)}
-        </button>
-      </div>
-    </form>
+          <option value="">{tLabel("Please select", lang)}</option>
+          {subjectOps.map((s, i) => (
+            <option key={`sub-${i}`} value={s}>
+              {s}
+            </option>
+          ))}
+        </SelectField>
+
+        {/* Preferred Language */}
+        <SelectField
+          label={tLabel("Preferred language", lang)}
+          name="preferredLanguage"
+          lang={lang}
+          required
+          defaultValue={lang}
+        >
+          <option value="zh">{tLabel("Chinese", lang)}</option>
+          <option value="jp">{tLabel("Japanese", lang)}</option>
+          <option value="en">{tLabel("English", lang)}</option>
+        </SelectField>
+
+        {/* A 型態：Client Type */}
+        {showClientType && (
+          <RadioGroupField
+            label={tLabel("Client Type", lang)}
+            name="clientType"
+            lang={lang}
+            options={clientTypeOptions}
+            required={showClientType}
+            onChange={(v) => setClientTypeValue(v)}
+          />
+        )}
+
+        {/* 法人額外欄位 */}
+        {showCorpExtra && (
+          <div className="space-y-4">
+            <RadioGroupField
+              label={tLabel("Type of Establishment", lang)}
+              name="establishmentType"
+              lang={lang}
+              options={establishmentOptions}
+              required={showCorpExtra}
+              onChange={(v) => setEstablishmentValue(v)}
+            />
+            <InputField
+              label={tLabel("Parent Company Country", lang)}
+              name="parentCompanyCountry"
+              lang={lang}
+              required={showCorpExtra}
+            />
+          </div>
+        )}
+
+        {/* Preferred Contact */}
+        {hasPreferredContact && (
+          <RadioGroupField
+            label={tLabel("Preferred contact", lang)}
+            name="preferredContact"
+            lang={lang}
+            options={contactOps}
+            required
+          />
+        )}
+
+        {/* Summary */}
+        <TextareaField
+          label={tLabel("Summary", lang)}
+          name="summary"
+          lang={lang}
+          placeholder={summaryHint ?? ""}
+        />
+
+        {/* Attachment */}
+        <div className="grid min-w-0 gap-1.5">
+          <span className="text-sm font-medium text-gray-900">
+            {tLabel("Attachment", lang)}
+          </span>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <label className="inline-flex items-center rounded-xl bg-[#1C3D5A] px-3 py-2 text-sm font-medium text-white cursor-pointer">
+              {fileButtonText(lang)}
+              <input
+                type="file"
+                name="attachments"
+                multiple
+                className="sr-only"
+                onChange={handleFileChange}
+              />
+            </label>
+          </div>
+          <span className="max-w-full truncate text-xs text-gray-600">
+            {fileText || noFileText(lang)}
+          </span>
+          <span className="mt-1 text-xs text-gray-500">
+            {attachmentHint ?? tLabel("Attachment hint default", lang)}
+          </span>
+        </div>
+
+        <ConsentCheckbox lang={lang} />
+
+        {/* Cloudflare Turnstile 容器（Invisible） */}
+        {TURNSTILE_SITE_KEY && (
+          <div
+            ref={turnstileRef}
+            className="cf-turnstile"
+            data-sitekey={TURNSTILE_SITE_KEY}
+            data-theme="light"
+            data-size="invisible"
+            data-callback="onTurnstileSuccessMini"
+            data-error-callback="onTurnstileErrorMini"
+            data-timeout-callback="onTurnstileTimeoutMini"
+          />
+        )}
+
+        <div className="pt-1">
+          <button
+            type="submit"
+            className="h-12 w-full rounded-2xl bg-[#1C3D5A] px-5 font-medium text-white transition hover:opacity-95 sm:w-auto"
+          >
+            {tLabel("Send", lang)}
+          </button>
+        </div>
+      </form>
+
+      {/* Cloudflare Turnstile Script（有 site key 才載入） */}
+      {TURNSTILE_SITE_KEY && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="afterInteractive"
+        />
+      )}
+    </>
   );
 }
