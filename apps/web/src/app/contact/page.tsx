@@ -38,6 +38,9 @@ const HERO_OVERLAY =
   "linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.30) 100%)";
 const HERO_OBJECT_POS = "50% 62%";
 
+// ✅ 新增 Cloudflare Turnstile Site Key（從環境變數讀取）
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
 // ========================== Hero 位置調整函式 ==========================
 
 const HERO_OFFSET = { x: 0, y: -20 };
@@ -475,6 +478,19 @@ export default async function Page({
                 <input type="hidden" name="lang" value={lang} />
                 <TimezoneHidden />
 
+                {/* ========================== Honeypot 欄位（給 bot 填） ========================== */}
+                <div className="sr-only" aria-hidden="true">
+                  <label>
+                    <span>Leave this field empty</span>
+                    <input
+                      type="text"
+                      name="hp_contact"
+                      autoComplete="off"
+                      tabIndex={-1}
+                    />
+                  </label>
+                </div>
+
                 {/* ========================== 第一列：Name / Email ========================== */}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <InputField
@@ -669,6 +685,19 @@ export default async function Page({
                 {/* ========================== Consent ========================== */}
                 <ConsentCheckbox lang={lang as ClientLang} />
 
+                {/* ========================== Cloudflare Turnstile 容器（Invisible） ========================== */}
+                {TURNSTILE_SITE_KEY && (
+                  <div
+                    className="cf-turnstile"
+                    data-sitekey={TURNSTILE_SITE_KEY}
+                    data-theme="light"
+                    data-size="invisible"
+                    data-callback="onTurnstileSuccess"
+                    data-error-callback="onTurnstileError"
+                    data-timeout-callback="onTurnstileTimeout"
+                  />
+                )}
+
                 {/* ========================== Submit ========================== */}
                 <div className="mt-2 sm:mt-3">
                   <button
@@ -691,6 +720,66 @@ export default async function Page({
               </Link>
             </section>
           </main>
+        </>
+      )}
+
+      {/* ========================== Cloudflare Turnstile Script ========================== */}
+      {TURNSTILE_SITE_KEY && (
+        <>
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+            strategy="afterInteractive"
+          />
+
+          <Script id="cf-turnstile-init" strategy="afterInteractive">{`
+            (function () {
+              var form = document.getElementById("contact-form");
+              if (!form) return;
+
+              var widget = document.querySelector(".cf-turnstile");
+              if (!widget) return;
+
+              // 全局 callback，在 Turnstile 驗證成功後實際送出表單
+              window.onTurnstileSuccess = function (token) {
+                try {
+                  form.submit();
+                } catch (e) {
+                  console.error("Turnstile submit error", e);
+                }
+              };
+
+              window.onTurnstileError = function () {
+                console.warn("Turnstile error");
+              };
+
+              window.onTurnstileTimeout = function () {
+                console.warn("Turnstile timeout");
+              };
+
+              form.addEventListener("submit", function (e) {
+                // 如果已經有 token，直接讓表單送出
+                var tokenInput = form.querySelector('input[name="cf-turnstile-response"]');
+                if (tokenInput && tokenInput.value) {
+                  return;
+                }
+
+                // 阻止預設送出，先執行 Turnstile
+                e.preventDefault();
+
+                if (typeof window.turnstile !== "undefined" && widget) {
+                  try {
+                    window.turnstile.execute(widget);
+                  } catch (err) {
+                    console.error("Turnstile execute error", err);
+                    form.submit();
+                  }
+                } else {
+                  // 如果 Turnstile 還沒載入，就直接送出，避免擋到正常使用者
+                  form.submit();
+                }
+              });
+            })();
+          `}</Script>
         </>
       )}
 
@@ -897,7 +986,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
 
         {Array.isArray(doc?.success?.message) &&
         doc.success?.message?.length > 0 ? (
-          <div className="prose prose-invert mt-5 rounded-2xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm sm:mt-6 sm:p-5">
+          <div className="prose prose-invert mt-5 rounded-2xl bg白/10 p-4 ring-1 ring-white/15 backdrop-blur-sm sm:mt-6 sm:p-5">
             <PortableText value={doc.success.message} />
           </div>
         ) : (
@@ -948,7 +1037,7 @@ function SuccessView({ lang, doc }: { lang: Lang; doc: ContactDoc }) {
           <CtaLink
             href="/companyStrengthsAndFAQ"
             lang={lang}
-            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text-white ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-white/10 px-5 font-medium text白 ring-1 ring-white/15 hover:bg-white/16 sm:h-11 md:h-12"
           >
             <HelpIcon className="h-5 w-5" />
             View FAQ

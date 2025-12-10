@@ -127,6 +127,49 @@ export async function POST(req: Request) {
     const preferredLanguageRaw = String(form.get("preferredLanguage") ?? "");
     msgLang = normalizeLang(preferredLanguageRaw || siteLang, siteLang); // 郵件語系用
 
+    // ===== Honeypot 檢查（hp_contact 有內容就當作 bot，直接回成功不寄信） =====
+    const honeypot = String(form.get("hp_contact") ?? "").trim();
+    if (honeypot) {
+      const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+      const url = new URL("/contact", base);
+      url.searchParams.set("submitted", "1");
+      url.searchParams.set("lang", siteLang);
+      return NextResponse.redirect(url.toString(), { status: 303 });
+    }
+
+    // ===== Cloudflare Turnstile 驗證 =====
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+    if (turnstileSecret) {
+      const token = form.get("cf-turnstile-response");
+      if (!token || typeof token !== "string" || !token.trim()) {
+        throw new Error("TURNSTILE_MISSING");
+      }
+
+      const ipHeader =
+        req.headers.get("cf-connecting-ip") ??
+        req.headers.get("x-forwarded-for") ??
+        "";
+      const remoteIp = ipHeader.split(",")[0].trim();
+
+      const verifyRes = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          body: new URLSearchParams({
+            secret: turnstileSecret,
+            response: token,
+            remoteip: remoteIp,
+          }),
+        }
+      );
+
+      const verifyData: any = await verifyRes.json();
+      if (!verifyData?.success) {
+        console.error("[/api/contact] Turnstile verification failed:", verifyData);
+        throw new Error("TURNSTILE_FAILED");
+      }
+    }
+
     // ===== 基本欄位 =====
     const name = String(form.get("name") ?? "");
     const email = String(form.get("email") ?? "");
