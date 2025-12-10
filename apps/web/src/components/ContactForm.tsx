@@ -484,50 +484,45 @@ export default function ContactForm({
 
   // ===== Turnstile：全域 callback 與 submit 攔截 =====
   React.useEffect(() => {
-    const form = formRef.current;
-    const widget = turnstileRef.current;
-    if (!form || !widget || !TURNSTILE_SITE_KEY) return;
+    if (!TURNSTILE_SITE_KEY) return;
+    if (typeof window === "undefined") return;
 
-    // 成功時實際送出表單
-    window.onTurnstileSuccessMini = function () {
-      try {
-        form.submit();
-      } catch (e) {
-        console.error("Turnstile submit error (mini form)", e);
-      }
-    };
-    window.onTurnstileErrorMini = function () {
-      console.warn("Turnstile error (mini form)");
-    };
-    window.onTurnstileTimeoutMini = function () {
-      console.warn("Turnstile timeout (mini form)");
-    };
+    const form = formRef.current;
+    const widget = document.querySelector<HTMLElement>(".cf-turnstile-mini");
+    if (!form || !widget) return;
 
     function handleSubmit(e: Event) {
-      // 如果已經有 token，就直接送出
-      const tokenInput = form.querySelector<HTMLInputElement>(
+      // 用這次 submit 的表單當成 form
+      const formEl = e.currentTarget as HTMLFormElement | null;
+      if (!formEl) return;
+
+      // 如果已經有 token，就直接讓它送出，不要再叫 Turnstile
+      const tokenInput = formEl.querySelector<HTMLInputElement>(
         'input[name="cf-turnstile-response"]'
       );
       if (tokenInput && tokenInput.value) {
         return;
       }
 
-      if (typeof window.turnstile !== "undefined" && widget) {
+      if (typeof window.turnstile !== "undefined") {
         e.preventDefault();
         try {
+          // Invisible widget，請求驗證
           window.turnstile.execute(widget);
         } catch (err) {
           console.error("Turnstile execute error (mini form)", err);
-          form.submit();
+          // 故障時不要卡住使用者，直接送出
+          formEl.submit();
         }
       }
     }
 
     form.addEventListener("submit", handleSubmit);
+
     return () => {
       form.removeEventListener("submit", handleSubmit);
     };
-  }, []);
+  }, [lang]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
