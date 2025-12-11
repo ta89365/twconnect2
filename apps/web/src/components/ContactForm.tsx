@@ -512,6 +512,8 @@ export default function ContactForm({
         currentForm.appendChild(tokenInput);
       }
       tokenInput.value = token;
+
+      // 使用原生 submit，避免再經過 handleSubmit
       currentForm.submit();
     };
 
@@ -530,21 +532,27 @@ export default function ContactForm({
       const tokenInput = formEl.querySelector<HTMLInputElement>(
         'input[name="cf-turnstile-response"]'
       );
+
+      // 已經有 token 就讓表單照正常流程送出
       if (tokenInput && tokenInput.value) {
         return;
       }
 
-      if (typeof window.turnstile !== "undefined") {
+      // Turnstile 還沒載入好：擋住送出 請使用者稍後再試
+      if (typeof window.turnstile === "undefined") {
         e.preventDefault();
-        try {
-          window.turnstile.execute(widget);
-        } catch (err) {
-          console.error("Turnstile execute error (mini form)", err);
-          formEl.submit();
-        }
-      } else {
-        // script 還沒載入時就送出，只能讓後端判定失敗
         console.warn("window.turnstile is undefined on submit (mini form)");
+        alert("Verification is still loading. Please try again in a moment.");
+        return;
+      }
+
+      // 有 Turnstile 但還沒有 token：先擋住送出 然後跑 Turnstile
+      e.preventDefault();
+      try {
+        window.turnstile.execute(widget);
+      } catch (err) {
+        console.error("Turnstile execute error (mini form)", err);
+        // 這裡就不要強制送出 讓使用者重新送一次比較安全
       }
     }
 
