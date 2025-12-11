@@ -442,7 +442,6 @@ export default function ContactForm({
 }) {
   const formRef = React.useRef<HTMLFormElement | null>(null);
   const turnstileRef = React.useRef<HTMLDivElement | null>(null);
-
   const waitingRef = React.useRef(false);
 
   const [fileText, setFileText] = React.useState<string>("");
@@ -481,11 +480,17 @@ export default function ContactForm({
     applyTimezoneToForm();
   }, []);
 
+  // Turnstile callbacks
   React.useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     if (typeof window === "undefined") return;
 
     window.onTurnstileSuccessMini = (token: string) => {
+      // 如果不是使用者按送出觸發的挑戰（例如 invisible 自動跑），直接忽略
+      if (!waitingRef.current) {
+        return;
+      }
+
       const currentForm = formRef.current;
       if (!currentForm) return;
 
@@ -501,20 +506,19 @@ export default function ContactForm({
       }
       tokenInput.value = token;
 
-      if (!waitingRef.current) {
-        // 不是使用者送出的挑戰，比如頁面載入時自動跑，先只存 token 不送表單
-        return;
-      }
-
       waitingRef.current = false;
-      // 讓瀏覽器走正常 submit 流程，保留 HTML5 驗證
-      currentForm.requestSubmit();
+
+      // 用原生 submit，避免再次觸發 onSubmit / handleSubmit
+      currentForm.submit();
     };
 
     window.onTurnstileErrorMini = () => {
       waitingRef.current = false;
       console.warn("Turnstile error (mini form)");
-      if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+      if (
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "localhost"
+      ) {
         const f = formRef.current;
         if (f) f.requestSubmit();
       } else {
@@ -525,7 +529,10 @@ export default function ContactForm({
     window.onTurnstileTimeoutMini = () => {
       waitingRef.current = false;
       console.warn("Turnstile timeout (mini form)");
-      if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+      if (
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "localhost"
+      ) {
         const f = formRef.current;
         if (f) f.requestSubmit();
       } else {
@@ -538,24 +545,25 @@ export default function ContactForm({
     applyTimezoneToForm();
 
     const formEl = e.currentTarget;
-    const tokenInput = formEl.querySelector<HTMLInputElement>(
+
+    // 每次送出前先把舊 token 清空，避免用到 invisible 自動跑的 token
+    const tokenInputExisting = formEl.querySelector<HTMLInputElement>(
       'input[name="cf-turnstile-response"]'
     );
-
-    // 已有 token 就直接讓表單送出
-    if (tokenInput && tokenInput.value) {
-      waitingRef.current = false;
-      return;
+    if (tokenInputExisting) {
+      tokenInputExisting.value = "";
     }
 
     if (!TURNSTILE_SITE_KEY) {
-      // 沒有設定 site key，視為不啟用 Turnstile
+      // 沒有設定 site key，就當作沒啟用 Turnstile，讓表單照預設流程送出
       waitingRef.current = false;
       return;
     }
 
-    if (typeof window === "undefined" || typeof window.turnstile === "undefined") {
-      // script 還沒載好
+    if (
+      typeof window === "undefined" ||
+      typeof window.turnstile === "undefined"
+    ) {
       if (
         window.location.hostname === "127.0.0.1" ||
         window.location.hostname === "localhost"
@@ -584,9 +592,10 @@ export default function ContactForm({
       return;
     }
 
-    // 真正交給 Turnstile 執行挑戰
+    // 攔截送出，改由 Turnstile 執行，成功後在 callback 裡真正 submit
     e.preventDefault();
     waitingRef.current = true;
+
     try {
       window.turnstile?.execute(widget);
     } catch (err) {
