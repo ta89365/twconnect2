@@ -443,6 +443,8 @@ export default function ContactForm({
   const formRef = React.useRef<HTMLFormElement | null>(null);
   const turnstileRef = React.useRef<HTMLDivElement | null>(null);
 
+  const waitingRef = React.useRef(false);
+
   const [fileText, setFileText] = React.useState<string>("");
 
   const [subjectValue, setSubjectValue] = React.useState("");
@@ -479,24 +481,10 @@ export default function ContactForm({
     applyTimezoneToForm();
   }, []);
 
-  // ===== Turnstile：全域 callback 與 submit 攔截（小表單專用） =====
   React.useEffect(() => {
     if (!TURNSTILE_SITE_KEY) return;
     if (typeof window === "undefined") return;
 
-    const form = formRef.current;
-    const widget = turnstileRef.current;
-
-    if (!form) {
-      console.warn("[mini-contact] formRef is null");
-      return;
-    }
-    if (!widget) {
-      console.warn("[mini-contact] turnstileRef is null, widget not found");
-      return;
-    }
-
-    // 成功時，寫入 hidden input 然後真正送出
     window.onTurnstileSuccessMini = (token: string) => {
       const currentForm = formRef.current;
       if (!currentForm) return;
@@ -513,55 +501,107 @@ export default function ContactForm({
       }
       tokenInput.value = token;
 
-      // 使用原生 submit，避免再經過 handleSubmit
-      currentForm.submit();
+      if (!waitingRef.current) {
+        // 不是使用者送出的挑戰，比如頁面載入時自動跑，先只存 token 不送表單
+        return;
+      }
+
+      waitingRef.current = false;
+      // 讓瀏覽器走正常 submit 流程，保留 HTML5 驗證
+      currentForm.requestSubmit();
     };
 
     window.onTurnstileErrorMini = () => {
+      waitingRef.current = false;
       console.warn("Turnstile error (mini form)");
+      if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+        const f = formRef.current;
+        if (f) f.requestSubmit();
+      } else {
+        alert("Verification failed. Please try again.");
+      }
     };
 
     window.onTurnstileTimeoutMini = () => {
+      waitingRef.current = false;
       console.warn("Turnstile timeout (mini form)");
-    };
-
-    function handleSubmit(e: Event) {
-      const formEl = e.currentTarget as HTMLFormElement | null;
-      if (!formEl) return;
-
-      const tokenInput = formEl.querySelector<HTMLInputElement>(
-        'input[name="cf-turnstile-response"]'
-      );
-
-      // 已經有 token 就讓表單照正常流程送出
-      if (tokenInput && tokenInput.value) {
-        return;
+      if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+        const f = formRef.current;
+        if (f) f.requestSubmit();
+      } else {
+        alert("Verification timeout. Please try again.");
       }
-
-      // Turnstile 還沒載入好：擋住送出 請使用者稍後再試
-      if (typeof window.turnstile === "undefined") {
-        e.preventDefault();
-        console.warn("window.turnstile is undefined on submit (mini form)");
-        alert("Verification is still loading. Please try again in a moment.");
-        return;
-      }
-
-      // 有 Turnstile 但還沒有 token：先擋住送出 然後跑 Turnstile
-      e.preventDefault();
-      try {
-        window.turnstile.execute(widget);
-      } catch (err) {
-        console.error("Turnstile execute error (mini form)", err);
-        // 這裡就不要強制送出 讓使用者重新送一次比較安全
-      }
-    }
-
-    form.addEventListener("submit", handleSubmit);
-
-    return () => {
-      form.removeEventListener("submit", handleSubmit);
     };
   }, []);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    applyTimezoneToForm();
+
+    const formEl = e.currentTarget;
+    const tokenInput = formEl.querySelector<HTMLInputElement>(
+      'input[name="cf-turnstile-response"]'
+    );
+
+    // 已有 token 就直接讓表單送出
+    if (tokenInput && tokenInput.value) {
+      waitingRef.current = false;
+      return;
+    }
+
+    if (!TURNSTILE_SITE_KEY) {
+      // 沒有設定 site key，視為不啟用 Turnstile
+      waitingRef.current = false;
+      return;
+    }
+
+    if (typeof window === "undefined" || typeof window.turnstile === "undefined") {
+      // script 還沒載好
+      if (
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "localhost"
+      ) {
+        waitingRef.current = false;
+        return;
+      }
+      e.preventDefault();
+      waitingRef.current = false;
+      alert("Verification is still loading. Please try again in a moment.");
+      return;
+    }
+
+    const widget = turnstileRef.current;
+    if (!widget) {
+      if (
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "localhost"
+      ) {
+        waitingRef.current = false;
+        return;
+      }
+      e.preventDefault();
+      waitingRef.current = false;
+      alert("Verification is not ready. Please reload the page and try again.");
+      return;
+    }
+
+    // 真正交給 Turnstile 執行挑戰
+    e.preventDefault();
+    waitingRef.current = true;
+    try {
+      window.turnstile?.execute(widget);
+    } catch (err) {
+      console.error("Turnstile execute error (mini form)", err);
+      waitingRef.current = false;
+      if (
+        window.location.hostname === "127.0.0.1" ||
+        window.location.hostname === "localhost"
+      ) {
+        formEl.requestSubmit();
+      } else {
+        alert("Verification failed. Please try again.");
+      }
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -603,7 +643,7 @@ export default function ContactForm({
         method="post"
         encType="multipart/form-data"
         className="space-y-4 overflow-x-clip rounded-2xl bg-white p-4 text-gray-900 shadow sm:space-y-5 sm:p-6"
-        onSubmit={applyTimezoneToForm}
+        onSubmit={handleSubmit}
       >
         <input type="hidden" name="lang" value={lang} />
         <input type="hidden" name="timezone" defaultValue="America/Chicago" />
