@@ -486,7 +486,15 @@ export default function ContactForm({
 
     const form = formRef.current;
     const widget = turnstileRef.current;
-    if (!form || !widget) return;
+
+    if (!form) {
+      console.warn("[mini-contact] formRef is null");
+      return;
+    }
+    if (!widget) {
+      console.warn("[mini-contact] turnstileRef is null, widget not found");
+      return;
+    }
 
     // 成功時，寫入 hidden input 然後真正送出
     window.onTurnstileSuccessMini = (token: string) => {
@@ -519,7 +527,6 @@ export default function ContactForm({
       const formEl = e.currentTarget as HTMLFormElement | null;
       if (!formEl) return;
 
-      // 如果已經有 token（例如前一次驗證過），就直接送出
       const tokenInput = formEl.querySelector<HTMLInputElement>(
         'input[name="cf-turnstile-response"]'
       );
@@ -533,9 +540,11 @@ export default function ContactForm({
           window.turnstile.execute(widget);
         } catch (err) {
           console.error("Turnstile execute error (mini form)", err);
-          // 極端狀況（Turnstile 壞掉），不要完全卡死使用者
           formEl.submit();
         }
+      } else {
+        // script 還沒載入時就送出，只能讓後端判定失敗
+        console.warn("window.turnstile is undefined on submit (mini form)");
       }
     }
 
@@ -590,14 +599,9 @@ export default function ContactForm({
       >
         <input type="hidden" name="lang" value={lang} />
         <input type="hidden" name="timezone" defaultValue="America/Chicago" />
-        {/* 給 Turnstile 寫入的 hidden token 欄位 */}
-        <input
-          type="hidden"
-          name="cf-turnstile-response"
-          defaultValue=""
-        />
+        <input type="hidden" name="cf-turnstile-response" defaultValue="" />
 
-        {/* Honeypot：給 bot 填的隱藏欄位 */}
+        {/* Honeypot */}
         <div className="sr-only" aria-hidden="true">
           <label>
             <span>Leave this field empty</span>
@@ -658,7 +662,7 @@ export default function ContactForm({
           required
         />
 
-        {/* 件名（Subject） */}
+        {/* 件名 */}
         <SelectField
           label={tLabel("Subject", lang)}
           name="subject"
@@ -695,7 +699,7 @@ export default function ContactForm({
           <option value="en">{tLabel("English", lang)}</option>
         </SelectField>
 
-        {/* A 型態：Client Type */}
+        {/* Client Type */}
         {showClientType && (
           <RadioGroupField
             label={tLabel("Client Type", lang)}
@@ -777,7 +781,7 @@ export default function ContactForm({
         {TURNSTILE_SITE_KEY && (
           <div
             ref={turnstileRef}
-            className="cf-turnstile-mini"
+            className="cf-turnstile"
             data-sitekey={TURNSTILE_SITE_KEY}
             data-theme="light"
             data-size="invisible"
