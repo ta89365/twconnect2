@@ -512,33 +512,24 @@ export default function ContactForm({
       currentForm.submit();
     };
 
-    window.onTurnstileErrorMini = () => {
-      waitingRef.current = false;
-      console.warn("Turnstile error (mini form)");
-      if (
-        window.location.hostname === "127.0.0.1" ||
-        window.location.hostname === "localhost"
-      ) {
-        const f = formRef.current;
-        if (f) f.requestSubmit();
-      } else {
-        alert("Verification failed. Please try again.");
-      }
-    };
+window.onTurnstileErrorMini = () => {
+  if (!waitingRef.current) {
+    console.warn("Turnstile error (mini form) ignored because not submitting");
+    return;
+  }
+  waitingRef.current = false;
+  alert("Verification failed. Please try again.");
+};
 
-    window.onTurnstileTimeoutMini = () => {
-      waitingRef.current = false;
-      console.warn("Turnstile timeout (mini form)");
-      if (
-        window.location.hostname === "127.0.0.1" ||
-        window.location.hostname === "localhost"
-      ) {
-        const f = formRef.current;
-        if (f) f.requestSubmit();
-      } else {
-        alert("Verification timeout. Please try again.");
-      }
-    };
+window.onTurnstileTimeoutMini = () => {
+  if (!waitingRef.current) {
+    console.warn("Turnstile timeout (mini form) ignored because not submitting");
+    return;
+  }
+  waitingRef.current = false;
+  alert("Verification timeout. Please try again.");
+};
+
   }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
