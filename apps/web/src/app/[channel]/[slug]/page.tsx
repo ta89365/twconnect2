@@ -5,9 +5,9 @@ import NavigationServer from "@/components/NavigationServer";
 import FooterServer from "@/components/FooterServer";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import * as React from "react";
-import type { JSX } from "react"; // ✅ add this line
+import type { JSX } from "react";
 import { PortableText } from "@portabletext/react";
 import { sfetch } from "@/lib/sanity/fetch";
 import { postBySlugAndLang, type Lang } from "@/lib/queries/news";
@@ -22,14 +22,18 @@ function isChannel(v: string): v is Channel {
 }
 
 const BRAND_BLUE = "#1C3D5A";
-const ACCENT_BLUE = "#4A90E2"; // ✅ 內卡 CTA 主要按鈕底色
+const ACCENT_BLUE = "#4A90E2";
 const CONTENT_MAX_W = "1200px";
 
 /* ============================ 多語與工具 ============================ */
 function resolveLang(sp?: { lang?: string | string[] } | null): Lang {
   let v = sp?.lang;
   if (Array.isArray(v)) v = v[0];
-  const s = (v ?? "").toString().toLowerCase();
+  const s = (v ?? "").toString().trim().toLowerCase();
+
+  // ✅ 與 LanguageSwitcher 對齊：zh-cn 一律視為 zh
+  if (s === "zh-cn" || s === "zh_cn" || s === "zh-hans" || s === "hans" || s === "cn") return "zh";
+
   return s === "zh" || s === "en" || s === "jp" ? (s as Lang) : "jp";
 }
 
@@ -48,9 +52,43 @@ function formatDate(d?: string | null, lang: Lang = "jp") {
   }
 }
 
+/**
+ * ✅ 會覆蓋 lang
+ * ✅ 會保留既有 query
+ * ✅ 會保留 #hash
+ */
 function withLang(href: string, lang: Lang) {
   if (!href.startsWith("/")) return href;
-  return href.includes("?") ? `${href}&lang=${lang}` : `${href}?lang=${lang}`;
+
+  const [beforeHash, hash = ""] = href.split("#");
+  const [path, qs = ""] = beforeHash.split("?");
+  const params = new URLSearchParams(qs);
+  params.set("lang", lang);
+
+  const nextQs = params.toString();
+  const out = nextQs ? `${path}?${nextQs}` : path;
+  return hash ? `${out}#${hash}` : out;
+}
+
+function buildSearchParamsWithLang(
+  sp: { lang?: string | string[] } | null | undefined,
+  lang: Lang
+) {
+  const params = new URLSearchParams();
+  if (sp) {
+    for (const [k, v] of Object.entries(sp)) {
+      if (typeof v === "undefined" || v === null) continue;
+      if (Array.isArray(v)) {
+        v.forEach((vv) => {
+          if (typeof vv === "string") params.append(k, vv);
+        });
+      } else {
+        params.set(k, String(v));
+      }
+    }
+  }
+  params.set("lang", lang);
+  return params;
 }
 
 function ptComponentsFactory(lang: Lang) {
@@ -109,7 +147,6 @@ function ptComponentsFactory(lang: Lang) {
         );
       },
     },
-
     types: {
       image: ({ value }: { value?: any }) => {
         const src = value?.url ?? value?.asset?.url;
@@ -136,6 +173,40 @@ function ptComponentsFactory(lang: Lang) {
   return C as any;
 }
 
+/**
+ * ✅ 跨語言 slug fallback
+ * 當網址 slug 與 lang 不匹配時，用任一語言 slug 找到同一篇文章
+ * 然後 redirect 到「正確語言的 slug」的 canonical URL
+ */
+const postByAnySlugForChannel = /* groq */ `
+*[
+  _type == "post" &&
+  channel == $channel &&
+  defined(publishedAt) && publishedAt <= now() &&
+  !(_id in path('drafts.**')) &&
+  (
+    slugJp.current == $slug ||
+    slugZh.current == $slug ||
+    slugEn.current == $slug
+  )
+][0]{
+  _id,
+  "slugJp": slugJp.current,
+  "slugZh": slugZh.current,
+  "slugEn": slugEn.current
+}
+`;
+
+function pickSlugForLang(
+  doc: { slugJp?: string | null; slugZh?: string | null; slugEn?: string | null } | null | undefined,
+  lang: Lang
+) {
+  if (!doc) return null;
+  const preferred =
+    lang === "jp" ? doc.slugJp : lang === "zh" ? doc.slugZh : doc.slugEn;
+  return preferred || doc.slugJp || doc.slugZh || doc.slugEn || null;
+}
+
 /* ============================ Page ============================ */
 export default async function ChannelPostPage({
   params,
@@ -151,36 +222,33 @@ export default async function ChannelPostPage({
   const lang = resolveLang(sp ?? undefined);
   const basePath = `/${channel}` as "/news" | "/column";
 
-  // 根據 channel 選用固定查詢（避免 $channel）
   const query = channel === "news" ? postBySlugAndLang : columnPostBySlugAndLang;
 
-  const data = await sfetch<{
-    _id?: string;
-    title?: string | null;
-    excerpt?: string | null;
-    body?: any[] | null;
-    coverImage?: { url?: string | null; alt?: string | null } | null;
-    publishedAt?: string | null;
-    readingMinutes?: number | null;
-    category?: { title?: string | null; slug?: string | null } | null;
-    tags?: Array<{ _id: string; title?: string | null; slug?: string | null }> | null;
-    author?: {
-      name?: string | null;
-      title?: string | null;
-      avatar?: string | null;
-      linkedin?: string | null;
-      email?: string | null;
-    } | null;
-    gallery?: Array<{ url?: string | null; alt?: string | null }> | null;
-  }>(query, { lang, slug });
+  // 先用「當前 lang 對應欄位」查一次
+  let data = await sfetch<any>(query, { lang, slug });
 
-  if (!data?._id) return notFound();
+  // 查不到才做 fallback
+  if (!data?._id) {
+    const any = await sfetch<{ _id?: string; slugJp?: string; slugZh?: string; slugEn?: string }>(
+      postByAnySlugForChannel,
+      { channel, slug }
+    );
+
+    // 連跨語言也找不到才是真的 404
+    if (!any?._id) return notFound();
+
+    const targetSlug = pickSlugForLang(any, lang);
+    if (!targetSlug) return notFound();
+
+    // ✅ 保留原本 query 參數，但覆蓋 lang
+    const nextParams = buildSearchParamsWithLang(sp ?? undefined, lang);
+    const qs = nextParams.toString();
+    redirect(`/${channel}/${targetSlug}${qs ? `?${qs}` : ""}`);
+  }
+
   const ptComponents = ptComponentsFactory(lang);
-
-  // 麵包屑標題
   const crumbLabel = channel === "news" ? "News" : "Column";
 
-  // 內卡 CTA 語系字串（移入白框內）
   const ctaHeading =
     lang === "jp"
       ? "安心して世界へ、一歩ずつ確実に"
@@ -194,7 +262,6 @@ export default async function ChannelPostPage({
     <div style={{ backgroundColor: BRAND_BLUE }} className="min-h-screen text-white">
       <NavigationServer lang={lang} />
 
-      {/* HERO 區 */}
       <section className="relative">
         {data.coverImage?.url && (
           <div className="absolute inset-0 -z-10 opacity-30">
@@ -234,16 +301,13 @@ export default async function ChannelPostPage({
               {data.publishedAt && (
                 <time dateTime={data.publishedAt}>{formatDate(data.publishedAt, lang)}</time>
               )}
-              {typeof data.readingMinutes === "number" && (
-                <span>{data.readingMinutes} min read</span>
-              )}
+              {typeof data.readingMinutes === "number" && <span>{data.readingMinutes} min read</span>}
               {data.category?.title && <span>· {data.category.title}</span>}
             </div>
           </header>
         </div>
       </section>
 
-      {/* 主體內容 */}
       <article className="mx-auto px-6 lg:px-10 pb-16" style={{ maxWidth: CONTENT_MAX_W }}>
         <div className="rounded-2xl bg-white text-slate-900 shadow-xl ring-1 ring-black/5 overflow-hidden">
           {data.coverImage?.url && (
@@ -258,7 +322,6 @@ export default async function ChannelPostPage({
             </div>
           )}
 
-          {/* 內容區 */}
           <div className="p-8 sm:p-10">
             <section>
               {Array.isArray(data.body) && data.body.length > 0 ? (
@@ -272,7 +335,7 @@ export default async function ChannelPostPage({
               <section className="mt-10">
                 <h2 className="text-lg font-semibold">Gallery</h2>
                 <div className="mt-4 grid gap-6 sm:grid-cols-2">
-                  {data.gallery.map((g, i) =>
+                  {data.gallery.map((g: any, i: number) =>
                     g?.url ? (
                       <figure key={i} className="overflow-hidden rounded-xl ring-1 ring-slate-200">
                         <Image
@@ -283,9 +346,7 @@ export default async function ChannelPostPage({
                           className="h-auto w-full object-cover"
                         />
                         {g.alt && (
-                          <figcaption className="px-3 py-2 text-xs text-slate-500">
-                            {g.alt}
-                          </figcaption>
+                          <figcaption className="px-3 py-2 text-xs text-slate-500">{g.alt}</figcaption>
                         )}
                       </figure>
                     ) : null
@@ -296,7 +357,7 @@ export default async function ChannelPostPage({
 
             {data.tags && data.tags.length > 0 && (
               <div className="mt-10 flex flex-wrap gap-2">
-                {data.tags.map((t, i) => (
+                {data.tags.map((t: any, i: number) => (
                   <span
                     key={i}
                     className="rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-700 bg-slate-50"
@@ -307,7 +368,6 @@ export default async function ChannelPostPage({
               </div>
             )}
 
-            {/* ============================ 內卡 CTA（搬進白色卡片底部） ============================ */}
             <div className="mt-12 border-t border-slate-200 pt-8">
               <div className="rounded-xl bg-slate-50 px-6 py-7 sm:px-8 sm:py-8 ring-1 ring-slate-200">
                 <h3 className="text-slate-900 text-lg sm:text-xl font-semibold tracking-tight text-center">
@@ -335,7 +395,6 @@ export default async function ChannelPostPage({
                 </div>
               </div>
 
-              {/* 回列表 */}
               <div className="mt-10 text-center">
                 <Link
                   href={withLang(basePath, lang)}
@@ -345,12 +404,10 @@ export default async function ChannelPostPage({
                 </Link>
               </div>
             </div>
-            {/* ============================ /內卡 CTA ============================ */}
           </div>
         </div>
       </article>
 
-      {/* 🔁 外層原 Pre-Footer CTA 已移除，避免重複出現 */}
       <FooterServer lang={lang} />
     </div>
   );
