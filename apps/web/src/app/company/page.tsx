@@ -374,7 +374,7 @@ export default async function CompanyPage({
               {(isValidSrc(fPhoto) || hasRepMessage) && (
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 md:gap-6 items-stretch">
                   {/* 照片 */}
-                  <div className="lg:col-span-2 h-full relative rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5">
+                  <div className="lg:col-span-2 relative w-full aspect-[4/5] lg:aspect-auto lg:h-full rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5">
                     <Image
                       src={isValidSrc(fPhoto) ? fPhoto! : "/logo.png"}
                       alt={fPhotoAlt}
@@ -448,7 +448,9 @@ export default async function CompanyPage({
                       </div>
                     )}
                   </div>
-                  <div className="lg:col-span-3 order-first lg:order-last relative h-full rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5">
+
+                  {/* 照片 */}
+                  <div className="lg:col-span-3 order-first lg:order-last relative w-full aspect-[4/5] lg:aspect-auto lg:h-full rounded-2xl overflow-hidden border border-white/15 shadow-xl bg-white/5">
                     <Image
                       src={isValidSrc(cPhoto) ? cPhoto! : "/logo.png"}
                       alt={cPhotoAlt}
