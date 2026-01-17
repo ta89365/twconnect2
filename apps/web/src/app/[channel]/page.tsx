@@ -19,7 +19,6 @@ function isChannel(v: string): v is Channel {
   return v === "news" || v === "column";
 }
 
-/* ============================ 視覺設定 ============================ */
 const BRAND_BLUE = "#1C3D5A";
 const TUNE = {
   contentMaxW: "1200px",
@@ -32,8 +31,30 @@ const TUNE = {
 function resolveLang(sp?: { lang?: string | string[] } | null): Lang {
   let v = sp?.lang;
   if (Array.isArray(v)) v = v[0];
-  const s = (v ?? "").toString().toLowerCase();
+  const s = (v ?? "").toString().trim().toLowerCase();
+
+  // ✅ 與 LanguageSwitcher 對齊：zh-cn 一律視為 zh
+  if (s === "zh-cn" || s === "zh_cn" || s === "zh-hans" || s === "hans" || s === "cn") return "zh";
+
   return s === "zh" || s === "en" || s === "jp" ? (s as Lang) : "jp";
+}
+
+/**
+ * ✅ 覆蓋 lang
+ * ✅ 保留 query
+ * ✅ 保留 hash
+ */
+function withLang(href: string, lang: Lang) {
+  if (!href.startsWith("/")) return href;
+
+  const [beforeHash, hash = ""] = href.split("#");
+  const [path, qs = ""] = beforeHash.split("?");
+  const params = new URLSearchParams(qs);
+  params.set("lang", lang);
+
+  const nextQs = params.toString();
+  const out = nextQs ? `${path}?${nextQs}` : path;
+  return hash ? `${out}#${hash}` : out;
 }
 
 function dict(channel: Channel, lang: Lang) {
@@ -71,7 +92,7 @@ function dict(channel: Channel, lang: Lang) {
       empty: "No posts yet. Coming soon.",
     };
   }
-  // column
+
   if (lang === "jp")
     return {
       breadcrumb: "ホーム / コラム",
@@ -103,7 +124,6 @@ function dict(channel: Channel, lang: Lang) {
   };
 }
 
-/* ============================ 型別：對齊 GROQ 回傳 ============================ */
 type EntranceData = {
   posts: any[];
   settings?: {
@@ -119,7 +139,6 @@ type EntranceData = {
   };
 };
 
-/* ============================ Helper：hotspot → object-position ============================ */
 function objPosFromHotspot(hs?: { x?: number; y?: number }) {
   if (!hs || typeof hs.x !== "number" || typeof hs.y !== "number") return "50% 50%";
   return `${Math.round(hs.x * 100)}% ${Math.round(hs.y * 100)}%`;
@@ -141,7 +160,6 @@ export default async function ChannelEntrancePage({
   const t = dict(channel, lang);
   const basePath = `/${channel}` as "/news" | "/column";
 
-  // 根據 channel 選用固定查詢
   const query = channel === "news" ? newsEntranceByLang : columnEntranceByLang;
   const data = await sfetch<EntranceData>(query, { lang, limit: 24 });
 
@@ -151,7 +169,6 @@ export default async function ChannelEntrancePage({
 
   const [featured, ...rest] = posts;
 
-  // Pre-Footer CTA 按鈕字樣
   const contactLabel =
     lang === "jp" ? "お問い合わせはこちら" : lang === "zh" ? "Contact Us 聯絡我們" : "Contact Us";
 
@@ -159,7 +176,6 @@ export default async function ChannelEntrancePage({
     <div style={{ backgroundColor: BRAND_BLUE }} className="min-h-screen text-white">
       <NavigationServer lang={lang} />
 
-      {/* Hero */}
       <section className="relative w-full overflow-hidden" style={{ minHeight: TUNE.heroMinH }}>
         {!!heroImg?.url && (
           <Image
@@ -179,7 +195,6 @@ export default async function ChannelEntrancePage({
         <div className="absolute inset-0" style={{ background: TUNE.heroOverlay }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-[rgba(28,61,90,0.22)]" />
 
-        {/* 內容置中層：移除搜尋，保留文案與快速主題，全部置中 */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full" style={{ maxWidth: TUNE.contentMaxW }}>
             <div className="mx-auto max-w-3xl text-center">
@@ -191,7 +206,6 @@ export default async function ChannelEntrancePage({
                 {(settings as any)?.heroSubtitle ?? t.subtitle}
               </p>
 
-              {/* 快速主題（可選） */}
               {Array.isArray((settings as any)?.quickTopics) && (settings as any).quickTopics.length > 0 && (
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                   {(settings as any).quickTopics.map((topic: any) => (
@@ -210,10 +224,8 @@ export default async function ChannelEntrancePage({
         </div>
       </section>
 
-      {/* Hero 與內容的留白 */}
       <div className="h-10 sm:h-12 lg:h-14" />
 
-      {/* 主打文章 */}
       {featured && (
         <section className="relative">
           <div className="relative mx-auto px-4 sm:px-6 lg:px-8 pb-6" style={{ maxWidth: TUNE.contentMaxW }}>
@@ -222,7 +234,6 @@ export default async function ChannelEntrancePage({
         </section>
       )}
 
-      {/* 文章列表 */}
       <section className="relative">
         <div
           className="absolute inset-0 opacity-10"
@@ -254,7 +265,6 @@ export default async function ChannelEntrancePage({
         </div>
       </section>
 
-      {/* ===== Pre-Footer CTA（沿用 finance-advisory 樣式） ===== */}
       <section className="border-y" style={{ borderColor: "rgba(255,255,255,0.15)" }}>
         <div className="mx-auto px-4 sm:px-6 lg:px-8" style={{ maxWidth: TUNE.contentMaxW }}>
           <div className="py-10 md:py-14 text-center">
@@ -264,7 +274,7 @@ export default async function ChannelEntrancePage({
 
             <div className="mt-5 md:mt-6 flex flex-wrap items-center justify-center gap-3 md:gap-4">
               <Link
-                href={`/contact?lang=${lang}`}
+                href={withLang("/contact", lang)}
                 className="inline-flex items-center justify-center rounded-xl px-4 md:px-5 py-2.5 md:py-3 text-sm md:text-base font-semibold bg-white hover:bg-white/90"
                 style={{ color: BRAND_BLUE, boxShadow: "0 1px 0 rgba(0,0,0,0.04)" }}
               >
@@ -307,7 +317,6 @@ function FeaturedCard({
   return (
     <article className="group relative overflow-hidden rounded-2xl ring-1 ring-white/10 bg-white/[0.04] backdrop-blur-sm">
       <div className="grid gap-0 md:grid-cols-5">
-        {/* 圖片區 */}
         <div className="relative md:col-span-3 aspect-[16/10] md:aspect-auto md:h-full">
           {coverUrl ? (
             <Image
@@ -327,10 +336,10 @@ function FeaturedCard({
             </span>
           )}
         </div>
-        {/* 文字區 */}
+
         <div className="md:col-span-2 p-6 md:p-7 flex flex-col">
           <h3 className="text-2xl font-semibold leading-snug">
-            <Link href={`${basePath}/${post.slug}?lang=${lang}`} className="hover:underline">
+            <Link href={withLang(`${basePath}/${post.slug}`, lang)} className="hover:underline">
               {post.title}
             </Link>
           </h3>
@@ -343,7 +352,7 @@ function FeaturedCard({
           </div>
           <div className="mt-6">
             <Link
-              href={`${basePath}/${post.slug}?lang=${lang}`}
+              href={withLang(`${basePath}/${post.slug}`, lang)}
               className="inline-flex items-center rounded-lg bg-white text-slate-900 text-sm px-3 py-2 hover:opacity-90"
             >
               {readMoreLabel}
@@ -387,7 +396,6 @@ function ArticleCard({
       id={anchorId}
       className="group relative flex flex-col rounded-2xl bg-white text-slate-900 shadow-sm ring-1 ring-black/5 overflow-hidden transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
     >
-      {/* 封面圖 */}
       {coverUrl ? (
         <div className="relative aspect-[16/9] w-full">
           <Image src={coverUrl} alt={title} width={800} height={450} className="object-cover w-full h-full" />
@@ -403,72 +411,26 @@ function ArticleCard({
         </div>
       )}
 
-      {/* 主內容 */}
       <div className="flex-1 p-5">
         <h3 className="text-lg font-semibold leading-snug line-clamp-2 group-hover:underline">
-          <Link href={`${basePath}/${slug}?lang=${lang}`}>{title}</Link>
+          <Link href={withLang(`${basePath}/${slug}`, lang)}>{title}</Link>
         </h3>
         {excerpt && <p className="mt-2 text-sm text-slate-600 line-clamp-3">{excerpt}</p>}
 
-        {/* 作者與標籤 */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
           {authorName && <span>👤 {authorName}</span>}
           {tags && tags.length > 0 && <span>🏷️ {tags.map((t) => t.title).join(", ")}</span>}
         </div>
       </div>
 
-      {/* CTA */}
       <div className="px-5 pb-5">
         <Link
-          href={`${basePath}/${slug}?lang=${lang}`}
+          href={withLang(`${basePath}/${slug}`, lang)}
           className="inline-flex items-center rounded-lg bg-slate-900 text-white text-sm px-3 py-2 hover:opacity-90"
         >
           {readMoreLabel}
         </Link>
       </div>
     </article>
-  );
-}
-
-/* ============================ 右上角語言下拉元件（目前未使用） ============================ */
-function LangDropdown({
-  current,
-  basePath,
-}: {
-  current: Lang;
-  basePath: "/news" | "/column";
-}) {
-  const langs = [
-    { code: "zh", label: "中文", flag: "🇹🇼" },
-    { code: "jp", label: "日本語", flag: "🇯🇵" },
-    { code: "en", label: "English", flag: "🇺🇸" },
-  ] as const;
-  const selected =
-    langs.find((l) => l.code === current) ?? langs.find((l) => l.code === "jp")!;
-
-  return (
-    <div className="relative group">
-      <button
-        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-md text-sm font-medium"
-        aria-label="Language"
-      >
-        <span>{selected.flag}</span>
-        <span>{selected.label}</span>
-      </button>
-      <div className="absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white text-slate-800 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition">
-        {langs.map((l, idx) => (
-          <Link
-            key={l.code}
-            href={`${basePath}?lang=${l.code}`}
-            className={`flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-100 ${
-              current === l.code ? "bg-slate-200 font-semibold" : ""
-            } ${idx !== langs.length - 1 ? "border-b border-slate-200/70" : ""}`}
-          >
-            <span>{l.flag}</span>
-            <span>{l.label}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
   );
 }
