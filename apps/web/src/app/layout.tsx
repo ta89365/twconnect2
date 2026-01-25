@@ -32,6 +32,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
+        {/* Google tag (gtag.js) */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-17886973732"
+          strategy="afterInteractive"
+        />
+
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-17886973732');
+          `}
+        </Script>
+
+        {/* Keep existing init-datalayer (harmless redundancy, but consistent with your current setup) */}
         <Script id="init-datalayer" strategy="afterInteractive">
           {`window.dataLayer = window.dataLayer || [];`}
         </Script>
@@ -49,11 +66,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <ConsentProvider>
             {/* ✅ 全站共用語言切換（右上、導航列下方，捲動後自動消失） */}
             <React.Suspense fallback={null}>
-              <LanguageSwitcher
-                behavior="fixed"
-                offsetY={0.3}   // Nav 下方微調位置
-                offsetRight={0.75}
-              />
+              <LanguageSwitcher behavior="fixed" offsetY={0.3} offsetRight={0.75} />
             </React.Suspense>
 
             {children}
