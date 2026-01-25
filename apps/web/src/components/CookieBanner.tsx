@@ -94,14 +94,23 @@ export default function CookieBanner() {
     React.useContext(ConsentContext);
 
   const [open, setOpen] = useState(false);
-  const [analytics, setAnalytics] = useState(consent.analytics);
-  const [ads, setAds] = useState(consent.ads);
+
+  // 這兩個是「偏好管理彈層」內的暫存值
+  const [analytics, setAnalytics] = useState(false);
+  const [ads, setAds] = useState(false);
 
   // 避免 SSR / 初次掛載時閃爍：等到真正 mounted 再決定要不要顯示
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 每次打開彈層，或 consent 改變時，把最新值同步進彈層暫存狀態
+  useEffect(() => {
+    if (!mounted) return;
+    setAnalytics(!!consent.analytics);
+    setAds(!!consent.ads);
+  }, [mounted, consent.analytics, consent.ads, open]);
 
   const searchParams = useSearchParams();
 
@@ -110,9 +119,7 @@ export default function CookieBanner() {
     if (fromQuery) return fromQuery;
 
     if (typeof document !== "undefined") {
-      const fromHtml = normalizeLangToken(
-        document.documentElement.getAttribute("lang"),
-      );
+      const fromHtml = normalizeLangToken(document.documentElement.getAttribute("lang"));
       if (fromHtml) return fromHtml;
     }
 
@@ -149,7 +156,10 @@ export default function CookieBanner() {
 
               {/* Reject 按鈕：白底 深字，加邊框 */}
               <button
-                onClick={rejectNonEssential}
+                onClick={() => {
+                  setOpen(false);
+                  rejectNonEssential();
+                }}
                 className="w-full sm:w-auto text-center px-4 py-2 rounded-lg border font-medium text-sm text-gray-800 bg-white hover:bg-gray-50"
                 style={{ borderColor: "rgba(0,0,0,0.2)" }}
               >
@@ -158,7 +168,10 @@ export default function CookieBanner() {
 
               {/* Accept all：維持品牌藍底 白字 */}
               <button
-                onClick={acceptAll}
+                onClick={() => {
+                  setOpen(false);
+                  acceptAll();
+                }}
                 className="w-full sm:w-auto text-center px-4 py-2 rounded-lg text-white font-medium text-sm"
                 style={{ backgroundColor: BRAND_BLUE }}
               >
@@ -176,26 +189,16 @@ export default function CookieBanner() {
           aria-modal="true"
           role="dialog"
         >
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="relative w-full max-w-xl max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl border p-5 sm:p-6">
-            <h3
-              className="text-base sm:text-lg font-semibold"
-              style={{ color: BRAND_BLUE }}
-            >
+            <h3 className="text-base sm:text-lg font-semibold" style={{ color: BRAND_BLUE }}>
               {t.modalTitle}
             </h3>
 
             <div className="mt-4 space-y-4">
               <fieldset className="border rounded-lg p-3 sm:p-4">
-                <legend className="px-1 text-sm font-semibold">
-                  {t.aLabel}
-                </legend>
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">
-                  {t.aDesc}
-                </p>
+                <legend className="px-1 text-sm font-semibold">{t.aLabel}</legend>
+                <p className="text-xs sm:text-sm text-gray-600 mb-2">{t.aDesc}</p>
                 <label className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -207,12 +210,8 @@ export default function CookieBanner() {
               </fieldset>
 
               <fieldset className="border rounded-lg p-3 sm:p-4">
-                <legend className="px-1 text-sm font-semibold">
-                  {t.adLabel}
-                </legend>
-                <p className="text-xs sm:text-sm text-gray-600 mb-2">
-                  {t.adDesc}
-                </p>
+                <legend className="px-1 text-sm font-semibold">{t.adLabel}</legend>
+                <p className="text-xs sm:text-sm text-gray-600 mb-2">{t.adDesc}</p>
                 <label className="inline-flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -225,12 +224,10 @@ export default function CookieBanner() {
             </div>
 
             <div className="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2">
-              <button
-                className="px-3 py-2 text-xs sm:text-sm underline"
-                onClick={() => setOpen(false)}
-              >
+              <button className="px-3 py-2 text-xs sm:text-sm underline" onClick={() => setOpen(false)}>
                 {t.close}
               </button>
+
               <button
                 className="px-4 py-2 rounded-lg text-white font-medium text-xs sm:text-sm"
                 style={{ backgroundColor: BRAND_BLUE }}
