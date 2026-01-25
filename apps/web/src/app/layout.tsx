@@ -28,31 +28,46 @@ const defaultCssVars = {
   ["--default-foreground" as any]: "#0b1324",
 } as React.CSSProperties;
 
+const GOOGLE_ADS_ID = "AW-17886973732";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
-        {/* Google tag (gtag.js) */}
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=AW-17886973732"
-          strategy="afterInteractive"
-        />
-
-        <Script id="google-ads-gtag" strategy="afterInteractive">
+        {/* 1) 最早期先建立 dataLayer + gtag stub，並把預設同意設為 denied */}
+        <Script id="gtag-consent-default" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'AW-17886973732');
+            window.gtag = window.gtag || gtag;
+
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              analytics_storage: 'denied'
+            });
           `}
         </Script>
 
-        {/* Keep existing init-datalayer (harmless redundancy, but consistent with your current setup) */}
-        <Script id="init-datalayer" strategy="afterInteractive">
-          {`window.dataLayer = window.dataLayer || [];`}
+        {/* 2) 載入 gtag.js（可以先載入，因為已經被 consent default 鎖住） */}
+        <Script
+          async
+          src={"https://www.googletagmanager.com/gtag/js?id=" + GOOGLE_ADS_ID}
+          strategy="afterInteractive"
+        />
+
+        {/* 3) 初始化 gtag，不在這裡做 config，避免同意機制被繞過 */}
+        <Script id="gtag-base" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            window.gtag = window.gtag || gtag;
+            gtag('js', new Date());
+          `}
         </Script>
       </head>
+
       <body
         suppressHydrationWarning
         style={defaultCssVars}
@@ -64,7 +79,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       >
         <React.Suspense fallback={null}>
           <ConsentProvider>
-            {/* ✅ 全站共用語言切換（右上、導航列下方，捲動後自動消失） */}
             <React.Suspense fallback={null}>
               <LanguageSwitcher behavior="fixed" offsetY={0.3} offsetRight={0.75} />
             </React.Suspense>
@@ -75,7 +89,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <CookieBanner />
             </React.Suspense>
 
-            {/* ✅ 右下角固定：快捷諮詢（回到頂端你可以一樣放這裡） */}
             <React.Suspense fallback={null}>
               <QuickConsult
                 targetId="contact"
