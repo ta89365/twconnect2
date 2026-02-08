@@ -177,6 +177,10 @@ export default async function Page({
     "activity",
   ] as const;
 
+  // 你要隱藏的兩塊就在 Introduction 區
+  const SHOW_NETWORK_CARD = false; // Global Network & On-ground Capability
+  const SHOW_COVERAGE_CARD = false; // Coverage
+
   return (
     <main className="min-h-screen text-white">
       <style>{`
@@ -222,16 +226,27 @@ export default async function Page({
             <path d="M10,78 C38,55 62,70 90,50" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
           </svg>
         </div>
-        <div className="relative mx-auto flex h-full w-full max-w-[1200px] flex-col items-start justify-end px-6 pb-14 pt-24">
-          {H?.badge ? (
-            <div className={`${TUNE.badge} mb-2`}>
-              <Lucide.BadgeCheck className="h-4 w-4" />
-              <span>{H.badge}</span>
-            </div>
-          ) : null}
-          <h1 className="text-3xl md:text-5xl font-semibold leading-tight drop-shadow-sm">{H?.title}</h1>
-          {H?.subtitle ? <p className="mt-3 max-w-3xl text-base md:text-lg text-white/85 leading-7">{H.subtitle}</p> : null}
-        </div>
+<div className="relative mx-auto flex h-full w-full max-w-[1200px] flex-col items-start justify-center px-6 pt-24 pb-24">
+  <div className="w-full max-w-[620px]">
+    {H?.badge ? (
+      <div className={`${TUNE.badge} mb-3`}>
+        <Lucide.BadgeCheck className="h-4 w-4" />
+        <span>{H.badge}</span>
+      </div>
+    ) : null}
+
+    <h1 className="text-3xl md:text-5xl font-semibold leading-tight drop-shadow-sm">
+      {H?.title}
+    </h1>
+
+    {H?.subtitle ? (
+      <p className="mt-3 max-w-[520px] text-base md:text-lg text-white/85 leading-7">
+        {H.subtitle}
+      </p>
+    ) : null}
+  </div>
+</div>
+
         <div className="absolute -bottom-1 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-[var(--page-bg)]" />
       </section>
 
@@ -242,23 +257,31 @@ export default async function Page({
             <div>
               <SectionHeading title={I?.lead} />
               {I?.body ? <p className="leading-7 text-white/85">{I.body}</p> : null}
-              {I?.networkBlurb ? (
+
+              {/* 第一個框：Global Network & On-ground Capability */}
+              {SHOW_NETWORK_CARD && I?.networkBlurb ? (
                 <div className="mt-4 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white/90 backdrop-blur">
                   <div className="mb-1 text-sm font-semibold text-white/90">Global Network & On-ground Capability</div>
                   <p className="text-sm leading-6 text-white/85">{I.networkBlurb}</p>
                 </div>
               ) : null}
             </div>
+
             <aside className="space-y-3">
-              <div className={`${TUNE.card} p-4`}>
-                <div className="text-sm font-semibold text-white/90">Coverage</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <StatPill label={`Countries: ${I?.stats?.countriesCount || "—"}`} />
-                  {(I?.stats?.regions || []).map((r, idx) => (
-                    <StatPill key={idx} label={r} />
-                  ))}
+              {/* 第二個框：Coverage */}
+              {SHOW_COVERAGE_CARD ? (
+                <div className={`${TUNE.card} p-4`}>
+                  <div className="text-sm font-semibold text-white/90">Coverage</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <StatPill label={`Countries: ${I?.stats?.countriesCount || "—"}`} />
+                    {(I?.stats?.regions || []).map((r, idx) => (
+                      <StatPill key={idx} label={r} />
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : null}
+
+              {/* 保留第三個框：Positioning */}
               <div className={`${TUNE.card} p-4`}>
                 <div className="text-sm font-semibold text-white/90">Positioning</div>
                 <p className="mt-1.5 text-sm text-white/80">
